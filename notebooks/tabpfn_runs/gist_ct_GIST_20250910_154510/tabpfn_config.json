@@ -1,0 +1,16 @@
+{
+  "device": "cpu",
+  "clf_kwargs": {},
+  "train_time_sec": 0.5788924694061279,
+  "tabpfn_src": "C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\TabPFN-main\\TabPFN-main\\src",
+  "shapes": {
+    "X_train": [
+      246,
+      246
+    ],
+    "X_val": [
+      78,
+      246
+    ]
+  }
+}
