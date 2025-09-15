@@ -40,6 +40,25 @@ from .tabpfn import (
 from .pipeline import (
     run_end_to_end,
 )
+from .export2d import (
+    export_swin_dataset,
+)
+from .vision2d import (
+    TrainConfig,
+    build_densenet121,
+    build_swin_transformer,
+    train_eval_densenet121,
+    train_eval_swin_transformer,
+)
+from .vision3d import (
+    Train3DConfig,
+    build_densenet121_3d,
+    build_swin_transformer_3d,
+    train_eval_densenet121_3d,
+    train_eval_swin_transformer_3d,
+    build_vit_3d,
+    train_eval_vit_3d,
+)
 
 __all__ = [
     "__version__",
@@ -71,6 +90,21 @@ __all__ = [
     "default_tabpfn_out_dir",
     # End-to-end (Steps 1–8)
     "run_end_to_end",
+    # 2D classification utilities
+    "export_swin_dataset",
+    "TrainConfig",
+    "build_densenet121",
+    "build_swin_transformer",
+    "train_eval_densenet121",
+    "train_eval_swin_transformer",
+    # 3D classification utilities
+    "Train3DConfig",
+    "build_densenet121_3d",
+    "build_swin_transformer_3d",
+    "train_eval_densenet121_3d",
+    "train_eval_swin_transformer_3d",
+    "build_vit_3d",
+    "train_eval_vit_3d",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.5.0"
