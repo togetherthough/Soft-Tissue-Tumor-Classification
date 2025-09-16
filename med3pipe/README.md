@@ -64,7 +64,7 @@ res = train_eval_densenet121_3d(
     num_classes=2,
     cfg=Train3DConfig(epochs=30, img_size=96, batch_size=2, device="cuda"),  # set device to "cuda" for GPU
 )
-print("Saved to:", res["out_dir"])  # vision3d_runs/densenet121_3d_<timestamp>
+print("Saved to:", res["out_dir"])  # baselines/densenet121_3d_<timestamp>
 ```
 
 ### Train Swin Transformer (3D)
@@ -82,7 +82,7 @@ res = train_eval_swin_transformer_3d(
     num_classes=2,
     cfg=Train3DConfig(epochs=30, img_size=96, batch_size=2, device="cuda"),
 )
-print("Saved to:", res["out_dir"])  # vision3d_runs/swin3d_<timestamp>
+print("Saved to:", res["out_dir"])  # baselines/swin3d_<timestamp>
 ```
 
 Both training and validation inference use the selected device (`cfg.device`), so GPU is used end-to-end when you set `device="cuda"`.
@@ -247,103 +247,6 @@ res = train_eval_tabpfn(
     ids_val=ids_val,
     out_dir=out_dir,
 )
-```
-
-## 2D Classification: DenseNet121 and Swin Transformer
-
-This package includes a modular 2D training API for DenseNet121 (torchvision) and Swin Transformer (timm) using ImageFolder datasets. It is designed to work with 2D slice datasets exported from your prepared SAM-Med3D volumes.
-
-### Export 2D slice dataset
-
-Use `export_swin_dataset` to convert your `imagesTr/labelsTr` and `imagesVal/labelsVal` into an ImageNet-style dataset with lesion-extracted slices:
-
-```python
-from pathlib import Path
-from med3pipe import Sam3DPaths, export_swin_dataset
-
-paths = Sam3DPaths(sam3d_root=Path("SAM-Med3D-main/SAM-Med3D-main"), category="gist", ct_name="ct_GIST")
-stats = export_swin_dataset(
-    paths=paths,
-    sheet_csv=Path("gist") / "sheet.csv",
-    export_root=Path("notebooks") / "swin_dataset",
-    dataset_name="GIST",
-    subject_col="Subject",
-    label_col="Diagnosis_binary",
-    case_suffix="_CT",
-    img_size=224,
-    slices_per_case=64,   # None for all masked slices
-    only_masked=True,     # True to sample slices intersecting masks
-)
-print(stats)
-```
-
-This creates folders:
-
-```
-<export_root>/train/{0,1}/*.png
-<export_root>/val/{0,1}/*.png
-```
-
-### Train DenseNet121
-
-```python
-from med3pipe import train_eval_densenet121, TrainConfig
-from pathlib import Path
-
-cfg = TrainConfig(
-    epochs=10,
-    lr=1e-4,
-    weight_decay=1e-4,
-    img_size=224,
-    batch_size=64,
-    augment="light",   # or "none"
-    case_agg="mean",   # aggregate slice probs per case: "mean" or "max"
-)
-res = train_eval_densenet121(
-    data_root=Path("notebooks") / "swin_dataset",
-    num_classes=2,
-    cfg=cfg,
-)
-print("Outputs saved to:", res["out_dir"])
-```
-
-### Train Swin Transformer (timm)
-
-```python
-from med3pipe import train_eval_swin_transformer, TrainConfig
-from pathlib import Path
-
-res = train_eval_swin_transformer(
-    data_root=Path("notebooks") / "swin_dataset",
-    num_classes=2,
-    model_name="swin_tiny_patch4_window7_224",  # any timm swin variant
-    cfg=TrainConfig(epochs=10, lr=2e-4, batch_size=64, img_size=224),
-)
-print("Outputs saved to:", res["out_dir"])
-```
-
-### Outputs
-
-Each run saves under `vision2d_runs/<model>_<timestamp>/`:
-
-```
-best_model.pth
-config.json
-class_to_idx.json
-slice_predictions.csv         # per-slice predictions with probabilities
-case_predictions.csv          # aggregated per-case predictions
-metrics_slice.json
-metrics_case.json
-classification_report_slice.txt
-classification_report_case.txt
-```
-
-### Dependencies
-
-Install additional packages for 2D classification:
-
-```
-pip install -r med3pipe/requirements.txt
 ```
 
 ## Output layout

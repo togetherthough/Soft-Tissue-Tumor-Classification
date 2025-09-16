@@ -542,9 +542,14 @@ def train_eval_densenet121_3d(
     # Evaluate best on val
     eval_res = _evaluate_3d(model, dl_va, dev)
 
-    out_dir = Path.cwd() / "vision3d_runs" / f"densenet121_3d_{_timestamp()}"
+    project_root = paths.sam3d_root.parent.parent
+    base_dir = project_root / "notebooks" / "baselines"
+    out_dir = base_dir / f"densenet121_3d_{_timestamp()}"
+    base_dir.mkdir(parents=True, exist_ok=True)
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Save best model to run dir and also a stable alias in baselines/
     torch.save(model.state_dict(), out_dir / "best_model.pth")
+    torch.save(model.state_dict(), base_dir / "d121_3d_best.pt")
     _save_run_outputs(
         out_dir,
         {
@@ -559,7 +564,8 @@ def train_eval_densenet121_3d(
         "out_dir": out_dir,
         "eval": eval_res,
         "fit": fit_info,
-        "model_path": out_dir / "best_model.pth",
+        "model_path": base_dir / "d121_3d_best.pt",
+        "run_model_path": out_dir / "best_model.pth",
     }
 
 
@@ -632,9 +638,14 @@ def train_eval_vit_3d(
 
     eval_res = _evaluate_3d(model, dl_va, dev)
 
-    out_dir = Path.cwd() / "vision3d_runs" / f"vit3d_{_timestamp()}"
+    project_root = paths.sam3d_root.parent.parent
+    base_dir = project_root / "notebooks" / "baselines"
+    out_dir = base_dir / f"vit3d_{_timestamp()}"
+    base_dir.mkdir(parents=True, exist_ok=True)
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Save best model to run dir and also a stable alias in baselines/
     torch.save(model.state_dict(), out_dir / "best_model.pth")
+    torch.save(model.state_dict(), base_dir / "vit3d_best.pt")
     _save_run_outputs(
         out_dir,
         {
@@ -659,7 +670,8 @@ def train_eval_vit_3d(
         "out_dir": out_dir,
         "eval": eval_res,
         "fit": fit_info,
-        "model_path": out_dir / "best_model.pth",
+        "model_path": base_dir / "vit3d_best.pt",
+        "run_model_path": out_dir / "best_model.pth",
     }
 
 
@@ -728,7 +740,10 @@ def train_eval_swin_transformer_3d(
     # Evaluate best on val
     eval_res = _evaluate_3d(model, dl_va, dev)
 
-    out_dir = Path.cwd() / "vision3d_runs" / f"swin3d_{_timestamp()}"
+    project_root = paths.sam3d_root.parent.parent
+    base_dir = project_root / "notebooks" / "baselines"
+    out_dir = base_dir / f"swin3d_{_timestamp()}"
+    base_dir.mkdir(parents=True, exist_ok=True)
     out_dir.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), out_dir / "best_model.pth")
     _save_run_outputs(

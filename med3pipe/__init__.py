@@ -43,16 +43,6 @@ from .tabular import (
 from .pipelines import (
     run_end_to_end,
 )
-from .exports import (
-    export_swin_dataset,
-)
-from .vision.v2d import (
-    TrainConfig,
-    build_densenet121,
-    build_swin_transformer,
-    train_eval_densenet121,
-    train_eval_swin_transformer,
-)
 from .vision.v3d import (
     Train3DConfig,
     build_densenet121_3d,
@@ -93,13 +83,6 @@ __all__ = [
     "default_tabpfn_out_dir",
     # End-to-end (Steps 1–8)
     "run_end_to_end",
-    # 2D classification utilities
-    "export_swin_dataset",
-    "TrainConfig",
-    "build_densenet121",
-    "build_swin_transformer",
-    "train_eval_densenet121",
-    "train_eval_swin_transformer",
     # 3D classification utilities
     "Train3DConfig",
     "build_densenet121_3d",
