@@ -42,7 +42,7 @@ pip install -r med3pipe/requirements.txt
 
 ## 3D Classification: DenseNet121 (3D) and Swin Transformer (3D)
 
-For native 3D volumetric classification, use the MONAI-based APIs in `med3pipe.vision3d`. These operate directly on NIfTI volumes prepared by steps 1–3 (SAM-Med3D layout), loading from:
+For native 3D volumetric classification, use the MONAI-based APIs in `med3pipe.vision.v3d`. These operate directly on NIfTI volumes prepared by steps 1–3 (SAM-Med3D layout), loading from:
 
 - `data/train/<category>/<ct_name>/imagesTr/*.nii.gz`
 - `data/validation/<category>/<ct_name>/imagesVal/*.nii.gz`

@@ -7,13 +7,16 @@
 CLI available via: `python -m med3pipe ...`
 """
 
-from .prepare import (
+# Re-export public APIs from structured subpackages
+# Ensure subpackage attribute exists (e.g., `med3pipe.vision`) when only `import med3pipe` is used
+from . import vision as vision
+from .data import (
     Sam3DPaths,
     find_default_sam3d_root,
     prepare_for_sam3d,
     split_validation,
 )
-from .sam3d import (
+from .sam import (
     Sam3DModelSpec,
     build_sam3d_model,
     make_pre_transform,
@@ -28,29 +31,29 @@ from .sam3d import (
     load_labels_from_sheet,
     build_y,
 )
-from .finetune import (
+from .training import (
     finetune_sam3d,
 )
-from .tabpfn import (
+from .tabular import (
     standardize_pca,
     train_eval_tabpfn,
     tabpfn_pipeline,
     default_tabpfn_out_dir,
 )
-from .pipeline import (
+from .pipelines import (
     run_end_to_end,
 )
-from .export2d import (
+from .exports import (
     export_swin_dataset,
 )
-from .vision2d import (
+from .vision.v2d import (
     TrainConfig,
     build_densenet121,
     build_swin_transformer,
     train_eval_densenet121,
     train_eval_swin_transformer,
 )
-from .vision3d import (
+from .vision.v3d import (
     Train3DConfig,
     build_densenet121_3d,
     build_swin_transformer_3d,
@@ -107,4 +110,4 @@ __all__ = [
     "train_eval_vit_3d",
 ]
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"

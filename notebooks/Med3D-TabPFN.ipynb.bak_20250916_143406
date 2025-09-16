@@ -1,0 +1,839 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# GIST -> SAM-Med3D (Steps 1–3) via med3pipe\n",
+    "\n",
+    "This notebook reproduces the first 3 steps of `gist_tabpfn_end_to_end_corrected.ipynb` by importing\n",
+    "and calling the reusable functions in `med3pipe.prepare` (no CLI).\n",
+    "\n",
+    "Steps:\n",
+    "1. Discover raw GIST cases in `gist/`.\n",
+    "2. Prepare SAM-Med3D-ready folders: `imagesTr/labelsTr` with merged lesions, aligned geometry,\n",
+    "   and binary labels.\n",
+    "3. Create a validation split by copying subset into `imagesVal/labelsVal` (seed 2025, split 0.8/0.2).\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "PROJECT_ROOT: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\n",
+      "DATASET_ROOT: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\gist\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Paths and imports\n",
+    "from pathlib import Path\n",
+    "import sys\n",
+    "\n",
+    "def find_project_root():\n",
+    "    p = Path.cwd().resolve()\n",
+    "    for cand in [p, *p.parents]:\n",
+    "        if (cand / 'gist').is_dir() and (cand / 'SAM-Med3D-main').is_dir():\n",
+    "            return cand\n",
+    "    return Path.cwd().resolve()\n",
+    "\n",
+    "PROJECT_ROOT = find_project_root()\n",
+    "# Make the project importable (so we can `import med3pipe`)\n",
+    "if str(PROJECT_ROOT) not in sys.path:\n",
+    "    sys.path.insert(0, str(PROJECT_ROOT))\n",
+    "\n",
+    "DATASET_ROOT = PROJECT_ROOT / 'gist'\n",
+    "print('PROJECT_ROOT:', PROJECT_ROOT)\n",
+    "print('DATASET_ROOT:', DATASET_ROOT)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 1–2) Prepare dataset into SAM-Med3D format\n",
+    "- Merge multiple lesions per case (images: max, labels: union)\n",
+    "- Align image to label geometry\n",
+    "- Binarize labels (>0)\n",
+    "- Write to `data/train/<category>/<ct_name>/{imagesTr,labelsTr}`\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\tqdm\\auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html\n",
+      "  from .autonotebook import tqdm as notebook_tqdm\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Prepared 25 cases ...\n",
+      "Prepared 50 cases ...\n",
+      "Prepared 75 cases ...\n",
+      "Prepared 100 cases ...\n",
+      "Prepared 125 cases ...\n",
+      "Prepared 150 cases ...\n",
+      "Prepared 175 cases ...\n",
+      "Prepared 200 cases ...\n",
+      "Prepared 225 cases ...\n",
+      "Done. Prepared 246 cases to C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\train\\gist\\ct_GIST\n",
+      "Prepared cases: 246\n",
+      "Train images folder: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\train\\gist\\ct_GIST\\imagesTr\n",
+      "Train labels folder: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\train\\gist\\ct_GIST\\labelsTr\n"
+     ]
+    }
+   ],
+   "source": [
+    "from med3pipe.prepare import prepare_for_sam3d, find_default_sam3d_root\n",
+    "\n",
+    "SAM3D_ROOT = find_default_sam3d_root(PROJECT_ROOT)\n",
+    "category = 'gist'\n",
+    "ct_name = 'ct_GIST'\n",
+    "\n",
+    "n_prepared, paths = prepare_for_sam3d(\n",
+    "    dataset_root=DATASET_ROOT,\n",
+    "    sam3d_root=SAM3D_ROOT,\n",
+    "    category=category,\n",
+    "    ct_name=ct_name,\n",
+    "    case_glob=None,  # default GIST pattern will be used\n",
+    ")\n",
+    "print('Prepared cases:', n_prepared)\n",
+    "print('Train images folder:', paths.images_tr)\n",
+    "print('Train labels folder:', paths.labels_tr)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 3) Create validation split\n",
+    "- Copy a subset to `imagesVal/labelsVal` (non-destructive)\n",
+    "- Seed 2025, split 0.8 train / 0.2 val (to match the original)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Validation set copied to: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\validation\\gist\\ct_GIST | Train: 196 | Val: 50\n",
+      "Train: 196 | Val: 50\n",
+      "Val images folder: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\validation\\gist\\ct_GIST\\imagesVal\n",
+      "Val labels folder: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\validation\\gist\\ct_GIST\\labelsVal\n"
+     ]
+    }
+   ],
+   "source": [
+    "from med3pipe.prepare import split_validation\n",
+    "\n",
+    "n_train, n_val = split_validation(paths, split_ratio=0.8, seed=2025, copy=True)\n",
+    "print('Train:', n_train, '| Val:', n_val)\n",
+    "print('Val images folder:', paths.images_val)\n",
+    "print('Val labels folder:', paths.labels_val)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train imgs/labels: 246 246\n",
+      "Val imgs/labels  : 78 78\n",
+      "Sample train files: ['GIST-001_CT.nii.gz', 'GIST-002_CT.nii.gz', 'GIST-003_CT.nii.gz', 'GIST-004_CT.nii.gz', 'GIST-005_CT.nii.gz']\n",
+      "Sample val files  : ['GIST-001_CT.nii.gz', 'GIST-007_CT.nii.gz', 'GIST-008_CT.nii.gz', 'GIST-012_CT.nii.gz', 'GIST-013_CT.nii.gz']\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Quick checks\n",
+    "train_imgs = sorted(paths.images_tr.glob('*.nii.gz'))\n",
+    "train_lbls = sorted(paths.labels_tr.glob('*.nii.gz'))\n",
+    "val_imgs = sorted(paths.images_val.glob('*.nii.gz'))\n",
+    "val_lbls = sorted(paths.labels_val.glob('*.nii.gz'))\n",
+    "\n",
+    "print('Train imgs/labels:', len(train_imgs), len(train_lbls))\n",
+    "print('Val imgs/labels  :', len(val_imgs), len(val_lbls))\n",
+    "print('Sample train files:', [p.name for p in train_imgs[:5]])\n",
+    "print('Sample val files  :', [p.name for p in val_imgs[:5]])\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e28604c3",
+   "metadata": {},
+   "source": [
+    "# Build model (optionally load checkpoint)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "1cbf9592",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from pathlib import Path\n",
+    "import torch\n",
+    "from med3pipe import (\n",
+    "    find_default_sam3d_root, build_sam3d_model,\n",
+    "    default_feature_dirs, extract_embeddings_train_val,\n",
+    "    load_roi_features, load_labels_from_sheet, build_y,\n",
+    ")\n",
+    "\n",
+    "SAM3D_ROOT = find_default_sam3d_root()\n",
+    "ckpt = SAM3D_ROOT / \"ckpt\" / \"sam_med3d_turbo.pth\"  # optional\n",
+    "model = build_sam3d_model(sam3d_root=SAM3D_ROOT, checkpoint=ckpt, model_type=\"vit_b_ori\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "68b518d7",
+   "metadata": {},
+   "source": [
+    "# Fine-Tuning"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "6eb58ec6",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "1"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from med3pipe import finetune_sam3d\n",
+    "proc = finetune_sam3d(paths, model_type=\"vit_b_ori\", checkpoint=ckpt, device=\"cuda\", num_epochs=2, batch_size=4)\n",
+    "proc.wait()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "28f671cc",
+   "metadata": {},
+   "source": [
+    "# Extract embeddings"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "e11c1fb1",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "To extract: 246 from C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\train\\gist\\ct_GIST\\imagesTr\n",
+      "Done extracting to: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\features\\gist\\ct_GIST_train\n",
+      "To extract: 78 from C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\validation\\gist\\ct_GIST\\imagesVal\n",
+      "Done extracting to: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\features\\gist\\ct_GIST\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "FeatureDirs(train_dir=WindowsPath('C:/Users/cahel/Desktop/Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/features/gist/ct_GIST_train'), val_dir=WindowsPath('C:/Users/cahel/Desktop/Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/features/gist/ct_GIST'))"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "\n",
+    "# Extract embeddings for TRAIN and VAL\n",
+    "feat_dirs = default_feature_dirs(SAM3D_ROOT, category=paths.category, ct_name=paths.ct_name)\n",
+    "extract_embeddings_train_val(paths, model, sam3d_root=SAM3D_ROOT)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6f95cc68",
+   "metadata": {},
+   "source": [
+    "# ROI-Pooling with SAM-Med3D embeddings"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "e50829b3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ROI-pool to per-case vectors\n",
+    "X_train, ids_train = load_roi_features(feat_dirs.train_dir, paths.labels_tr)\n",
+    "X_val,   ids_val   = load_roi_features(feat_dirs.val_dir,   paths.labels_val)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "61216e36",
+   "metadata": {},
+   "source": [
+    "# Load Labels from csv"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "db98b15b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "y_train: (246,) y_val: (78,)\n"
+     ]
+    }
+   ],
+   "source": [
+    "df, lab_map = load_labels_from_sheet(Path(r\"C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\gist\\sheet.csv\"))  # dataset_name='GIST' by default\n",
+    "\n",
+    "# ids_train / ids_val must already be defined from ROI features\n",
+    "y_train, missing_tr = build_y(ids_train, lab_map)\n",
+    "y_val,   missing_va = build_y(ids_val,   lab_map)\n",
+    "\n",
+    "print(\"y_train:\", y_train.shape, \"y_val:\", y_val.shape)\n",
+    "if missing_tr or missing_va:\n",
+    "    print(\"WARNING missing labels. train:\", len(missing_tr), \"val:\", len(missing_va))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "cd053d70",
+   "metadata": {},
+   "source": [
+    "# TabPFN"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "43266767",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\TabPFN-main\\TabPFN-main\\src\\tabpfn\\classifier.py:463: UserWarning: Running on CPU with more than 200 samples may be slow.\n",
+      "Consider using a GPU or the tabpfn-client API: https://github.com/PriorLabs/tabpfn-client\n",
+      "  check_cpu_warning(\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Saved outputs under: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\tabpfn_runs\\gist_ct_GIST_20250910_154510\n",
+      "Preproc dir: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\tabpfn_runs\\gist_ct_GIST_20250910_154510\\preproc\n",
+      "Predictions: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\tabpfn_runs\\gist_ct_GIST_20250910_154510\\tabpfn_val_predictions.csv\n",
+      "Metrics: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\tabpfn_runs\\gist_ct_GIST_20250910_154510\\tabpfn_metrics.json\n",
+      "Report: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\tabpfn_runs\\gist_ct_GIST_20250910_154510\\tabpfn_classification_report.txt\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\TabPFN-main\\TabPFN-main\\src\\tabpfn\\classifier.py:463: UserWarning: Running on CPU with more than 200 samples may be slow.\n",
+      "Consider using a GPU or the tabpfn-client API: https://github.com/PriorLabs/tabpfn-client\n",
+      "  check_cpu_warning(\n"
+     ]
+    }
+   ],
+   "source": [
+    "from med3pipe import tabpfn_pipeline\n",
+    "\n",
+    "# Option A: One-liner pipeline with default saving\n",
+    "res = tabpfn_pipeline(\n",
+    "    X_train=X_train,\n",
+    "    y_train=y_train,\n",
+    "    X_val=X_val,\n",
+    "    y_val=y_val,\n",
+    "    ids_val=ids_val,\n",
+    "    category=paths.category,  # e.g., \"gist\"\n",
+    "    ct_name=paths.ct_name,    # e.g., \"ct_GIST\"\n",
+    ")\n",
+    "\n",
+    "print(\"Saved outputs under:\", res[\"out_dir\"])\n",
+    "print(\"Preproc dir:\", res[\"preproc_dir\"])\n",
+    "print(\"Predictions:\", res[\"pred_path\"])\n",
+    "print(\"Metrics:\", res[\"metrics_path\"])\n",
+    "print(\"Report:\", res[\"report_path\"])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "e19d3e3f",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "Test (VAL) metrics:\n",
+      "{'accuracy': 0.5769230769230769, 'macro_f1': 0.5751774220168344, 'roc_auc': 0.5603164139749506, 'confusion_matrix': [[25, 12], [21, 20]]}\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"\\nTest (VAL) metrics:\")\n",
+    "print(res[\"metrics\"])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "cdeb17ed",
+   "metadata": {},
+   "source": [
+    "# Everything at once"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "3764deea",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Prepared 25 cases ...\n",
+      "Prepared 50 cases ...\n",
+      "Prepared 75 cases ...\n",
+      "Prepared 100 cases ...\n",
+      "Prepared 125 cases ...\n",
+      "Prepared 150 cases ...\n",
+      "Prepared 175 cases ...\n",
+      "Prepared 200 cases ...\n",
+      "Prepared 225 cases ...\n",
+      "Done. Prepared 246 cases to C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\train\\gist\\ct_GIST\n",
+      "Validation set copied to: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\validation\\gist\\ct_GIST | Train: 196 | Val: 50\n",
+      "To extract: 246 from C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\train\\gist\\ct_GIST\\imagesTr\n",
+      "Done extracting to: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\features\\gist\\ct_GIST_train\n",
+      "To extract: 78 from C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\validation\\gist\\ct_GIST\\imagesVal\n",
+      "Done extracting to: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\features\\gist\\ct_GIST\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\TabPFN-main\\TabPFN-main\\src\\tabpfn\\classifier.py:463: UserWarning: Running on CPU with more than 200 samples may be slow.\n",
+      "Consider using a GPU or the tabpfn-client API: https://github.com/PriorLabs/tabpfn-client\n",
+      "  check_cpu_warning(\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "TabPFN metrics: {'accuracy': 0.5769230769230769, 'macro_f1': 0.5751774220168344, 'roc_auc': 0.5603164139749506, 'confusion_matrix': [[25, 12], [21, 20]]}\n",
+      "TabPFN metrics: {'accuracy': 0.5769230769230769, 'macro_f1': 0.5751774220168344, 'roc_auc': 0.5603164139749506, 'confusion_matrix': [[25, 12], [21, 20]]}\n",
+      "Saved run dir: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\tabpfn_runs\\gist_ct_GIST_20250910_161132\n",
+      "Predictions CSV: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\tabpfn_runs\\gist_ct_GIST_20250910_161132\\tabpfn_val_predictions.csv\n",
+      "Report TXT: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\tabpfn_runs\\gist_ct_GIST_20250910_161132\\tabpfn_classification_report.txt\n"
+     ]
+    }
+   ],
+   "source": [
+    "from pathlib import Path\n",
+    "from med3pipe import run_end_to_end\n",
+    "\n",
+    "res = run_end_to_end(\n",
+    "    dataset_root=Path(r\"C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\gist\"),\n",
+    "    category=\"gist\",\n",
+    "    ct_name=\"ct_GIST\",\n",
+    "    sheet_csv=Path(r\"C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\gist\\sheet.csv\"),  # force exact file\n",
+    ")\n",
+    "\n",
+    "print(\"TabPFN metrics:\", res.tabpfn[\"metrics\"])\n",
+    "print(\"Saved run dir:\", res.tabpfn[\"out_dir\"])\n",
+    "print(\"Predictions CSV:\", res.tabpfn[\"pred_path\"])\n",
+    "print(\"Report TXT:\", res.tabpfn[\"report_path\"])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "df7e65fd",
+   "metadata": {},
+   "source": [
+    "# Swin transformer"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5330d22c",
+   "metadata": {},
+   "source": [
+    "Volumetric CT/MRI (medical imaging)\n",
+    "\n",
+    "Swin UNETR (MONAI) — a 3D Swin-Transformer encoder + U-Net-style decoder, widely used for CT/MRI segmentation; official code, docs, tutorials, and pretrained weights are available. \n",
+    "\n",
+    "Paper: Self-Supervised Pre-Training of Swin Transformers for 3D Medical Image Analysis (CVPR 2022), which introduced Swin UNETR and released code. \n",
+    "\n",
+    "\n",
+    "Related: “Swin-Unet3D” variants (3D Swin blocks in encoder/decoder). \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "af5b9a6f",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\tqdm\\auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html\n",
+      "  from .autonotebook import tqdm as notebook_tqdm\n"
+     ]
+    },
+    {
+     "ename": "TypeError",
+     "evalue": "SwinUNETR.__init__() got an unexpected keyword argument 'img_size'",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mTypeError\u001b[0m                                 Traceback (most recent call last)",
+      "Cell \u001b[1;32mIn[1], line 2\u001b[0m\n\u001b[0;32m      1\u001b[0m \u001b[38;5;28;01mfrom\u001b[39;00m\u001b[38;5;250m \u001b[39m\u001b[38;5;21;01mmonai\u001b[39;00m\u001b[38;5;21;01m.\u001b[39;00m\u001b[38;5;21;01mnetworks\u001b[39;00m\u001b[38;5;21;01m.\u001b[39;00m\u001b[38;5;21;01mnets\u001b[39;00m\u001b[38;5;250m \u001b[39m\u001b[38;5;28;01mimport\u001b[39;00m SwinUNETR\n\u001b[1;32m----> 2\u001b[0m model \u001b[38;5;241m=\u001b[39m \u001b[43mSwinUNETR\u001b[49m\u001b[43m(\u001b[49m\n\u001b[0;32m      3\u001b[0m \u001b[43m    \u001b[49m\u001b[43mimg_size\u001b[49m\u001b[38;5;241;43m=\u001b[39;49m\u001b[43m(\u001b[49m\u001b[38;5;241;43m96\u001b[39;49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[38;5;241;43m96\u001b[39;49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[38;5;241;43m96\u001b[39;49m\u001b[43m)\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43min_channels\u001b[49m\u001b[38;5;241;43m=\u001b[39;49m\u001b[38;5;241;43m1\u001b[39;49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43mout_channels\u001b[49m\u001b[38;5;241;43m=\u001b[39;49m\u001b[38;5;241;43m3\u001b[39;49m\u001b[43m,\u001b[49m\n\u001b[0;32m      4\u001b[0m \u001b[43m    \u001b[49m\u001b[43mfeature_size\u001b[49m\u001b[38;5;241;43m=\u001b[39;49m\u001b[38;5;241;43m48\u001b[39;49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43muse_checkpoint\u001b[49m\u001b[38;5;241;43m=\u001b[39;49m\u001b[38;5;28;43;01mTrue\u001b[39;49;00m\n\u001b[0;32m      5\u001b[0m \u001b[43m)\u001b[49m\n",
+      "\u001b[1;31mTypeError\u001b[0m: SwinUNETR.__init__() got an unexpected keyword argument 'img_size'"
+     ]
+    }
+   ],
+   "source": [
+    "from monai.networks.nets import SwinUNETR\n",
+    "model = SwinUNETR(\n",
+    "    img_size=(96, 96, 96), in_channels=1, out_channels=3,\n",
+    "    feature_size=48, use_checkpoint=True\n",
+    ")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4a108f0e",
+   "metadata": {},
+   "source": [
+    "Why these are sensible for STS\n",
+    "\n",
+    "Published STS MRI classification has successfully used CNN backbones (e.g., DenseNet-161 for grade G1 vs G2/G3, external validation). Your 3D DenseNet/ResNet baselines match that recipe but operate on volumes."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "955ea805",
+   "metadata": {},
+   "source": [
+    "# Other models"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "fa3eca26",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "numpy: 2.2.6\n",
+      "numpy file: c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\numpy\\__init__.py\n",
+      "pandas: 2.3.2\n",
+      "pandas file: c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\pandas\\__init__.py\n"
+     ]
+    }
+   ],
+   "source": [
+    "import sys, site, os\n",
+    "\n",
+    "# 1) Ignore user site for this session\n",
+    "os.environ[\"PYTHONNOUSERSITE\"] = \"1\"  # takes effect on restart; we also patch sys.path below\n",
+    "user_site = site.getusersitepackages()\n",
+    "sys.path = [p for p in sys.path if p != user_site]\n",
+    "\n",
+    "# 2) Verify imports now come from your env\n",
+    "import numpy as np, pandas as pd\n",
+    "print(\"numpy:\", np.__version__)\n",
+    "print(\"numpy file:\", np.__file__)\n",
+    "print(\"pandas:\", pd.__version__)\n",
+    "print(\"pandas file:\", pd.__file__)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "c08ce8fd",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from importlib import reload\n",
+    "import med3pipe\n",
+    "reload(med3pipe.vision3d)   # reload submodule first\n",
+    "reload(med3pipe)            # then reload the package, which re-exports the updated symbols\n",
+    "from importlib import reload\n",
+    "import med3pipe.vision3d as v3d, med3pipe\n",
+    "reload(v3d); reload(med3pipe)\n",
+    "from med3pipe import Sam3DPaths, Train3DConfig, train_eval_densenet121_3d"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "id": "677f067a",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "MONAI version: 1.5.0\n",
+      "DenseNet121 import OK: <class 'monai.networks.nets.densenet.DenseNet121'>\n"
+     ]
+    }
+   ],
+   "source": [
+    "import monai, torch\n",
+    "print(\"MONAI version:\", monai.__version__)\n",
+    "\n",
+    "from monai.networks.nets import DenseNet121 as MDN\n",
+    "print(\"DenseNet121 import OK:\", MDN)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "31dde919",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "imagesTr: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\train\\gist\\ct_GIST\\imagesTr True\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "['GIST-001_CT.nii',\n",
+       " 'GIST-002_CT.nii',\n",
+       " 'GIST-003_CT.nii',\n",
+       " 'GIST-004_CT.nii',\n",
+       " 'GIST-005_CT.nii',\n",
+       " 'GIST-006_CT.nii',\n",
+       " 'GIST-007_CT.nii',\n",
+       " 'GIST-008_CT.nii',\n",
+       " 'GIST-009_CT.nii',\n",
+       " 'GIST-010_CT.nii']"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from pathlib import Path\n",
+    "from med3pipe import Sam3DPaths, find_default_sam3d_root\n",
+    "\n",
+    "SAM3D_ROOT = find_default_sam3d_root()  # auto-detects <PROJECT_ROOT>/SAM-Med3D-main/SAM-Med3D-main\n",
+    "paths = Sam3DPaths(sam3d_root=SAM3D_ROOT, category=\"gist\", ct_name=\"ct_GIST\")\n",
+    "\n",
+    "print(\"imagesTr:\", paths.images_tr.resolve(), paths.images_tr.exists())\n",
+    "sorted_ids = [p.stem for p in sorted(paths.images_tr.glob(\"*.nii.gz\"))[:10]]\n",
+    "sorted_ids"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "0b25d048",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Validation set copied to: C:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\SAM-Med3D-main\\SAM-Med3D-main\\data\\validation\\gist\\ct_GIST | Train: 196 | Val: 50\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "(196, 50)"
+      ]
+     },
+     "execution_count": 14,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from med3pipe import split_validation\n",
+    "\n",
+    "# Create imagesVal/labelsVal if not present\n",
+    "split_validation(paths, split_ratio=0.8, seed=2025, copy=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "id": "b8d6b8e0",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Saved to: c:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\vision3d_runs\\densenet121_3d_20250915_153235\n"
+     ]
+    }
+   ],
+   "source": [
+    "from med3pipe import Train3DConfig, train_eval_densenet121_3d\n",
+    "\n",
+    "res = train_eval_densenet121_3d(\n",
+    "    paths=paths,\n",
+    "    dataset_root=Path(\"gist\"),               # resolver will use dataset_root/sheet.csv\n",
+    "    cfg=Train3DConfig(epochs=1, img_size=96, batch_size=2, device=\"cpu\"),  # or \"cpu\"\n",
+    ")\n",
+    "print(\"Saved to:\", res[\"out_dir\"])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "65cad02b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\sklearn\\metrics\\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.\n",
+      "  _warn_prf(average, modifier, f\"{metric.capitalize()} is\", result.shape[0])\n",
+      "c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\sklearn\\metrics\\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.\n",
+      "  _warn_prf(average, modifier, f\"{metric.capitalize()} is\", result.shape[0])\n",
+      "c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\sklearn\\metrics\\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.\n",
+      "  _warn_prf(average, modifier, f\"{metric.capitalize()} is\", result.shape[0])\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Run dir: c:\\Users\\cahel\\Desktop\\Med3Tab-PFN\\notebooks\\vision3d_runs\\vit3d_20250915_165630\n",
+      "Val accuracy: 0.5256410256410257\n",
+      "Val macro-F1: 0.3445378151260504\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\sklearn\\metrics\\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.\n",
+      "  _warn_prf(average, modifier, f\"{metric.capitalize()} is\", result.shape[0])\n",
+      "c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\sklearn\\metrics\\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.\n",
+      "  _warn_prf(average, modifier, f\"{metric.capitalize()} is\", result.shape[0])\n",
+      "c:\\Users\\cahel\\.conda\\envs\\sammed3d\\lib\\site-packages\\sklearn\\metrics\\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.\n",
+      "  _warn_prf(average, modifier, f\"{metric.capitalize()} is\", result.shape[0])\n"
+     ]
+    }
+   ],
+   "source": [
+    "from pathlib import Path\n",
+    "from med3pipe import (\n",
+    "    find_default_sam3d_root, Sam3DPaths,\n",
+    "    Train3DConfig, train_eval_vit_3d\n",
+    ")\n",
+    "\n",
+    "SAM3D_ROOT = find_default_sam3d_root()\n",
+    "paths = Sam3DPaths(sam3d_root=SAM3D_ROOT, category=\"gist\", ct_name=\"ct_GIST\")\n",
+    "\n",
+    "res_ViT = train_eval_vit_3d(\n",
+    "    paths=paths,\n",
+    "    dataset_root=Path(\"gist\"),\n",
+    "    dataset_name=None,\n",
+    "    img_size_3d=(96, 96, 96),       # keep aligned with cfg.img_size\n",
+    "    patch_size=(16, 16, 16),\n",
+    "    hidden_size=384, mlp_dim=1536,\n",
+    "    num_layers=8, num_heads=6,\n",
+    "    pos_embed=\"conv\",\n",
+    "    cfg=Train3DConfig(\n",
+    "        epochs=1,\n",
+    "        img_size=96,\n",
+    "        batch_size=2,\n",
+    "        lr=2e-4,\n",
+    "        weight_decay=1e-4,\n",
+    "        device=\"cpu\",               # or \"cuda\" to use GPU\n",
+    "    ),\n",
+    ")\n",
+    "print(\"Run dir:\", res_ViT[\"out_dir\"])\n",
+    "print(\"Val accuracy:\", res_ViT[\"eval\"][\"acc\"])\n",
+    "print(\"Val macro-F1:\", res_ViT[\"eval\"][\"macro_f1\"])"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "sammed3d",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.18"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
