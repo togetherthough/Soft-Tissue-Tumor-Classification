@@ -39,9 +39,16 @@ from .tabular import (
     train_eval_tabpfn,
     tabpfn_pipeline,
     default_tabpfn_out_dir,
+    # LoCalPFN
+    LocalPFNConfig,
+    localpfn_infer,
+    localpfn_pipeline,
+    default_localpfn_out_dir,
 )
 from .pipelines import (
     run_end_to_end,
+    local_end_to_end,
+    local_from_prepared_to_localpfn,
 )
 from .vision.v3d import (
     Train3DConfig,
@@ -81,8 +88,15 @@ __all__ = [
     "train_eval_tabpfn",
     "tabpfn_pipeline",
     "default_tabpfn_out_dir",
+    # LoCalPFN
+    "LocalPFNConfig",
+    "localpfn_infer",
+    "localpfn_pipeline",
+    "default_localpfn_out_dir",
     # End-to-end (Steps 1–8)
     "run_end_to_end",
+    "local_end_to_end",
+    "local_from_prepared_to_localpfn",
     # 3D classification utilities
     "Train3DConfig",
     "build_densenet121_3d",

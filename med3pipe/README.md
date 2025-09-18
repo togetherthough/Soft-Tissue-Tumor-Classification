@@ -40,7 +40,7 @@ You can install them with pip:
 pip install -r med3pipe/requirements.txt
 ```
 
-## 3D Classification: DenseNet121 (3D) and Swin Transformer (3D)
+## 3D Classification: DenseNet121 (3D) and !!!!Vision Transformer!!!!! (3D)
 
 For native 3D volumetric classification, use the MONAI-based APIs in `med3pipe.vision.v3d`. These operate directly on NIfTI volumes prepared by steps 1–3 (SAM-Med3D layout), loading from:
 
