@@ -3,7 +3,7 @@
   "metric": "euclidean",
   "device": "cpu",
   "tabpfn_src": null,
-  "clf_kwargs": null,
+  "clf_kwargs": {},
   "fit_adapter": false,
   "adapter_epochs": 5,
   "adapter_lr": 0.05,
@@ -14,11 +14,11 @@
   "shapes": {
     "X_train_p": [
       246,
-      246
+      128
     ],
     "X_val_p": [
-      78,
-      246
+      50,
+      128
     ]
   }
 }
