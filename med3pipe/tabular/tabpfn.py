@@ -163,13 +163,26 @@ def train_eval_tabpfn(
     roc_auc = None
     try:
         proba = clf.predict_proba(X_val)
-        if proba is not None and proba.shape[1] == 2:
-            roc_auc = float(roc_auc_score(y_val, proba[:, 1]))
+        if proba is not None:
+            if proba.ndim == 1:
+                # Ensure 2D [n_samples, n_classes]
+                proba = np.stack([1 - proba, proba], axis=-1)
+            if proba.shape[1] == 2:
+                # Binary ROC AUC
+                roc_auc = float(roc_auc_score(y_val, proba[:, 1]))
+            elif proba.shape[1] > 2:
+                # Multiclass ROC AUC (macro, one-vs-rest)
+                try:
+                    roc_auc = float(roc_auc_score(y_val, proba, multi_class="ovr"))
+                except Exception:
+                    roc_auc = None
     except Exception:
         proba = None
-
-    report_txt = classification_report(y_val, y_pred, target_names=["0", "1"])  # binary labels assumed
-    cm = confusion_matrix(y_val, y_pred)
+    
+    # Derive label set dynamically to support binary or multi-class
+    labels_sorted = np.unique(np.concatenate([np.unique(y_val), np.unique(y_pred)]))
+    report_txt = classification_report(y_val, y_pred, labels=labels_sorted)
+    cm = confusion_matrix(y_val, y_pred, labels=labels_sorted)
 
     # Prepare out_dir
     if out_dir is None:
@@ -187,6 +200,7 @@ def train_eval_tabpfn(
             "X_train": list(map(int, X_train.shape)),
             "X_val": list(map(int, X_val.shape)),
         },
+        "classes": (clf.classes_.tolist() if hasattr(clf, "classes_") else None),
     }
     (out_dir / "tabpfn_config.json").write_text(json.dumps(cfg, indent=2))
 
@@ -200,8 +214,9 @@ def train_eval_tabpfn(
     if proba is not None:
         if proba.ndim == 1:
             proba = np.stack([1 - proba, proba], axis=-1)
-        pred_df["proba_0"] = proba[:, 0].tolist()
-        pred_df["proba_1"] = proba[:, 1].tolist()
+        # Save all class probability columns with consistent naming
+        for k in range(proba.shape[1]):
+            pred_df[f"proba_k{k}"] = proba[:, k].tolist()
     pd.DataFrame(pred_df).to_csv(out_dir / "tabpfn_val_predictions.csv", index=False)
 
     # Save metrics

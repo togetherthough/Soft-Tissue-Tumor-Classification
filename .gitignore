@@ -1,5 +1,5 @@
 gist/*
-data/*
+data/
 features/*
 notebooks/baselines/*
 notebooks/Med3Tab/*
