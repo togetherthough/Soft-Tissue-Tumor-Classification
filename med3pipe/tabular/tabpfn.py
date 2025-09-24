@@ -173,7 +173,35 @@ def train_eval_tabpfn(
             elif proba.shape[1] > 2:
                 # Multiclass ROC AUC (macro, one-vs-rest)
                 try:
-                    roc_auc = float(roc_auc_score(y_val, proba, multi_class="ovr"))
+                    # Determine classifier class order and restrict to classes present in y_val
+                    if hasattr(clf, "classes_") and len(clf.classes_) == proba.shape[1]:
+                        cls_arr = np.array(clf.classes_)
+                    else:
+                        # Fallback: assume classes are 0..K-1 in column order
+                        cls_arr = np.arange(proba.shape[1])
+                    present = np.unique(y_val)
+                    mask = np.isin(cls_arr, present)
+                    # Need at least 2 classes present to compute multiclass AUC
+                    if mask.sum() >= 2:
+                        proba_present = proba[:, mask]
+                        labels_present = cls_arr[mask]
+                        try:
+                            roc_auc = float(roc_auc_score(y_val, proba_present, multi_class="ovr", labels=labels_present))
+                        except Exception:
+                            # Manual fallback: mean of one-vs-rest AUCs for classes present
+                            aucs = []
+                            for j, cls in enumerate(labels_present):
+                                y_bin = (y_val == cls).astype(int)
+                                # Need both positive and negative samples
+                                if y_bin.min() == y_bin.max():
+                                    continue
+                                try:
+                                    aucs.append(roc_auc_score(y_bin, proba_present[:, j]))
+                                except Exception:
+                                    continue
+                            roc_auc = float(np.mean(aucs)) if aucs else None
+                    else:
+                        roc_auc = None
                 except Exception:
                     roc_auc = None
     except Exception:
@@ -217,6 +245,13 @@ def train_eval_tabpfn(
         # Save all class probability columns with consistent naming
         for k in range(proba.shape[1]):
             pred_df[f"proba_k{k}"] = proba[:, k].tolist()
+        # Also save label-named columns if classes_ available
+        try:
+            if hasattr(clf, "classes_") and len(clf.classes_) == proba.shape[1]:
+                for idx, cls in enumerate(clf.classes_):
+                    pred_df[f"proba_c{cls}"] = proba[:, idx].tolist()
+        except Exception:
+            pass
     pd.DataFrame(pred_df).to_csv(out_dir / "tabpfn_val_predictions.csv", index=False)
 
     # Save metrics

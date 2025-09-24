@@ -1,3 +1,3 @@
 dataset,accuracy,macro_f1,roc_auc,n
 gist,1.0,1.0,,50
-lipo,1.0,1.0,,23
+lipo,1.0,1.0,1.0,23

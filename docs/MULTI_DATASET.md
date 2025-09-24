@@ -82,6 +82,33 @@ Notes:
 3) Add a block to `configs/datasets.yaml` with the fields described above.
 4) Run `notebooks/MultiDataset-PFNs.ipynb`.
 
+## Label handling (binarization quick fix)
+
+Some datasets encode targets with three values (e.g., `-1`, `0`, `1`) where `-1` may mean "unknown" or a second negative category. When pooling multiple datasets, this can make evaluation (especially ROC AUC) ambiguous per dataset.
+
+To provide a consistent binary target across datasets by default, the label loader `med3pipe.sam.core.load_labels_from_sheet(...)` now applies a small, pragmatic fix:
+
+- Maps `-1 -> 0`, then clamps labels to `{0, 1}`.
+- Controlled by the parameter `binarize_neg1_to0` (default: `True`).
+
+This is intentionally a quick fix to make pooled TabPFN experiments easy to run and to ensure per‑dataset ROC AUC is well‑defined. If you require strict multi‑class behavior, disable this by passing `binarize_neg1_to0=False` wherever you call `load_labels_from_sheet` (e.g., in your notebook):
+
+```python
+df, lab_map = load_labels_from_sheet(
+    sheet_csv=sheet_csv,
+    dataset_col=ds_col,
+    dataset_name=ds_name,
+    subject_col=labs.get('subject_col','Subject'),
+    label_col=labs.get('label_col','Diagnosis_binary'),
+    case_suffix=labs.get('case_suffix','_CT'),
+    binarize_neg1_to0=False,   # disable the quick-fix binarization
+)
+```
+
+Notes:
+- Keeping `binarize_neg1_to0=True` is recommended when pooling heterogeneous datasets to avoid label‑space mismatch.
+- If you see unexpectedly low metrics after switching to multi‑class, consider training per‑dataset models or adding a dataset indicator feature to the pooled tabular inputs.
+
 ## Outputs
 - TabPFN runs: `notebooks/tabpfn_runs/<category>_<ct_name>_<timestamp>/`
 - LoCalPFN runs: `notebooks/tabpfn_runs/local_<category>_<ct_name>_<timestamp>/`

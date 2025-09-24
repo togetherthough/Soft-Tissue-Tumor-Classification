@@ -263,11 +263,17 @@ def load_labels_from_sheet(
     subject_col: str = "Subject",
     label_col: str = "Diagnosis_binary",
     case_suffix: str = "_CT",
+    binarize_neg1_to0: bool = True,
 ) -> Tuple[pd.DataFrame, dict]:
     """Load a CSV sheet and build a label map {<Subject><case_suffix>: label}.
 
     - If dataset_name is provided, filter rows where `dataset_col` equals that string.
     - Coerce `label_col` to int, returning 0 for invalid/missing.
+    - If `binarize_neg1_to0` is True (default), map -1 -> 0 and clamp labels to {0,1}.
+      This is a pragmatic quick fix for mixed/ambiguous target encodings across datasets
+      (e.g., {-1,0,1} where -1 might mean "unknown" or "benign"). Binarizing ensures
+      consistent targets for pooling and enables per‑dataset ROC AUC to be well‑defined.
+      Disable if you explicitly want multi‑class behavior.
     - Return the filtered dataframe and a dict mapping case_id to int label.
     """
     df = pd.read_csv(sheet_csv)
@@ -278,7 +284,12 @@ def load_labels_from_sheet(
 
     df[subject_col] = df[subject_col].astype(str).str.strip()
     df[label_col] = pd.to_numeric(df[label_col], errors="coerce").fillna(0).astype(int)
-    df["label"] = df[label_col].astype(int)
+    lab = df[label_col].astype(int)
+    if binarize_neg1_to0:
+        # Map -1 -> 0, and clamp to {0,1}
+        lab = lab.replace({-1: 0})
+        lab = lab.clip(lower=0, upper=1)
+    df["label"] = lab.astype(int)
 
     lab_map = {f"{sid}{case_suffix}": int(lbl) for sid, lbl in zip(df[subject_col], df["label"])}
     return df, lab_map
