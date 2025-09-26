@@ -1,0 +1,24 @@
+{
+  "k": 8,
+  "metric": "euclidean",
+  "device": "cpu",
+  "tabpfn_src": null,
+  "clf_kwargs": null,
+  "fit_adapter": true,
+  "adapter_epochs": 10,
+  "adapter_lr": 0.05,
+  "adapter_weight_decay": 0.0,
+  "adapter_num_queries": 1000,
+  "adapter_verbose": true,
+  "k_effective": 8,
+  "shapes": {
+    "X_train_p": [
+      246,
+      246
+    ],
+    "X_val_p": [
+      50,
+      246
+    ]
+  }
+}

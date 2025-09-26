@@ -1,9 +1,10 @@
 # Multi-dataset pipeline (YAML-driven)
 
-This repo supports running the full SAM-Med3D ➜ TabPFN/LoCalPFN pipeline across arbitrarily many datasets using a single YAML configuration.
+This repo supports running the full SAM-Med3D ➜ TabPFN/LoCalPFN pipeline across arbitrarily many datasets using either a YAML configuration or automatic folder discovery.
 
 - Primary config: `configs/datasets.yaml`
-- Notebook to run multiple datasets/methods: `notebooks/MultiDataset-PFNs.ipynb`
+- Notebook (YAML-driven): `notebooks/MultiDataset-PFNs.ipynb`
+- Notebook (folder discovery): `notebooks/MultiDataset-FromDataFolder.ipynb`
 
 ## Dataset registration (configs/datasets.yaml)
 
@@ -60,7 +61,10 @@ The notebook resolves `dataset_root` with the following strategy:
 This allows flexibility if some datasets live at `project_root/gist/` and others under `project_root/data/<name>/`.
 
 ## Running multiple datasets
-Open and execute `notebooks/MultiDataset-PFNs.ipynb`. The notebook:
+
+You now have four interchangeable ways to run the multi-dataset pipeline:
+
+1) Notebook (YAML): open and execute `notebooks/MultiDataset-PFNs.ipynb` (or the clean variant). The notebook:
 - Loads `configs/datasets.yaml`
 - Iterates all datasets listed under `datasets:`
 - For each dataset, runs two methods end-to-end:
@@ -68,6 +72,75 @@ Open and execute `notebooks/MultiDataset-PFNs.ipynb`. The notebook:
   - Method 2: Med3D embeddings ➜ LoCalPFN (`med3pipe.pipelines.end_to_end.local_end_to_end`)
 - Aggregates metrics (accuracy, macro-F1, AUROC, confusion matrix) into a table and saves it at `notebooks/multi_results_summary.csv`.
 - Writes full per-run artifacts (preprocessing objects, predictions, metrics, classification report) into `notebooks/tabpfn_runs/...` directories.
+
+2) Notebook (folder discovery): open and execute `notebooks/MultiDataset-FromDataFolder.ipynb`. It discovers datasets under `data/` and runs the same two methods per dataset without needing a YAML file.
+
+3) Programmatic API (YAML): call the entrypoint `run_multi_dataset(...)` from Python.
+
+```python
+from med3pipe.pipelines import run_multi_dataset
+
+res = run_multi_dataset(
+    config_path="configs/datasets.yaml",
+    methods=("tabpfn", "localpfn"),        # choose one or both
+    dataset_names=None,                      # or subset like ("gist", "lipo")
+    outputs_base_dir=None,                   # or Path("notebooks") to redirect outputs
+    # Optional shared overrides
+    sam3d_root=None,
+    model_type="vit_b_ori",
+    checkpoint=None,
+    device=None,                             # "cuda" or "cpu"; auto if None
+    n_components_max=500,
+    random_state=42,
+)
+
+# res["summary_df"] is a pandas DataFrame with per-dataset/method metrics
+# res["summary_path"] points to the written CSV if save_summary=True (default)
+print(res["summary_df"].to_string())
+```
+
+4) Programmatic API (folder discovery): call the entrypoint `run_multi_from_folder(...)` from Python.
+
+```python
+from med3pipe.pipelines import run_multi_from_folder
+
+res = run_multi_from_folder(
+    datasets_dir="data",                 # discovers immediate subfolders as datasets
+    methods=("tabpfn", "localpfn"),      # choose one or both
+    dataset_names=None,                    # optional subset
+    outputs_base_dir="notebooks",         # redirect outputs under notebooks/
+    # Optional shared overrides
+    sam3d_root=None,
+    model_type="vit_b_ori",
+    checkpoint=None,
+    device=None,
+    n_components_max=500,
+    random_state=42,
+)
+
+print(res["summary_df"].to_string())
+```
+
+Single‑method convenience wrappers are also available:
+
+- TabPFN only (YAML): `run_multi_tabpfn(config_path, ...)`
+- LoCalPFN only (YAML): `run_multi_localpfn(config_path, ...)`
+- TabPFN only (folder discovery): `run_multi_tabpfn_from_folder(datasets_dir, ...)`
+- LoCalPFN only (folder discovery): `run_multi_localpfn_from_folder(datasets_dir, ...)`
+
+5) CLI: use the packaged command to run from the terminal.
+
+```bash
+python -m med3pipe multi --config configs/datasets.yaml \
+  --methods tabpfn,localpfn \
+  --datasets gist,lipo \   # optional filter
+  --outputs-base notebooks  # optional base directory for run folders
+```
+
+CLI flags include shared overrides like `--sam3d-root`, `--model-type`, `--checkpoint`,
+`--device`, `--n-components-max`, `--random-state`, and LoCalPFN-specific ones such as
+`--local-k`, `--local-metric`, `--local-fit-adapter`, `--local-adapter-epochs`,
+`--local-adapter-lr`, `--local-adapter-weight-decay`, `--local-adapter-num-queries`.
 
 Notes:
 - The notebook attempts to use CUDA if available (fallback to CPU otherwise).

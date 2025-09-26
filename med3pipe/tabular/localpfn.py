@@ -25,14 +25,6 @@ import time
 import datetime as _dt
 
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    classification_report,
-    confusion_matrix,
-    roc_auc_score,
-)
 import joblib
 
 from .tabpfn import ensure_tabpfn_on_sys_path, standardize_pca
@@ -87,7 +79,17 @@ def _auto_k(n_train: int) -> int:
     return int(min(1000, max(1, 10 * np.sqrt(max(1, n_train)))))
 
 
-def build_knn_index(X_train_p: np.ndarray, metric: str = "euclidean") -> NearestNeighbors:
+def build_knn_index(X_train_p: np.ndarray, metric: str = "euclidean") -> "NearestNeighbors":
+    # Local import to avoid heavy sklearn import at module load time
+    try:
+        from sklearn import set_config as _sk_set_config  # type: ignore
+        try:
+            _sk_set_config(skip_parameter_validation=False)  # type: ignore
+        except TypeError:
+            pass
+    except Exception:
+        pass
+    from sklearn.neighbors import NearestNeighbors
     nn = NearestNeighbors(metric=metric)
     nn.fit(X_train_p)
     return nn
@@ -184,6 +186,35 @@ def localpfn_infer(
     # Ensure TabPFN import path and classifier
     tabpfn_src = ensure_tabpfn_on_sys_path(cfg.tabpfn_src)
     from tabpfn.classifier import TabPFNClassifier  # type: ignore
+
+    # Import sklearn metrics lazily to avoid environment issues during module import
+    try:
+        from sklearn.metrics import (
+            accuracy_score,
+            f1_score,
+            classification_report,
+            confusion_matrix,
+            roc_auc_score,
+        )
+    except Exception:
+        try:
+            from sklearn import set_config as _sk_set_config  # type: ignore
+            try:
+                _sk_set_config(skip_parameter_validation=False)  # type: ignore
+            except TypeError:
+                pass
+            from sklearn.metrics import (
+                accuracy_score,
+                f1_score,
+                classification_report,
+                confusion_matrix,
+                roc_auc_score,
+            )
+        except Exception as e:
+            raise ImportError(
+                f"Failed to import sklearn.metrics due to environment configuration: {e}. "
+                "Please ensure scikit-learn is correctly installed in this environment."
+            )
 
     # Determine device
     device = cfg.device or ("cuda" if _has_cuda() else "cpu")

@@ -19,15 +19,6 @@ import time
 import datetime as _dt
 
 import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    classification_report,
-    confusion_matrix,
-    roc_auc_score,
-)
 import joblib
 
 
@@ -85,6 +76,19 @@ def standardize_pca(
     - If save_dir is provided, saves scaler, pca, and transformed arrays.
     """
     assert X_train.ndim == 2 and X_val.ndim == 2, "X arrays must be 2D"
+    # Import sklearn components here to avoid heavy import at module level
+    try:
+        from sklearn import set_config as _sk_set_config  # type: ignore
+        try:
+            _sk_set_config(skip_parameter_validation=False)  # type: ignore
+        except TypeError:
+            # Older scikit-learn versions: argument not supported
+            pass
+    except Exception:
+        # set_config not available; continue
+        pass
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.decomposition import PCA
 
     scaler = StandardScaler()
     X_train_s = scaler.fit_transform(X_train)

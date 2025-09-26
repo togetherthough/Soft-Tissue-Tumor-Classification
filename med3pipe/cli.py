@@ -141,6 +141,52 @@ def build_parser() -> argparse.ArgumentParser:
     p_both.add_argument("--max-cases", type=int, default=None, help="Limit number of cases (debug)")
     p_both.set_defaults(func=cmd_prepare_split)
 
+    # Multi-dataset orchestrator
+    p_multi = sub.add_parser(
+        "multi",
+        help="Run multi-dataset pipeline (TabPFN/LoCalPFN) from a YAML config.",
+    )
+    p_multi.add_argument(
+        "--config",
+        type=Path,
+        required=True,
+        help="Path to YAML config (e.g., configs/datasets.yaml)",
+    )
+    p_multi.add_argument(
+        "--methods",
+        type=str,
+        default="tabpfn,localpfn",
+        help="Comma-separated methods to run per dataset (tabpfn,localpfn)",
+    )
+    p_multi.add_argument(
+        "--datasets",
+        type=str,
+        default=None,
+        help="Optional comma-separated subset of dataset keys to run (e.g., 'gist,lipo')",
+    )
+    p_multi.add_argument(
+        "--outputs-base",
+        type=Path,
+        default=None,
+        help="Optional base directory to write outputs (runs will be timestamped subfolders)",
+    )
+    # Shared optional overrides
+    p_multi.add_argument("--sam3d-root", type=Path, default=None, help="Override SAM-Med3D repo root")
+    p_multi.add_argument("--model-type", type=str, default="vit_b_ori")
+    p_multi.add_argument("--checkpoint", type=Path, default=None)
+    p_multi.add_argument("--device", type=str, default=None, help="Force device 'cuda' or 'cpu'")
+    p_multi.add_argument("--n-components-max", type=int, default=500)
+    p_multi.add_argument("--random-state", type=int, default=42)
+    # LoCalPFN overrides (optional)
+    p_multi.add_argument("--local-k", type=int, default=None, help="Override k for local retrieval")
+    p_multi.add_argument("--local-metric", type=str, default="euclidean")
+    p_multi.add_argument("--local-fit-adapter", action="store_true", help="Enable adapter fine-tuning")
+    p_multi.add_argument("--local-adapter-epochs", type=int, default=10)
+    p_multi.add_argument("--local-adapter-lr", type=float, default=5e-2)
+    p_multi.add_argument("--local-adapter-weight-decay", type=float, default=0.0)
+    p_multi.add_argument("--local-adapter-num-queries", type=int, default=1000)
+    p_multi.set_defaults(func=cmd_multi)
+
     return p
 
 
@@ -148,6 +194,56 @@ def main(argv: Optional[list[str]] = None) -> None:
     p = build_parser()
     args = p.parse_args(argv)
     args.func(args)
+
+
+def cmd_multi(args: argparse.Namespace) -> None:
+    """Run multi-dataset pipeline from YAML.
+
+    Heavy imports are local to avoid importing torch/itk when only parsing --help.
+    """
+    from .pipelines import run_multi_dataset
+    from .tabular.localpfn import LocalPFNConfig
+
+    methods = [m.strip() for m in str(args.methods).split(",") if m.strip()]
+    dataset_filter = None
+    if args.datasets:
+        dataset_filter = [d.strip() for d in str(args.datasets).split(",") if d.strip()]
+
+    local_cfg = LocalPFNConfig(
+        k=args.local_k,
+        metric=args.local_metric,
+        fit_adapter=bool(args.local_fit_adapter),
+        adapter_epochs=int(args.local_adapter_epochs),
+        adapter_lr=float(args.local_adapter_lr),
+        adapter_weight_decay=float(args.local_adapter_weight_decay),
+        adapter_num_queries=int(args.local_adapter_num_queries),
+    )
+
+    res = run_multi_dataset(
+        config_path=args.config,
+        methods=methods,
+        dataset_names=dataset_filter,
+        outputs_base_dir=args.outputs_base,
+        sam3d_root=args.sam3d_root,
+        model_type=args.model_type,
+        checkpoint=args.checkpoint,
+        device=args.device,
+        n_components_max=int(args.n_components_max),
+        random_state=int(args.random_state),
+        local_cfg=local_cfg,
+        save_summary=True,
+        summary_path=None,
+    )
+
+    print("\nMulti-dataset run completed. Summary:")
+    df = res.get("summary_df")
+    try:
+        # Avoid huge output; print limited rows
+        print(df.to_string(max_rows=50))
+    except Exception:
+        print(str(df))
+    if res.get("summary_path"):
+        print("\nSummary CSV:", res["summary_path"]) 
 
 
 if __name__ == "__main__":

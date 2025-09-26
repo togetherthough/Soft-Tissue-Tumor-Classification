@@ -16,7 +16,20 @@ This is my master thesis work. It centers around the classification of multiple 
    - `Subject` (case ID without suffix)
    - `Diagnosis_binary` (0/1 label)
 3. Edit `configs/datasets.yaml` to ensure each dataset block is correct (category, ct_name, labels, etc.).
-4. Open and run `notebooks/MultiDataset-PFNs-clean.ipynb`.
+4. Choose one of the following ways to run:
+   - Notebook: open and run `notebooks/MultiDataset-PFNs-clean.ipynb`.
+   - CLI:
+     ```bash
+     python -m med3pipe multi --config configs/datasets.yaml \
+       --methods tabpfn,localpfn \
+       --outputs-base notebooks
+     ```
+   - Programmatic API:
+     ```python
+     from med3pipe.pipelines import run_multi_dataset
+     res = run_multi_dataset("configs/datasets.yaml", methods=("tabpfn","localpfn"))
+     print(res["summary_df"].to_string())
+     ```
    - It will:
      - Prepare the dataset in SAM-Med3D format (train/val split)
      - Build/load SAM-Med3D, extract embeddings, ROI-pool to vectors
