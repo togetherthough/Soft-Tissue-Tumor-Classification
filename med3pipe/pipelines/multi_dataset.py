@@ -20,7 +20,7 @@ import traceback
 import pandas as pd
 import yaml
 
-from .end_to_end import run_end_to_end, local_end_to_end
+from .end_to_end import run_single_dataset
 from ..data.prepare import find_default_sam3d_root
 from ..tabular.localpfn import LocalPFNConfig
 from ..tabular.tabpfn import default_tabpfn_out_dir
@@ -163,34 +163,38 @@ def _run_multi_core(
                 return None
             return default_localpfn_out_dir(category, ct_name, base_dir=outputs_base_dir)
 
-        # Execute methods for this dataset
+        # Execute methods for this dataset via the unified single-dataset pipeline
         for method in methods:
             try:
-                if method.lower() == "tabpfn":
-                    res = run_end_to_end(
-                        dataset_root=ds_root,
-                        category=category,
-                        ct_name=ct_name,
-                        case_glob=case_glob,
-                        max_cases=max_cases,
-                        split_ratio=split_ratio,
-                        seed=seed,
-                        sam3d_root=sam3d_root,
-                        model_type=model_type,
-                        checkpoint=checkpoint,
-                        img_size=img_size,
-                        device=device,
-                        sheet_csv=sheet_csv,
-                        dataset_name=dataset_name,
-                        subject_col=subject_col,
-                        label_col=label_col,
-                        case_suffix=case_suffix,
-                        n_components_max=n_components_max,
-                        random_state=random_state,
-                        tabpfn_out_dir=_tabpfn_out_dir(),
-                        tabpfn_src=tabpfn_src,
-                        clf_kwargs=None,
-                    )
+                res = run_single_dataset(
+                    method=method,
+                    dataset_root=ds_root,
+                    category=category,
+                    ct_name=ct_name,
+                    case_glob=case_glob,
+                    max_cases=max_cases,
+                    split_ratio=split_ratio,
+                    seed=seed,
+                    sam3d_root=sam3d_root,
+                    model_type=model_type,
+                    checkpoint=checkpoint,
+                    img_size=img_size,
+                    device=device,
+                    sheet_csv=sheet_csv,
+                    dataset_name=dataset_name,
+                    subject_col=subject_col,
+                    label_col=label_col,
+                    case_suffix=case_suffix,
+                    n_components_max=n_components_max,
+                    random_state=random_state,
+                    tabpfn_out_dir=_tabpfn_out_dir(),
+                    tabpfn_src=tabpfn_src,
+                    clf_kwargs=None,
+                    local_out_dir=_local_out_dir(),
+                    local_cfg=local_cfg,
+                )
+                meth = method.lower()
+                if meth == "tabpfn":
                     met = res.tabpfn.get("metrics", {})
                     records.append(
                         MultiRunRecord(
@@ -206,30 +210,7 @@ def _run_multi_core(
                             pred_path=res.tabpfn.get("pred_path"),
                         )
                     )
-                elif method.lower() == "localpfn":
-                    res = local_end_to_end(
-                        dataset_root=ds_root,
-                        category=category,
-                        ct_name=ct_name,
-                        case_glob=case_glob,
-                        max_cases=max_cases,
-                        split_ratio=split_ratio,
-                        seed=seed,
-                        sam3d_root=sam3d_root,
-                        model_type=model_type,
-                        checkpoint=checkpoint,
-                        img_size=img_size,
-                        device=device,
-                        sheet_csv=sheet_csv,
-                        dataset_name=dataset_name,
-                        subject_col=subject_col,
-                        label_col=label_col,
-                        case_suffix=case_suffix,
-                        n_components_max=n_components_max,
-                        random_state=random_state,
-                        local_out_dir=_local_out_dir(),
-                        local_cfg=local_cfg,
-                    )
+                elif meth == "localpfn":
                     met = res.localpfn.get("metrics", {})
                     records.append(
                         MultiRunRecord(
@@ -331,6 +312,123 @@ def run_multi_dataset(
     """
     cfg_path = Path(config_path)
     cfg = _load_yaml(cfg_path)
+    return _run_multi_core(
+        cfg,
+        methods=methods,
+        dataset_names=dataset_names,
+        outputs_base_dir=outputs_base_dir,
+        sam3d_root=sam3d_root,
+        model_type=model_type,
+        checkpoint=checkpoint,
+        device=device,
+        n_components_max=n_components_max,
+        random_state=random_state,
+        tabpfn_src=tabpfn_src,
+        local_cfg=local_cfg,
+        save_summary=save_summary,
+        summary_path=summary_path,
+    )
+
+
+def run_pipeline(
+    *,
+    # Choose one of the following sources
+    config_path: Optional[Path | str] = None,
+    config: Optional[Dict[str, Any]] = None,
+    datasets_dir: Optional[Path | str] = None,
+    # Or call with a single dataset (converted to a one-item multi-run)
+    dataset_root: Optional[Path | str] = None,
+    category: Optional[str] = None,
+    ct_name: Optional[str] = None,
+    # Common controls
+    methods: Sequence[str] = ("tabpfn", "localpfn"),
+    dataset_names: Optional[Sequence[str]] = None,
+    outputs_base_dir: Optional[Path] = None,
+    # Shared SAM3D params
+    sam3d_root: Optional[Path] = None,
+    model_type: str = "vit_b_ori",
+    checkpoint: Optional[Path] = None,
+    device: Optional[str] = None,
+    # Shared Tabular params
+    n_components_max: int = 500,
+    random_state: int = 42,
+    # Method-specific
+    tabpfn_src: Optional[Path] = None,
+    local_cfg: Optional[LocalPFNConfig] = None,
+    # Prepare/Split/Extract defaults for single-dataset mode
+    case_glob: Optional[str] = None,
+    max_cases: Optional[int] = None,
+    split_ratio: float = 0.8,
+    seed: int = 2025,
+    img_size: int = 128,
+    # Labels for single-dataset mode
+    sheet_csv: Optional[Path | str] = None,
+    dataset_name: Optional[str] = None,
+    subject_col: str = "Subject",
+    label_col: str = "Diagnosis_binary",
+    case_suffix: str = "_CT",
+    # Summary output
+    save_summary: bool = True,
+    summary_path: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Unified entrypoint.
+
+    Supports 4 modes:
+    - config_path: YAML with a 'datasets' mapping
+    - config: in-memory dict with 'datasets'
+    - datasets_dir: discover datasets under a folder
+    - dataset_root (+metadata): treat as a single-dataset multi-run
+    """
+    if sum(x is not None for x in [config_path, config, datasets_dir, dataset_root]) != 1:
+        raise ValueError(
+            "Specify exactly one of: config_path, config, datasets_dir, dataset_root"
+        )
+
+    if config_path is not None:
+        cfg_path = Path(config_path)
+        cfg = _load_yaml(cfg_path)
+    elif config is not None:
+        cfg = config
+    elif datasets_dir is not None:
+        # Discover
+        sam3d_root = sam3d_root or find_default_sam3d_root()
+        project_root = sam3d_root.parent.parent.resolve()
+        base_dir = Path(datasets_dir)
+        if not base_dir.is_absolute():
+            cand = (project_root / base_dir).resolve()
+            if cand.exists():
+                base_dir = cand
+        ds_map = discover_datasets_in_folder(base_dir, require_sheet_csv=True)
+        cfg = {"datasets": ds_map}
+    else:
+        # Single dataset to one-item multi-run
+        if dataset_root is None:
+            raise ValueError("dataset_root must be provided for single-dataset mode")
+        ds_root = Path(dataset_root)
+        key = (category or ds_root.name)
+        cat = key
+        ct = ct_name or f"ct_{key.upper()}"
+        labels_block = {
+            "sheet_csv": str(sheet_csv) if sheet_csv else "sheet.csv",
+            "dataset_name": dataset_name,
+            "subject_col": subject_col,
+            "label_col": label_col,
+            "case_suffix": case_suffix,
+        }
+        cfg = {
+            "datasets": {
+                key: {
+                    "dataset_root": str(ds_root),
+                    "category": cat,
+                    "ct_name": ct,
+                    "labels": labels_block,
+                    "prepare": {"case_glob": case_glob, "max_cases": max_cases},
+                    "split": {"ratio": split_ratio, "seed": seed},
+                    "extraction": {"img_size": img_size},
+                }
+            }
+        }
+
     return _run_multi_core(
         cfg,
         methods=methods,
