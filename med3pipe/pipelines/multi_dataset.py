@@ -90,7 +90,7 @@ def _load_yaml(path: Path) -> Dict[str, Any]:
 def _run_multi_core(
     cfg: Dict[str, Any],
     *,
-    methods: Sequence[str] = ("tabpfn", "localpfn"),
+    method: str = "tabpfn",
     dataset_names: Optional[Sequence[str]] = None,
     outputs_base_dir: Optional[Path] = None,
     sam3d_root: Optional[Path] = None,
@@ -100,7 +100,17 @@ def _run_multi_core(
     n_components_max: int = 500,
     random_state: int = 42,
     tabpfn_src: Optional[Path] = None,
+    # TabPFN ablations
+    tabpfn_clf_kwargs: Optional[Dict[str, Any]] = None,
+    # LoCalPFN ablations
     local_cfg: Optional[LocalPFNConfig] = None,
+    local_k: Optional[int] = None,
+    local_metric: str = "euclidean",
+    local_fit_adapter: bool = False,
+    local_adapter_epochs: int = 10,
+    local_adapter_lr: float = 5e-2,
+    local_adapter_weight_decay: float = 0.0,
+    local_adapter_num_queries: int = 1000,
     save_summary: bool = True,
     summary_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
@@ -122,6 +132,35 @@ def _run_multi_core(
     if save_summary and summary_path is None:
         summary_path = (Path.cwd() / "notebooks" / "multi_results_summary.csv").resolve()
         summary_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Validate method
+    meth = str(method).lower().strip()
+    if meth not in {"tabpfn", "localpfn"}:
+        raise ValueError(f"method must be one of 'tabpfn' or 'localpfn'; got {method!r}")
+
+    # Prepare LoCalPFN config (override or build)
+    if meth == "localpfn":
+        if local_cfg is None:
+            local_cfg = LocalPFNConfig(
+                k=local_k,
+                metric=local_metric,
+                fit_adapter=bool(local_fit_adapter),
+                adapter_epochs=int(local_adapter_epochs),
+                adapter_lr=float(local_adapter_lr),
+                adapter_weight_decay=float(local_adapter_weight_decay),
+                adapter_num_queries=int(local_adapter_num_queries),
+            )
+        else:
+            # Apply overrides if provided
+            if local_k is not None:
+                local_cfg.k = local_k
+            if local_metric is not None:
+                local_cfg.metric = local_metric
+            local_cfg.fit_adapter = bool(local_fit_adapter) if local_fit_adapter is not None else local_cfg.fit_adapter
+            local_cfg.adapter_epochs = int(local_adapter_epochs)
+            local_cfg.adapter_lr = float(local_adapter_lr)
+            local_cfg.adapter_weight_decay = float(local_adapter_weight_decay)
+            local_cfg.adapter_num_queries = int(local_adapter_num_queries)
 
     records: List[MultiRunRecord] = []
 
@@ -163,89 +202,85 @@ def _run_multi_core(
                 return None
             return default_localpfn_out_dir(category, ct_name, base_dir=outputs_base_dir)
 
-        # Execute methods for this dataset via the unified single-dataset pipeline
-        for method in methods:
-            try:
-                res = run_single_dataset(
-                    method=method,
-                    dataset_root=ds_root,
-                    category=category,
-                    ct_name=ct_name,
-                    case_glob=case_glob,
-                    max_cases=max_cases,
-                    split_ratio=split_ratio,
-                    seed=seed,
-                    sam3d_root=sam3d_root,
-                    model_type=model_type,
-                    checkpoint=checkpoint,
-                    img_size=img_size,
-                    device=device,
-                    sheet_csv=sheet_csv,
-                    dataset_name=dataset_name,
-                    subject_col=subject_col,
-                    label_col=label_col,
-                    case_suffix=case_suffix,
-                    n_components_max=n_components_max,
-                    random_state=random_state,
-                    tabpfn_out_dir=_tabpfn_out_dir(),
-                    tabpfn_src=tabpfn_src,
-                    clf_kwargs=None,
-                    local_out_dir=_local_out_dir(),
-                    local_cfg=local_cfg,
-                )
-                meth = method.lower()
-                if meth == "tabpfn":
-                    met = res.tabpfn.get("metrics", {})
-                    records.append(
-                        MultiRunRecord(
-                            dataset_key=ds_key,
-                            category=category,
-                            ct_name=ct_name,
-                            method="tabpfn",
-                            accuracy=met.get("accuracy"),
-                            macro_f1=met.get("macro_f1"),
-                            roc_auc=met.get("roc_auc"),
-                            out_dir=res.tabpfn.get("out_dir"),
-                            metrics_path=res.tabpfn.get("metrics_path"),
-                            pred_path=res.tabpfn.get("pred_path"),
-                        )
-                    )
-                elif meth == "localpfn":
-                    met = res.localpfn.get("metrics", {})
-                    records.append(
-                        MultiRunRecord(
-                            dataset_key=ds_key,
-                            category=category,
-                            ct_name=ct_name,
-                            method="localpfn",
-                            accuracy=met.get("accuracy"),
-                            macro_f1=met.get("macro_f1"),
-                            roc_auc=met.get("roc_auc"),
-                            out_dir=res.localpfn.get("out_dir"),
-                            metrics_path=res.localpfn.get("metrics_path"),
-                            pred_path=res.localpfn.get("pred_path"),
-                        )
-                    )
-                else:
-                    raise ValueError(f"Unknown method: {method}")
-            except Exception as e:
-                # Record failure and continue with other datasets/methods
-                tb = traceback.format_exc(limit=2)
+        # Execute the chosen method for this dataset via the unified single-dataset pipeline
+        try:
+            res = run_single_dataset(
+                method=meth,
+                dataset_root=ds_root,
+                category=category,
+                ct_name=ct_name,
+                case_glob=case_glob,
+                max_cases=max_cases,
+                split_ratio=split_ratio,
+                seed=seed,
+                sam3d_root=sam3d_root,
+                model_type=model_type,
+                checkpoint=checkpoint,
+                img_size=img_size,
+                device=device,
+                sheet_csv=sheet_csv,
+                dataset_name=dataset_name,
+                subject_col=subject_col,
+                label_col=label_col,
+                case_suffix=case_suffix,
+                n_components_max=n_components_max,
+                random_state=random_state,
+                tabpfn_out_dir=_tabpfn_out_dir(),
+                tabpfn_src=tabpfn_src,
+                clf_kwargs=tabpfn_clf_kwargs,
+                local_out_dir=_local_out_dir(),
+                local_cfg=local_cfg,
+            )
+            if meth == "tabpfn":
+                met = res.tabpfn.get("metrics", {})
                 records.append(
                     MultiRunRecord(
                         dataset_key=ds_key,
                         category=category,
                         ct_name=ct_name,
-                        method=method,
-                        accuracy=None,
-                        macro_f1=None,
-                        roc_auc=None,
-                        out_dir=None,
-                        metrics_path=None,
-                        pred_path=None,
-                        error=f"{e}\n{tb}",
+                        method="tabpfn",
+                        accuracy=met.get("accuracy"),
+                        macro_f1=met.get("macro_f1"),
+                        roc_auc=met.get("roc_auc"),
+                        out_dir=res.tabpfn.get("out_dir"),
+                        metrics_path=res.tabpfn.get("metrics_path"),
+                        pred_path=res.tabpfn.get("pred_path"),
                     )
                 )
+            elif meth == "localpfn":
+                met = res.localpfn.get("metrics", {})
+                records.append(
+                    MultiRunRecord(
+                        dataset_key=ds_key,
+                        category=category,
+                        ct_name=ct_name,
+                        method="localpfn",
+                        accuracy=met.get("accuracy"),
+                        macro_f1=met.get("macro_f1"),
+                        roc_auc=met.get("roc_auc"),
+                        out_dir=res.localpfn.get("out_dir"),
+                        metrics_path=res.localpfn.get("metrics_path"),
+                        pred_path=res.localpfn.get("pred_path"),
+                    )
+                )
+        except Exception as e:
+            # Record failure and continue with other datasets
+            tb = traceback.format_exc(limit=2)
+            records.append(
+                MultiRunRecord(
+                    dataset_key=ds_key,
+                    category=category,
+                    ct_name=ct_name,
+                    method=meth,
+                    accuracy=None,
+                    macro_f1=None,
+                    roc_auc=None,
+                    out_dir=None,
+                    metrics_path=None,
+                    pred_path=None,
+                    error=f"{e}\n{tb}",
+                )
+            )
 
     # Build summary DataFrame
     rows: List[Dict[str, Any]] = []
@@ -284,7 +319,7 @@ def _run_multi_core(
 
 def run_multi_dataset(
     config_path: Path | str,
-    methods: Sequence[str] = ("tabpfn", "localpfn"),
+    method: str = "tabpfn",
     dataset_names: Optional[Sequence[str]] = None,
     outputs_base_dir: Optional[Path] = None,
     # Shared SAM3D params
@@ -297,7 +332,17 @@ def run_multi_dataset(
     random_state: int = 42,
     # Method-specific
     tabpfn_src: Optional[Path] = None,
+    # TabPFN ablations
+    tabpfn_clf_kwargs: Optional[Dict[str, Any]] = None,
+    # LoCalPFN ablations
     local_cfg: Optional[LocalPFNConfig] = None,
+    local_k: Optional[int] = None,
+    local_metric: str = "euclidean",
+    local_fit_adapter: bool = False,
+    local_adapter_epochs: int = 10,
+    local_adapter_lr: float = 5e-2,
+    local_adapter_weight_decay: float = 0.0,
+    local_adapter_num_queries: int = 1000,
     # Summary output
     save_summary: bool = True,
     summary_path: Optional[Path] = None,
@@ -314,7 +359,7 @@ def run_multi_dataset(
     cfg = _load_yaml(cfg_path)
     return _run_multi_core(
         cfg,
-        methods=methods,
+        method=method,
         dataset_names=dataset_names,
         outputs_base_dir=outputs_base_dir,
         sam3d_root=sam3d_root,
@@ -324,7 +369,15 @@ def run_multi_dataset(
         n_components_max=n_components_max,
         random_state=random_state,
         tabpfn_src=tabpfn_src,
+        tabpfn_clf_kwargs=tabpfn_clf_kwargs,
         local_cfg=local_cfg,
+        local_k=local_k,
+        local_metric=local_metric,
+        local_fit_adapter=local_fit_adapter,
+        local_adapter_epochs=local_adapter_epochs,
+        local_adapter_lr=local_adapter_lr,
+        local_adapter_weight_decay=local_adapter_weight_decay,
+        local_adapter_num_queries=local_adapter_num_queries,
         save_summary=save_summary,
         summary_path=summary_path,
     )
@@ -341,7 +394,7 @@ def run_pipeline(
     category: Optional[str] = None,
     ct_name: Optional[str] = None,
     # Common controls
-    methods: Sequence[str] = ("tabpfn", "localpfn"),
+    method: str = "tabpfn",
     dataset_names: Optional[Sequence[str]] = None,
     outputs_base_dir: Optional[Path] = None,
     # Shared SAM3D params
@@ -354,7 +407,17 @@ def run_pipeline(
     random_state: int = 42,
     # Method-specific
     tabpfn_src: Optional[Path] = None,
+    # TabPFN ablations
+    tabpfn_clf_kwargs: Optional[Dict[str, Any]] = None,
+    # LoCalPFN ablations
     local_cfg: Optional[LocalPFNConfig] = None,
+    local_k: Optional[int] = None,
+    local_metric: str = "euclidean",
+    local_fit_adapter: bool = False,
+    local_adapter_epochs: int = 10,
+    local_adapter_lr: float = 5e-2,
+    local_adapter_weight_decay: float = 0.0,
+    local_adapter_num_queries: int = 1000,
     # Prepare/Split/Extract defaults for single-dataset mode
     case_glob: Optional[str] = None,
     max_cases: Optional[int] = None,
@@ -431,7 +494,7 @@ def run_pipeline(
 
     return _run_multi_core(
         cfg,
-        methods=methods,
+        method=method,
         dataset_names=dataset_names,
         outputs_base_dir=outputs_base_dir,
         sam3d_root=sam3d_root,
@@ -441,7 +504,15 @@ def run_pipeline(
         n_components_max=n_components_max,
         random_state=random_state,
         tabpfn_src=tabpfn_src,
+        tabpfn_clf_kwargs=tabpfn_clf_kwargs,
         local_cfg=local_cfg,
+        local_k=local_k,
+        local_metric=local_metric,
+        local_fit_adapter=local_fit_adapter,
+        local_adapter_epochs=local_adapter_epochs,
+        local_adapter_lr=local_adapter_lr,
+        local_adapter_weight_decay=local_adapter_weight_decay,
+        local_adapter_num_queries=local_adapter_num_queries,
         save_summary=save_summary,
         summary_path=summary_path,
     )
@@ -452,7 +523,7 @@ def run_multi_tabpfn_from_folder(
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """Folder-driven runner that executes only the TabPFN method across datasets."""
-    return run_multi_from_folder(datasets_dir=datasets_dir, methods=("tabpfn",), **kwargs)
+    return run_multi_from_folder(datasets_dir=datasets_dir, method="tabpfn", **kwargs)
 
 
 def run_multi_localpfn_from_folder(
@@ -460,7 +531,7 @@ def run_multi_localpfn_from_folder(
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """Folder-driven runner that executes only the LoCalPFN method across datasets."""
-    return run_multi_from_folder(datasets_dir=datasets_dir, methods=("localpfn",), **kwargs)
+    return run_multi_from_folder(datasets_dir=datasets_dir, method="localpfn", **kwargs)
 
 
 def run_multi_tabpfn(
@@ -468,7 +539,7 @@ def run_multi_tabpfn(
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """YAML-driven runner that executes only the TabPFN method across datasets."""
-    return run_multi_dataset(config_path=config_path, methods=("tabpfn",), **kwargs)
+    return run_multi_dataset(config_path=config_path, method="tabpfn", **kwargs)
 
 
 def run_multi_localpfn(
@@ -476,12 +547,12 @@ def run_multi_localpfn(
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """YAML-driven runner that executes only the LoCalPFN method across datasets."""
-    return run_multi_dataset(config_path=config_path, methods=("localpfn",), **kwargs)
+    return run_multi_dataset(config_path=config_path, method="localpfn", **kwargs)
 
 
 def run_multi_dataset_from_config(
     config: Dict[str, Any],
-    methods: Sequence[str] = ("tabpfn", "localpfn"),
+    method: str = "tabpfn",
     dataset_names: Optional[Sequence[str]] = None,
     outputs_base_dir: Optional[Path] = None,
     # Shared SAM3D params
@@ -494,7 +565,17 @@ def run_multi_dataset_from_config(
     random_state: int = 42,
     # Method-specific
     tabpfn_src: Optional[Path] = None,
+    # TabPFN ablations
+    tabpfn_clf_kwargs: Optional[Dict[str, Any]] = None,
+    # LoCalPFN ablations
     local_cfg: Optional[LocalPFNConfig] = None,
+    local_k: Optional[int] = None,
+    local_metric: str = "euclidean",
+    local_fit_adapter: bool = False,
+    local_adapter_epochs: int = 10,
+    local_adapter_lr: float = 5e-2,
+    local_adapter_weight_decay: float = 0.0,
+    local_adapter_num_queries: int = 1000,
     # Summary output
     save_summary: bool = True,
     summary_path: Optional[Path] = None,
@@ -502,7 +583,7 @@ def run_multi_dataset_from_config(
     """Run multi-dataset using an in-memory config dict with a 'datasets' mapping."""
     return _run_multi_core(
         config,
-        methods=methods,
+        method=method,
         dataset_names=dataset_names,
         outputs_base_dir=outputs_base_dir,
         sam3d_root=sam3d_root,
@@ -512,7 +593,15 @@ def run_multi_dataset_from_config(
         n_components_max=n_components_max,
         random_state=random_state,
         tabpfn_src=tabpfn_src,
+        tabpfn_clf_kwargs=tabpfn_clf_kwargs,
         local_cfg=local_cfg,
+        local_k=local_k,
+        local_metric=local_metric,
+        local_fit_adapter=local_fit_adapter,
+        local_adapter_epochs=local_adapter_epochs,
+        local_adapter_lr=local_adapter_lr,
+        local_adapter_weight_decay=local_adapter_weight_decay,
+        local_adapter_num_queries=local_adapter_num_queries,
         save_summary=save_summary,
         summary_path=summary_path,
     )
@@ -567,7 +656,7 @@ def discover_datasets_in_folder(
 
 def run_multi_from_folder(
     datasets_dir: Path | str = "data",
-    methods: Sequence[str] = ("tabpfn", "localpfn"),
+    method: str = "tabpfn",
     dataset_names: Optional[Sequence[str]] = None,
     outputs_base_dir: Optional[Path] = None,
     # Shared SAM3D params
@@ -580,7 +669,17 @@ def run_multi_from_folder(
     random_state: int = 42,
     # Method-specific
     tabpfn_src: Optional[Path] = None,
+    # TabPFN ablations
+    tabpfn_clf_kwargs: Optional[Dict[str, Any]] = None,
+    # LoCalPFN ablations
     local_cfg: Optional[LocalPFNConfig] = None,
+    local_k: Optional[int] = None,
+    local_metric: str = "euclidean",
+    local_fit_adapter: bool = False,
+    local_adapter_epochs: int = 10,
+    local_adapter_lr: float = 5e-2,
+    local_adapter_weight_decay: float = 0.0,
+    local_adapter_num_queries: int = 1000,
     # Discovery params
     require_sheet_csv: bool = True,
     default_case_suffix: str = "_CT",
@@ -611,7 +710,7 @@ def run_multi_from_folder(
     cfg = {"datasets": ds_map}
     return _run_multi_core(
         cfg,
-        methods=methods,
+        method=method,
         dataset_names=dataset_names,
         outputs_base_dir=outputs_base_dir,
         sam3d_root=sam3d_root,
@@ -621,7 +720,15 @@ def run_multi_from_folder(
         n_components_max=n_components_max,
         random_state=random_state,
         tabpfn_src=tabpfn_src,
+        tabpfn_clf_kwargs=tabpfn_clf_kwargs,
         local_cfg=local_cfg,
+        local_k=local_k,
+        local_metric=local_metric,
+        local_fit_adapter=local_fit_adapter,
+        local_adapter_epochs=local_adapter_epochs,
+        local_adapter_lr=local_adapter_lr,
+        local_adapter_weight_decay=local_adapter_weight_decay,
+        local_adapter_num_queries=local_adapter_num_queries,
         save_summary=save_summary,
         summary_path=summary_path,
     )

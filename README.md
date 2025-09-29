@@ -21,20 +21,20 @@ This is my master thesis work. It centers around the classification of multiple 
    - CLI:
      ```bash
      python -m med3pipe multi --config configs/datasets.yaml \
-       --methods tabpfn,localpfn \
+       --method tabpfn \
        --outputs-base notebooks
      ```
    - Programmatic API:
      ```python
      from med3pipe.pipelines import run_multi_dataset
-     res = run_multi_dataset("configs/datasets.yaml", methods=("tabpfn","localpfn"))
+     res = run_multi_dataset("configs/datasets.yaml", method="tabpfn")
      print(res["summary_df"].to_string())
      ```
    - It will:
      - Prepare the dataset in SAM-Med3D format (creates a folder-level validation subset for caching)
      - Build/load SAM-Med3D, extract embeddings, ROI-pool to vectors
      - Perform a feature-level STRATIFIED train/validation split from the union of features
-     - Train/evaluate TabPFN and LoCalPFN
+     - Train/evaluate TabPFN
      - Save artifacts under `notebooks/tabpfn_runs/`
      - Write a summary table to `notebooks/multi_results_summary.csv`
 

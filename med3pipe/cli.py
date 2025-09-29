@@ -153,10 +153,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to YAML config (e.g., configs/datasets.yaml)",
     )
     p_multi.add_argument(
-        "--methods",
+        "--method",
         type=str,
-        default="tabpfn,localpfn",
-        help="Comma-separated methods to run per dataset (tabpfn,localpfn)",
+        choices=["tabpfn", "localpfn"],
+        default="tabpfn",
+        help="Single method to run per dataset (tabpfn or localpfn)",
     )
     p_multi.add_argument(
         "--datasets",
@@ -204,7 +205,14 @@ def cmd_multi(args: argparse.Namespace) -> None:
     from .pipelines import run_multi_dataset
     from .tabular.localpfn import LocalPFNConfig
 
-    methods = [m.strip() for m in str(args.methods).split(",") if m.strip()]
+    # Backward-compat shim: if old --methods is present, take the first
+    method = getattr(args, "method", None)
+    if method is None and hasattr(args, "methods"):
+        parts = [m.strip() for m in str(args.methods).split(",") if m.strip()]
+        method = parts[0] if parts else "tabpfn"
+        print(f"[WARN] --methods is deprecated; using the first entry -> --method {method}")
+    if method is None:
+        method = "tabpfn"
     dataset_filter = None
     if args.datasets:
         dataset_filter = [d.strip() for d in str(args.datasets).split(",") if d.strip()]
@@ -221,7 +229,7 @@ def cmd_multi(args: argparse.Namespace) -> None:
 
     res = run_multi_dataset(
         config_path=args.config,
-        methods=methods,
+        method=method,
         dataset_names=dataset_filter,
         outputs_base_dir=args.outputs_base,
         sam3d_root=args.sam3d_root,
@@ -231,6 +239,13 @@ def cmd_multi(args: argparse.Namespace) -> None:
         n_components_max=int(args.n_components_max),
         random_state=int(args.random_state),
         local_cfg=local_cfg,
+        local_k=args.local_k,
+        local_metric=args.local_metric,
+        local_fit_adapter=bool(args.local_fit_adapter),
+        local_adapter_epochs=int(args.local_adapter_epochs),
+        local_adapter_lr=float(args.local_adapter_lr),
+        local_adapter_weight_decay=float(args.local_adapter_weight_decay),
+        local_adapter_num_queries=int(args.local_adapter_num_queries),
         save_summary=True,
         summary_path=None,
     )
