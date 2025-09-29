@@ -150,6 +150,35 @@ def train_eval_tabpfn(
     # Lazy import TabPFN
     from tabpfn.classifier import TabPFNClassifier  # type: ignore
 
+    # Lazy import sklearn metrics to avoid heavy import at module import time
+    try:
+        from sklearn.metrics import (
+            accuracy_score,
+            f1_score,
+            classification_report,
+            confusion_matrix,
+            roc_auc_score,
+        )
+    except Exception:
+        try:
+            from sklearn import set_config as _sk_set_config  # type: ignore
+            try:
+                _sk_set_config(skip_parameter_validation=False)  # type: ignore
+            except TypeError:
+                pass
+            from sklearn.metrics import (
+                accuracy_score,
+                f1_score,
+                classification_report,
+                confusion_matrix,
+                roc_auc_score,
+            )
+        except Exception as e:
+            raise ImportError(
+                f"Failed to import sklearn.metrics due to environment configuration: {e}. "
+                "Please ensure scikit-learn is correctly installed in this environment."
+            )
+
     if device is None:
         device = "cuda" if _has_cuda() else "cpu"
     clf_kwargs = clf_kwargs or {}

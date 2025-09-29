@@ -70,6 +70,7 @@ You now have four interchangeable ways to run the multi-dataset pipeline:
 - For each dataset, runs two methods end-to-end:
   - Method 1: Med3D embeddings ➜ TabPFN (`med3pipe.pipelines.end_to_end.run_end_to_end`)
   - Method 2: Med3D embeddings ➜ LoCalPFN (`med3pipe.pipelines.end_to_end.local_end_to_end`)
+- Uses a feature-level STRATIFIED train/validation split from the union of per-case features for evaluation.
 - Aggregates metrics (accuracy, macro-F1, AUROC, confusion matrix) into a table and saves it at `notebooks/multi_results_summary.csv`.
 - Writes full per-run artifacts (preprocessing objects, predictions, metrics, classification report) into `notebooks/tabpfn_runs/...` directories.
 
@@ -143,6 +144,7 @@ CLI flags include shared overrides like `--sam3d-root`, `--model-type`, `--check
 `--local-adapter-lr`, `--local-adapter-weight-decay`, `--local-adapter-num-queries`.
 
 Notes:
+- Folder-level validation directories (`imagesVal/labelsVal`) are created to enable cached extraction and consistent directory structure. Evaluation uses a feature-level STRATIFIED split from the union of features (train_ratio) to ensure label balance.
 - The notebook attempts to use CUDA if available (fallback to CPU otherwise).
 - Fine-tuning of SAM-Med3D is not included in the multi-dataset loop by default to keep runs quick. You can fine-tune separately via `med3pipe.finetune_sam3d` if desired.
 

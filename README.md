@@ -4,7 +4,7 @@ This is my master thesis work. It centers around the classification of multiple 
 ## What's included
 - `notebooks/Med3D-TabPFN.ipynb`: step-by-step single-dataset pipeline (GIST example)
 - `notebooks/Med3D-LoCalPFN-fast.ipynb`: LoCalPFN experiment (single dataset)
-- `notebooks/MultiDataset-PFNs-clean.ipynb`: run multiple datasets and both methods (TabPFN and LoCalPFN) end-to-end, YAML-driven
+- `notebooks/MultiDataset-PFNs-sequential.ipynb`: run multiple datasets and both methods (TabPFN then LoCalPFN) sequentially via YAML
 - `configs/datasets.yaml`: register datasets and their metadata once
 - `docs/MULTI_DATASET.md`: documentation for running multiple datasets and adding new ones
 
@@ -31,8 +31,9 @@ This is my master thesis work. It centers around the classification of multiple 
      print(res["summary_df"].to_string())
      ```
    - It will:
-     - Prepare the dataset in SAM-Med3D format (train/val split)
+     - Prepare the dataset in SAM-Med3D format (creates a folder-level validation subset for caching)
      - Build/load SAM-Med3D, extract embeddings, ROI-pool to vectors
+     - Perform a feature-level STRATIFIED train/validation split from the union of features
      - Train/evaluate TabPFN and LoCalPFN
      - Save artifacts under `notebooks/tabpfn_runs/`
      - Write a summary table to `notebooks/multi_results_summary.csv`
@@ -58,7 +59,7 @@ Note: TabPFN is imported dynamically. If you have the TabPFN source checked out 
 - Method 1: Med3D embeddings → TabPFN (`med3pipe.pipelines.end_to_end.run_end_to_end`)
 - Method 2: Med3D embeddings → LoCalPFN (`med3pipe.pipelines.end_to_end.local_end_to_end`)
 
-Both methods share Steps 1–7 (prepare, split, build SAM-Med3D, extract embeddings, ROI pooling, label alignment, standardize+PCA) and differ in the final inference/training step.
+Both methods share Steps 1–7 (prepare, folder split for caching, build SAM-Med3D, extract embeddings, ROI pooling, label alignment, feature-level STRATIFIED split, standardize+PCA) and differ in the final inference/training step.
 
 ## Notes
 - GPU is used if available for SAM-Med3D and TabPFN; otherwise CPU is used.

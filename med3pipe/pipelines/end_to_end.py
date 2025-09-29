@@ -3,17 +3,18 @@ from __future__ import annotations
 """
 med3pipe.pipelines.end_to_end
 
-High-level pipeline to run Steps 1–8 (SAM-Med3D -> TabPFN) in one call.
+High-level pipeline to run Steps 1–8 (SAM-Med3D -> TabPFN/LoCalPFN) in one call.
 
 Flow:
 1-2) Prepare dataset to SAM-Med3D nnU-Net-style folders.
-3)    Create validation split (copy by default) into imagesVal/labelsVal.
+3)    Create validation split (copy by default) into imagesVal/labelsVal (folder-level, for caching only).
 4)    Build SAM-Med3D model (optionally load checkpoint).
 4)    Extract TRAIN and VAL embeddings.
 5)    ROI-pool to per-case vectors using masks.
-6)    Load labels and align to case IDs.
+6)    Load labels and build label map.
+6b)   Perform a STRATIFIED feature-level split from the UNION of features (train_ratio).
 7)    Standardize (fit on TRAIN) + PCA.
-8)    Train TabPFN and evaluate on VAL. Save all artifacts by default.
+8)    Train the chosen tabular method and evaluate on VAL. Save all artifacts by default.
 """
 
 from dataclasses import dataclass
@@ -46,6 +47,7 @@ from ..tabular.localpfn import (
     LocalPFNConfig,
     default_localpfn_out_dir,
 )
+from ..tabular.stratify import stratified_features_split
 
 
 @dataclass
@@ -157,11 +159,7 @@ def run_single_dataset(
         device=torch_device,
     )
 
-    # 5) ROI features
-    X_train, ids_train = load_roi_features(feat_dirs.train_dir, paths.labels_tr)
-    X_val, ids_val = load_roi_features(feat_dirs.val_dir, paths.labels_val)
-
-    # 6) Labels
+    # 6) Labels -> build map
     if sheet_csv is None:
         candidates = [
             dataset_root / "sheet.csv",
@@ -180,10 +178,17 @@ def run_single_dataset(
         label_col=label_col,
         case_suffix=case_suffix,
     )
-    y_train, missing_tr = build_y(ids_train, lab_map)
-    y_val, missing_va = build_y(ids_val, lab_map)
-    if len(missing_tr) or len(missing_va):
-        print(f"[WARN] Missing labels -> train: {len(missing_tr)} | val: {len(missing_va)}")
+
+    # 6b) Stratified feature-level split from the UNION of features
+    (X_train, y_train, ids_train), (X_val, y_val, ids_val) = stratified_features_split(
+        feat_train_dir=feat_dirs.train_dir,
+        feat_val_dir=feat_dirs.val_dir,
+        labels_tr_dir=paths.labels_tr,
+        labels_val_dir=paths.labels_val,
+        lab_map=lab_map,
+        train_ratio=split_ratio,
+        seed=seed,
+    )
 
     method_l = method.lower()
     if method_l == "tabpfn":
@@ -495,10 +500,6 @@ def run_from_prepared(
         device=torch_device,
     )
 
-    # ROI features
-    X_train, ids_train = load_roi_features(feat_dirs.train_dir, paths.labels_tr)
-    X_val, ids_val = load_roi_features(feat_dirs.val_dir, paths.labels_val)
-
     # Labels
     if sheet_csv is None:
         if dataset_root is not None:
@@ -519,10 +520,20 @@ def run_from_prepared(
         label_col=label_col,
         case_suffix=case_suffix,
     )
-    y_train, missing_tr = build_y(ids_train, lab_map)
-    y_val, missing_va = build_y(ids_val, lab_map)
-    if len(missing_tr) or len(missing_va):
-        print(f"[WARN] Missing labels -> train: {len(missing_tr)} | val: {len(missing_va)}")
+
+    # Stratified feature-level split from the UNION of features
+    # Use default controls here (run_from_prepared does not expose split controls)
+    train_ratio = 0.8
+    seed = 2025
+    (X_train, y_train, ids_train), (X_val, y_val, ids_val) = stratified_features_split(
+        feat_train_dir=feat_dirs.train_dir,
+        feat_val_dir=feat_dirs.val_dir,
+        labels_tr_dir=paths.labels_tr,
+        labels_val_dir=paths.labels_val,
+        lab_map=lab_map,
+        train_ratio=train_ratio,
+        seed=seed,
+    )
 
     method_l = method.lower()
     if method_l == "tabpfn":

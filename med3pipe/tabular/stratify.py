@@ -21,15 +21,15 @@ def stratified_features_split(
     lab_map: Dict[str, int],
     train_ratio: float = 0.8,
     seed: int = 2025,
-) -> Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray], List[str]]:
+) -> Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]:
     """
     Build a stratified train/val split from the UNION of ROI-pooled features coming
     from the dataset's train and val feature directories.
 
-    Returns: (X_train, y_train), (X_val, y_val), ids_val
+    Returns: (X_train, y_train, ids_train), (X_val, y_val, ids_val)
     - X_* shape: (n_samples, n_features)
     - y_* dtype: int
-    - ids_val: case_id strings aligned to X_val rows
+    - ids_*: case_id strings aligned to rows
     """
     # Load ROI features from both dirs (global pool)
     X_parts: List[np.ndarray] = []
@@ -46,7 +46,10 @@ def stratified_features_split(
         id_parts.append(idva)
 
     if not X_parts:
-        return (np.empty((0,)), np.empty((0,), dtype=int)), (np.empty((0,)), np.empty((0,), dtype=int)), []
+        return (
+            (np.empty((0,)), np.empty((0,), dtype=int), []),
+            (np.empty((0,)), np.empty((0,), dtype=int), []),
+        )
 
     X_all = X_parts[0] if len(X_parts) == 1 else np.vstack(X_parts)
     ids_all = sum(id_parts, [])
@@ -63,7 +66,10 @@ def stratified_features_split(
     # Filter to labeled subset only
     mask_lab = np.array([_clean_id(c) in lab_map for c in ids_all_arr], dtype=bool)
     if not mask_lab.any():
-        return (np.empty((0,)), np.empty((0,), dtype=int)), (np.empty((0,)), np.empty((0,), dtype=int)), []
+        return (
+            (np.empty((0,)), np.empty((0,), dtype=int), []),
+            (np.empty((0,)), np.empty((0,), dtype=int), []),
+        )
 
     X_l = X_all[mask_lab]
     ids_l = ids_all_arr[mask_lab]
@@ -74,30 +80,22 @@ def stratified_features_split(
     unique_classes = np.unique(y_l)
     test_size = float(max(min(1 - float(train_ratio), 0.99), 0.01))
 
-    # Try sklearn stratified split first when feasible
-    strat_ok = False
-    if unique_classes.size >= 2:
-        try:
-            X_tr, X_va, y_tr, y_va, ids_tr, ids_va = train_test_split(
-                X_l, y_l, ids_l, test_size=test_size, random_state=int(seed), stratify=y_l
-            )
-            # Ensure VAL has >= 2 classes
-            if np.unique(y_va).size >= 2:
-                strat_ok = True
-                return (X_tr, y_tr), (X_va, y_va), ids_va.tolist()
-        except Exception:
-            strat_ok = False
-
-    # Fallback: deterministic multi-class VAL selection when possible
-    # If overall only one class exists, we cannot make a multi-class VAL
+    # Require at least two classes for stratified sampling
     if unique_classes.size < 2:
-        # No way to create multi-class VAL; return a simple holdout
-        n_va = max(1, int(round(len(y_l) * test_size)))
-        idx = np.arange(len(y_l))
-        rs.shuffle(idx)
-        va_idx = idx[:n_va]
-        tr_idx = idx[n_va:]
-        return (X_l[tr_idx], y_l[tr_idx]), (X_l[va_idx], y_l[va_idx]), ids_l[va_idx].tolist()
+        raise ValueError(
+            "Stratified split requires at least two classes in the labeled set; found only one."
+        )
+
+    # Try sklearn stratified split first when feasible
+    try:
+        X_tr, X_va, y_tr, y_va, ids_tr, ids_va = train_test_split(
+            X_l, y_l, ids_l, test_size=test_size, random_state=int(seed), stratify=y_l
+        )
+        # Ensure VAL has >= 2 classes
+        if np.unique(y_va).size >= 2:
+            return (X_tr, y_tr, ids_tr.tolist()), (X_va, y_va, ids_va.tolist())
+    except Exception:
+        pass
 
     # Build per-class index lists
     cls_to_idx = {c: np.where(y_l == c)[0].tolist() for c in unique_classes}
@@ -139,6 +137,7 @@ def stratified_features_split(
 
     X_tr, y_tr = X_l[tr_sel], y_l[tr_sel]
     X_va, y_va = X_l[va_sel], y_l[va_sel]
+    ids_tr = ids_l[tr_sel]
     ids_va = ids_l[va_sel]
 
-    return (X_tr, y_tr), (X_va, y_va), ids_va.tolist()
+    return (X_tr, y_tr, ids_tr.tolist()), (X_va, y_va, ids_va.tolist())
