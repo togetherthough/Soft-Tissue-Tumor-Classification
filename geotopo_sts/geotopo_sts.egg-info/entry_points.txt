@@ -1,0 +1,5 @@
+[console_scripts]
+geotopo-eval = geotopo_sts.eval:main
+geotopo-preprocess = geotopo_sts.preprocess_pipeline:main
+geotopo-train = geotopo_sts.train:main
+

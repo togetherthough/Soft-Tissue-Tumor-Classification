@@ -1,0 +1,38 @@
+# Core dependencies
+torch>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+scikit-image>=0.21.0
+pyyaml>=6.0
+
+# Medical imaging
+nibabel>=5.0.0
+SimpleITK>=2.2.0
+
+# Mesh processing
+trimesh>=3.23.0
+pymeshlab>=2022.2  # optional, for advanced mesh ops
+
+# Graph neural networks
+torch-geometric>=2.3.0
+torch-scatter>=2.1.0
+torch-sparse>=0.6.17
+
+# Topology (persistent homology)
+gudhi>=3.8.0  # preferred
+# OR giotto-tda>=0.6.0  # alternative
+
+# Optional: advanced components
+geoopt>=0.5.0  # for hyperbolic embeddings
+e3nn>=0.5.0    # for SE(3)-equivariant networks (optional)
+
+# Training utilities
+tqdm>=4.65.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Experiment tracking (optional)
+wandb>=0.15.0
+tensorboard>=2.13.0
