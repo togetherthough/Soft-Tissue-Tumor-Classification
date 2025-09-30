@@ -76,49 +76,47 @@ You now have four interchangeable ways to run the multi-dataset pipeline:
 
 2) Notebook (folder discovery): open and execute `notebooks/MultiDataset-FromDataFolder.ipynb`. It discovers datasets under `data/` and runs the same two methods per dataset without needing a YAML file.
 
-3) Programmatic API (YAML): call the entrypoint `run_multi_dataset(...)` from Python.
+3) Programmatic API (YAML): call the method-specific entrypoints from Python.
 
 ```python
-from med3pipe.pipelines import run_multi_dataset
+from med3pipe.pipelines import run_multi_tabpfn, run_multi_localpfn
 
-res = run_multi_dataset(
+# TabPFN only
+res = run_multi_tabpfn(
     config_path="configs/datasets.yaml",
-    methods=("tabpfn", "localpfn"),        # choose one or both
-    dataset_names=None,                      # or subset like ("gist", "lipo")
-    outputs_base_dir=None,                   # or Path("notebooks") to redirect outputs
-    # Optional shared overrides
-    sam3d_root=None,
-    model_type="vit_b_ori",
-    checkpoint=None,
-    device=None,                             # "cuda" or "cpu"; auto if None
-    n_components_max=500,
-    random_state=42,
+    outputs_base_dir="notebooks",
 )
+print(res["summary_df"].to_string())
 
-# res["summary_df"] is a pandas DataFrame with per-dataset/method metrics
-# res["summary_path"] points to the written CSV if save_summary=True (default)
+# LoCalPFN only (with ablations)
+res = run_multi_localpfn(
+    config_path="configs/datasets.yaml",
+    outputs_base_dir="notebooks",
+    local_k=50,
+    local_fit_adapter=True,
+    local_adapter_epochs=8,
+)
 print(res["summary_df"].to_string())
 ```
 
-4) Programmatic API (folder discovery): call the entrypoint `run_multi_from_folder(...)` from Python.
+4) Programmatic API (folder discovery): call method-specific folder runners from Python.
 
 ```python
-from med3pipe.pipelines import run_multi_from_folder
+from med3pipe.pipelines import run_multi_tabpfn_from_folder, run_multi_localpfn_from_folder
 
-res = run_multi_from_folder(
-    datasets_dir="data",                 # discovers immediate subfolders as datasets
-    methods=("tabpfn", "localpfn"),      # choose one or both
-    dataset_names=None,                    # optional subset
-    outputs_base_dir="notebooks",         # redirect outputs under notebooks/
-    # Optional shared overrides
-    sam3d_root=None,
-    model_type="vit_b_ori",
-    checkpoint=None,
-    device=None,
-    n_components_max=500,
-    random_state=42,
+# TabPFN only
+res = run_multi_tabpfn_from_folder(
+    datasets_dir="data",
+    outputs_base_dir="notebooks",
 )
+print(res["summary_df"].to_string())
 
+# LoCalPFN only (with ablations)
+res = run_multi_localpfn_from_folder(
+    datasets_dir="data",
+    outputs_base_dir="notebooks",
+    local_k=50,
+)
 print(res["summary_df"].to_string())
 ```
 
@@ -132,10 +130,17 @@ Single‑method convenience wrappers are also available:
 5) CLI: use the packaged command to run from the terminal.
 
 ```bash
+# TabPFN only
 python -m med3pipe multi --config configs/datasets.yaml \
-  --methods tabpfn,localpfn \
+  --method tabpfn \
   --datasets gist,lipo \   # optional filter
   --outputs-base notebooks  # optional base directory for run folders
+
+# LoCalPFN only (with ablations)
+python -m med3pipe multi --config configs/datasets.yaml \
+  --method localpfn \
+  --outputs-base notebooks \
+  --local-k 50 --local-fit-adapter --local-adapter-epochs 8
 ```
 
 CLI flags include shared overrides like `--sam3d-root`, `--model-type`, `--checkpoint`,
