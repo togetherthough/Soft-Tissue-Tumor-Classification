@@ -26,8 +26,8 @@ This is my master thesis work. It centers around the classification of multiple 
      ```
    - Programmatic API:
      ```python
-     from med3pipe.pipelines import run_multi_dataset
-     res = run_multi_dataset("configs/datasets.yaml", method="tabpfn")
+     from med3pipe.pipelines import run_multi_tabpfn
+     res = run_multi_tabpfn("configs/datasets.yaml")
      print(res["summary_df"].to_string())
      ```
    - It will:

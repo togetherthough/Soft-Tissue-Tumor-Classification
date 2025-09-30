@@ -317,71 +317,6 @@ def _run_multi_core(
     }
 
 
-def run_multi_dataset(
-    config_path: Path | str,
-    method: str = "tabpfn",
-    dataset_names: Optional[Sequence[str]] = None,
-    outputs_base_dir: Optional[Path] = None,
-    # Shared SAM3D params
-    sam3d_root: Optional[Path] = None,
-    model_type: str = "vit_b_ori",
-    checkpoint: Optional[Path] = None,
-    device: Optional[str] = None,
-    # Shared Tabular params
-    n_components_max: int = 500,
-    random_state: int = 42,
-    # Method-specific
-    tabpfn_src: Optional[Path] = None,
-    # TabPFN ablations
-    tabpfn_clf_kwargs: Optional[Dict[str, Any]] = None,
-    # LoCalPFN ablations
-    local_cfg: Optional[LocalPFNConfig] = None,
-    local_k: Optional[int] = None,
-    local_metric: str = "euclidean",
-    local_fit_adapter: bool = False,
-    local_adapter_epochs: int = 10,
-    local_adapter_lr: float = 5e-2,
-    local_adapter_weight_decay: float = 0.0,
-    local_adapter_num_queries: int = 1000,
-    # Summary output
-    save_summary: bool = True,
-    summary_path: Optional[Path] = None,
-) -> Dict[str, Any]:
-    """
-    Run the full pipeline for multiple datasets defined in a YAML config and aggregate results.
-
-    Returns a dict with keys:
-    - runs: List[MultiRunRecord]
-    - summary_path: Optional[Path]
-    - summary_df: pd.DataFrame
-    """
-    cfg_path = Path(config_path)
-    cfg = _load_yaml(cfg_path)
-    return _run_multi_core(
-        cfg,
-        method=method,
-        dataset_names=dataset_names,
-        outputs_base_dir=outputs_base_dir,
-        sam3d_root=sam3d_root,
-        model_type=model_type,
-        checkpoint=checkpoint,
-        device=device,
-        n_components_max=n_components_max,
-        random_state=random_state,
-        tabpfn_src=tabpfn_src,
-        tabpfn_clf_kwargs=tabpfn_clf_kwargs,
-        local_cfg=local_cfg,
-        local_k=local_k,
-        local_metric=local_metric,
-        local_fit_adapter=local_fit_adapter,
-        local_adapter_epochs=local_adapter_epochs,
-        local_adapter_lr=local_adapter_lr,
-        local_adapter_weight_decay=local_adapter_weight_decay,
-        local_adapter_num_queries=local_adapter_num_queries,
-        save_summary=save_summary,
-        summary_path=summary_path,
-    )
-
 
 
 def run_multi_tabpfn_from_folder(
@@ -420,8 +355,10 @@ def run_multi_tabpfn(
     summary_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Run TabPFN only across datasets defined in a YAML config."""
-    return run_multi_dataset(
-        config_path=config_path,
+    cfg_path = Path(config_path)
+    cfg = _load_yaml(cfg_path)
+    return _run_multi_core(
+        cfg,
         method="tabpfn",
         dataset_names=dataset_names,
         outputs_base_dir=outputs_base_dir,
@@ -464,8 +401,10 @@ def run_multi_localpfn(
     summary_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Run LoCalPFN only across datasets defined in a YAML config."""
-    return run_multi_dataset(
-        config_path=config_path,
+    cfg_path = Path(config_path)
+    cfg = _load_yaml(cfg_path)
+    return _run_multi_core(
+        cfg,
         method="localpfn",
         dataset_names=dataset_names,
         outputs_base_dir=outputs_base_dir,

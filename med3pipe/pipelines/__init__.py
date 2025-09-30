@@ -14,7 +14,6 @@ from .end_to_end import (
 )
 
 from .multi_dataset import (
-    run_multi_dataset,
     run_multi_dataset_from_config,
     discover_datasets_in_folder,
     run_multi_from_folder,
@@ -29,7 +28,6 @@ __all__ = [
     "run_from_prepared_to_tabpfn",
     "local_end_to_end",
     "local_from_prepared_to_localpfn",
-    "run_multi_dataset",
     "run_multi_dataset_from_config",
     "discover_datasets_in_folder",
     "run_multi_from_folder",
