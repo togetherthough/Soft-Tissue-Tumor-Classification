@@ -9,7 +9,9 @@ YAML-driven orchestrator to run the full pipeline across multiple datasets.
 - For each dataset block in configs/datasets.yaml, we execute Steps 1–8 via the
   existing single-dataset entrypoints and aggregate the results.
 
-Primary entrypoint: run_multi_dataset(...)
+Method-specific entrypoints:
+- run_multi_tabpfn(config_path, ...)
+- run_multi_localpfn(config_path, ...)
 """
 
 from dataclasses import dataclass

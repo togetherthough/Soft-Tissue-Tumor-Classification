@@ -131,14 +131,12 @@ Single‑method convenience wrappers are also available:
 
 ```bash
 # TabPFN only
-python -m med3pipe multi --config configs/datasets.yaml \
-  --method tabpfn \
+python -m med3pipe multi-tabpfn --config configs/datasets.yaml \
   --datasets gist,lipo \   # optional filter
   --outputs-base notebooks  # optional base directory for run folders
 
 # LoCalPFN only (with ablations)
-python -m med3pipe multi --config configs/datasets.yaml \
-  --method localpfn \
+python -m med3pipe multi-localpfn --config configs/datasets.yaml \
   --outputs-base notebooks \
   --local-k 50 --local-fit-adapter --local-adapter-epochs 8
 ```

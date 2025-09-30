@@ -19,11 +19,16 @@ This is my master thesis work. It centers around the classification of multiple 
 4. Choose one of the following ways to run:
    - Notebook: open and run `notebooks/MultiDataset-PFNs-clean.ipynb`.
    - CLI:
-     ```bash
-     python -m med3pipe multi --config configs/datasets.yaml \
-       --method tabpfn \
-       --outputs-base notebooks
-     ```
+    ```bash
+    # TabPFN across datasets (evaluation uses stratified feature-level split)
+    python -m med3pipe multi-tabpfn --config configs/datasets.yaml \
+      --outputs-base notebooks
+
+    # LoCalPFN across datasets (stratified evaluation; optional ablations)
+    python -m med3pipe multi-localpfn --config configs/datasets.yaml \
+      --outputs-base notebooks \
+      --local-k 50 --local-fit-adapter --local-adapter-epochs 8
+    ```
    - Programmatic API:
      ```python
      from med3pipe.pipelines import run_multi_tabpfn
