@@ -185,6 +185,15 @@ def localpfn_infer(
 
     # Ensure TabPFN import path and classifier
     tabpfn_src = ensure_tabpfn_on_sys_path(cfg.tabpfn_src)
+    # Work around environments where torch.version may be missing (older or minimal builds)
+    try:
+        import torch as _torch  # type: ignore
+        if not hasattr(_torch, "version"):
+            class _TorchVersion:
+                cuda = None
+            _torch.version = _TorchVersion()  # type: ignore[attr-defined]
+    except Exception:
+        pass
     from tabpfn.classifier import TabPFNClassifier  # type: ignore
 
     # Import sklearn metrics lazily to avoid environment issues during module import

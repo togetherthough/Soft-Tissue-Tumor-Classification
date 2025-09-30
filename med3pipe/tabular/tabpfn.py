@@ -147,6 +147,16 @@ def train_eval_tabpfn(
     # Ensure TabPFN on sys.path
     tabpfn_src = ensure_tabpfn_on_sys_path(tabpfn_src)
 
+    # Work around environments where torch.version may be missing (older or minimal builds)
+    try:
+        import torch as _torch  # type: ignore
+        if not hasattr(_torch, "version"):
+            class _TorchVersion:  # minimal shim for torch.version
+                cuda = None
+            _torch.version = _TorchVersion()  # type: ignore[attr-defined]
+    except Exception:
+        pass
+
     # Lazy import TabPFN
     from tabpfn.classifier import TabPFNClassifier  # type: ignore
 
