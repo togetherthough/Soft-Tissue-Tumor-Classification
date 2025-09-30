@@ -22,7 +22,6 @@ from .multi_dataset import (
     run_multi_localpfn,
     run_multi_tabpfn_from_folder,
     run_multi_localpfn_from_folder,
-    run_pipeline,
 )
 
 __all__ = [
@@ -38,7 +37,6 @@ __all__ = [
     "run_multi_localpfn",
     "run_multi_tabpfn_from_folder",
     "run_multi_localpfn_from_folder",
-    "run_pipeline",
     "EndToEndResult",
     "LocalEndToEndResult",
 ]
