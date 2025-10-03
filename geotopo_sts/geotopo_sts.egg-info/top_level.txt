@@ -1,4 +1,0 @@
-dataio
-geometry
-models
-topology
