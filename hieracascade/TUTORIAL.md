@@ -1,6 +1,25 @@
-# HieraCascade-STS Tutorial
+# HieraCascade Tutorial
 
-Complete step-by-step guide to training and evaluating HieraCascade-STS on your soft-tissue tumor dataset.
+Complete step-by-step guide to training and evaluating HieraCascade on your soft tissue tumor dataset.
+
+## Two ways to Run
+
+###  **Option 1: Terminal** (Recommended for Training)
+Best for long training runs (hours). More stable, better GPU utilization.
+```bash
+python -m hieracascade.quick_start --label_column diagnosis --fold 0
+```
+**Follow this tutorial below** ↓
+
+###  **Option 2: Jupyter Notebook** (Best for Exploration)
+Best for interactive analysis, visualization, and understanding the pipeline.
+```bash
+# See: notebooks/hieracascade_full_pipeline.py
+# Open in Jupyter or VS Code
+```
+**See:** `notebooks/README.md` for notebook instructions.
+
+---
 
 ## Prerequisites
 
@@ -12,6 +31,11 @@ pip install -r hieracascade/requirements.txt
 python -c "import torch; print(f'PyTorch {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
 ```
 
+### Requirements
+- Python 3.8 or higher
+- PyTorch 2.0+ with CUDA 11.8+
+- nibabel, scipy, scikit-learn, matplotlib, pyyaml, tqdm
+
 ## Data Preparation
 
 ### Expected Data Structure
@@ -22,7 +46,6 @@ data/
 │   ├── Melanoma-001_CT/
 │   │   └── 1/NIFTI/image.nii.gz
 │   └── Melanoma-002_MR/
-│       └── 1/NIFTI/image.nii.gz
 ├── crlm/
 ├── gist/
 ├── lipo/
@@ -35,7 +58,7 @@ data/
 
 Required columns:
 - `case_id`: Study identifier
-- `target`: Class label (melanoma, crlm, gist, lipo, desmoid, liver)
+- `Diagnosis` or `Diagnosis_binary`: Class labels
 
 Optional columns:
 - `modality`: CT or MRI (inferred from case_id if missing)
@@ -43,10 +66,11 @@ Optional columns:
 
 Example:
 ```csv
-case_id,target,modality,site
-Melanoma-001,melanoma,CT,hospital_a
-CRLM-045,crlm,CT,hospital_b
-Desmoid-023,desmoid,MRI,hospital_a
+case_id,Diagnosis,Diagnosis_binary,modality,site
+Melanoma-001,melanoma,malignant,CT,hospital_a
+CRLM-045,crlm,malignant,CT,hospital_b
+Desmoid-023,desmoid,benign,MRI,hospital_a
+Lipo-078,lipo,benign,CT,hospital_c
 ```
 
 ## Quick Start (Recommended)
