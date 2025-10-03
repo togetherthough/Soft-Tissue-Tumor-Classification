@@ -62,6 +62,13 @@ data/
 └── liver/
 ```
 
+### 2. Select Label Column
+
+The pipeline supports different label configurations from your `sheet.csv`:
+
+- **`Diagnosis`** - Multi-class classification (melanoma, crlm, gist, lipo, desmoid, liver)
+- **`Diagnosis_binary`** - Binary classification (malignant, benign)
+
 Create labels CSV from sheet.csv:
 ```bash
 python -m hieracascade.prepare_data \
@@ -69,7 +76,24 @@ python -m hieracascade.prepare_data \
     --output_csv labels.csv
 ```
 
-### 2. Train Stage 1
+**Or use quick start with label selection:**
+```bash
+# Multi-class (default)
+python -m hieracascade.quick_start \
+    --label_column Diagnosis \
+    --data_root data \
+    --sheet_csv data/sheet.csv
+
+# Binary classification
+python -m hieracascade.quick_start \
+    --label_column Diagnosis_binary \
+    --data_root data \
+    --sheet_csv data/sheet.csv
+```
+
+See [LABEL_SELECTION_GUIDE.md](LABEL_SELECTION_GUIDE.md) for detailed instructions.
+
+### 3. Train Stage 1
 
 ```bash
 python -m hieracascade.train_stage1 \

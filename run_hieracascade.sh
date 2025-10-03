@@ -2,12 +2,14 @@
 # Quick start script for HieraCascade training
 # 
 # Usage:
-#   bash run_hieracascade.sh [fold_number]
+#   bash run_hieracascade.sh [fold_number] [label_column]
 #
-# Example:
-#   bash run_hieracascade.sh 0
+# Examples:
+#   bash run_hieracascade.sh 0 Diagnosis
+#   bash run_hieracascade.sh 0 Diagnosis_binary
 
 FOLD=${1:-0}
+LABEL_COL=${2:-Diagnosis}
 DATA_ROOT="data"
 SHEET_CSV="data/sheet.csv"
 OUTPUT_DIR="outputs/hieracascade"
@@ -16,6 +18,7 @@ echo "========================================"
 echo "HieraCascade Training Pipeline"
 echo "========================================"
 echo "Fold: $FOLD"
+echo "Label column: $LABEL_COL"
 echo "Data root: $DATA_ROOT"
 echo "Sheet CSV: $SHEET_CSV"
 echo "Output dir: $OUTPUT_DIR"
@@ -37,6 +40,7 @@ echo "Starting training pipeline..."
 python -m hieracascade.quick_start \
     --data_root "$DATA_ROOT" \
     --sheet_csv "$SHEET_CSV" \
+    --label_column "$LABEL_COL" \
     --output_dir "$OUTPUT_DIR" \
     --fold "$FOLD" \
     --device cuda

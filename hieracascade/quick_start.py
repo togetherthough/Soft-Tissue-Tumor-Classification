@@ -35,6 +35,13 @@ def main():
         help='Path to sheet.csv file (default: data/sheet.csv)'
     )
     parser.add_argument(
+        '--label_column',
+        type=str,
+        default='Diagnosis',
+        choices=['Diagnosis', 'Diagnosis_binary'],
+        help='Column to use for labels (default: Diagnosis). Options: Diagnosis (multi-class), Diagnosis_binary (binary classification)'
+    )
+    parser.add_argument(
         '--output_dir',
         type=str,
         default='outputs/hieracascade',
@@ -76,6 +83,7 @@ def main():
     index = create_index_from_sheet(
         data_root=args.data_root,
         sheet_path=args.sheet_csv,
+        label_column=args.label_column,
         output_csv=str(labels_csv)
     )
     

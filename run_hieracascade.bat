@@ -2,13 +2,17 @@
 REM Quick start script for HieraCascade training (Windows)
 REM 
 REM Usage:
-REM   run_hieracascade.bat [fold_number]
+REM   run_hieracascade.bat [fold_number] [label_column]
 REM
-REM Example:
-REM   run_hieracascade.bat 0
+REM Examples:
+REM   run_hieracascade.bat 0 Diagnosis
+REM   run_hieracascade.bat 0 Diagnosis_binary
 
 SET FOLD=%1
 IF "%FOLD%"=="" SET FOLD=0
+
+SET LABEL_COL=%2
+IF "%LABEL_COL%"=="" SET LABEL_COL=Diagnosis
 
 SET DATA_ROOT=data
 SET SHEET_CSV=data\sheet.csv
@@ -18,6 +22,7 @@ echo ========================================
 echo HieraCascade Training Pipeline
 echo ========================================
 echo Fold: %FOLD%
+echo Label column: %LABEL_COL%
 echo Data root: %DATA_ROOT%
 echo Sheet CSV: %SHEET_CSV%
 echo Output dir: %OUTPUT_DIR%
@@ -40,6 +45,7 @@ echo Starting training pipeline...
 python -m hieracascade.quick_start ^
     --data_root %DATA_ROOT% ^
     --sheet_csv %SHEET_CSV% ^
+    --label_column %LABEL_COL% ^
     --output_dir %OUTPUT_DIR% ^
     --fold %FOLD% ^
     --device cuda

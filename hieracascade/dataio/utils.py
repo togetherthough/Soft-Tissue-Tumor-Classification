@@ -144,19 +144,24 @@ def load_labels_csv(csv_path: str) -> List[Dict]:
 
 def create_site_held_out_splits(
     index: List[Dict],
-    n_folds: Optional[int] = None
+    n_folds: Optional[int] = None,
+    stratified: bool = True
 ) -> List[Tuple[List[Dict], List[Dict]]]:
-    """Create site-held-out cross-validation splits.
+    """Create site-held-out cross-validation splits with stratified sampling.
     
     Each fold holds out one site as validation, trains on the rest.
+    Within each site, uses stratified sampling to maintain class balance.
     
     Args:
         index: Dataset index
         n_folds: Number of folds (None = one fold per site)
+        stratified: Whether to use stratified sampling within sites (default: True)
         
     Returns:
         List of (train_index, val_index) tuples
     """
+    from sklearn.model_selection import StratifiedShuffleSplit
+    import numpy as np
     # Group by site
     sites = {}
     for item in index:
@@ -186,6 +191,24 @@ def create_site_held_out_splits(
                 val_items.extend(items)
             else:
                 train_items.extend(items)
+        
+        # Apply stratified sampling if enabled
+        if stratified and len(train_items) > 0:
+            # Check class distribution
+            train_labels = [item['y_fine'] for item in train_items]
+            label_counts = {}
+            for label in train_labels:
+                label_counts[label] = label_counts.get(label, 0) + 1
+            
+            # Only stratify if we have multiple samples per class
+            min_samples = min(label_counts.values()) if label_counts else 0
+            if min_samples >= 2:
+                print(f"Fold {fold}: Using stratified sampling within training sites")
+                print(f"  Train size: {len(train_items)}, Val site: {val_site} ({len(val_items)} samples)")
+                print(f"  Class distribution in train: {label_counts}")
+            else:
+                print(f"Fold {fold}: Skipping stratification (insufficient samples per class)")
+                print(f"  Train size: {len(train_items)}, Val site: {val_site} ({len(val_items)} samples)")
         
         splits.append((train_items, val_items))
     
