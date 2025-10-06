@@ -7,21 +7,23 @@ from typing import List, Dict, Tuple, Optional
 import json
 
 
-# Class hierarchy mapping (coarse families)
-CLASS_HIERARCHY = {
-    # Fine class -> Coarse family mapping
-    'melanoma': 'malignant',
-    'crlm': 'malignant',  # colorectal liver metastasis
-    'gist': 'malignant',  # gastrointestinal stromal tumor
-    'lipo': 'benign',     # lipoma/liposarcoma (depends on grade)
-    'desmoid': 'benign',  # desmoid tumor
-    'liver': 'other',     # liver lesions
-    # Binary classification (when using Diagnosis_binary column)
-    'malignant': 'malignant',
-    'benign': 'benign',
-    'unknown': 'other',
+# ============================================================================
+# Binary Classification Mappings (for BinaryCascade)
+# ============================================================================
+BINARY_TO_IDX = {
+    'benign': 0,
+    'malignant': 1,
 }
 
+IDX_TO_BINARY = {
+    0: 'benign',
+    1: 'malignant',
+}
+
+# ============================================================================
+# Hierarchical Multi-class Mappings (for HieraCascade)
+# ============================================================================
+# Fine-grained tumor types
 FINE_TO_IDX = {
     'melanoma': 0,
     'crlm': 1,
@@ -29,16 +31,38 @@ FINE_TO_IDX = {
     'lipo': 3,
     'desmoid': 4,
     'liver': 5,
-    # Binary classification labels
-    'malignant': 6,
-    'benign': 7,
-    'unknown': 8,
 }
 
+IDX_TO_FINE = {
+    0: 'melanoma',
+    1: 'crlm',
+    2: 'gist',
+    3: 'lipo',
+    4: 'desmoid',
+    5: 'liver',
+}
+
+# Coarse families
 COARSE_TO_IDX = {
     'malignant': 0,
     'benign': 1,
     'other': 2,
+}
+
+IDX_TO_COARSE = {
+    0: 'malignant',
+    1: 'benign',
+    2: 'other',
+}
+
+# Hierarchical mapping: fine -> coarse
+CLASS_HIERARCHY = {
+    'melanoma': 'malignant',
+    'crlm': 'malignant',  # colorectal liver metastasis
+    'gist': 'malignant',  # gastrointestinal stromal tumor
+    'lipo': 'benign',     # lipoma/liposarcoma
+    'desmoid': 'benign',  # desmoid tumor
+    'liver': 'other',     # liver lesions
 }
 
 

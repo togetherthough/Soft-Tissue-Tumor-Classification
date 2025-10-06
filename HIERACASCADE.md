@@ -1,31 +1,132 @@
-# ✅ Notebook Ready: hieracascade_final.ipynb
+# ✅ Two Cascade Pipelines Ready
 
-**Status**: COMPLETE  
+**Status**: ✅ BOTH PIPELINES CONFIGURED  
 **Date**: 2025-10-06  
-**Location**: `notebooks/hieracascade_final.ipynb`
+**Pipelines**: HieraCascade (multi-class) + BinaryCascade (binary)
 
 ---
 
-## What Was Created
+## 🚀 Quick Start
 
-### Main File
-📓 **`notebooks/hieracascade_final.ipynb`** - Complete notebook with your configuration
-- 32 cells (markdown + code)
-- Binary classification using `Diagnosis_binary` column
-- Automatic numeric-to-text conversion (0→benign, 1→malignant, -1→unknown)
-- Uses `data/sheet.csv` and `Subject` column
-- Ready to run immediately
+### 📌 CHOOSE YOUR PIPELINE:
 
-### Supporting Files
-- 📄 `notebooks/hieracascade_final.py` - Python source
-- 🔧 `notebooks/convert_hieracascade_final.py` - Conversion script
-- 📖 `notebooks/README_HIERACASCADE_FINAL.md` - Complete usage guide
+**Option 1: BinaryCascade** (Current Priority - Binary Classification)
+```bash
+python -m hieracascade.quick_start --data_root data --fold 0
+```
+
+**Option 2: HieraCascade** (Tumor Type Classification)
+```bash
+python -m hieracascade.quick_start_hierarchical --data_root data --fold 0
+```
+
+### 📖 READ THIS FIRST:
+**`TWO_CASCADES_EXPLAINED.md`** - Complete explanation of both pipelines
+
+---
+
+## 🎯 Two Pipelines Available
+
+### Pipeline 1: HieraCascade (Multi-class)
+**Task**: Classify tumor types (CRLM, Desmoid, GIST, Lipo, Liver, Melanoma)  
+**Labels**: `Dataset` column  
+**Architecture**: Hierarchical (6 fine + 3 coarse classes)
+
+### Pipeline 2: BinaryCascade (Binary) ⭐ Current Priority  
+**Task**: Classify benign vs. malignant  
+**Labels**: `Diagnosis_binary` column  
+**Architecture**: Simplified binary classification
+
+### Goal
+Classify tumors as **benign (0)** or **malignant (1)** using 3D medical imaging
+
+### Configuration
+- **Target column**: `Diagnosis_binary` (from `sheet.csv`)
+- **Classes**: 2 (benign vs. malignant)
+- **Architecture**: 2-stage cascade with MIL
+- **Data**: 930 studies (CT/MRI scans)
+
+### Architecture Summary
+
+**Stage-1 (Scout)**:
+- Input: Full 3D volume
+- Output: Binary prediction + saliency map
+- Purpose: Quick screening + crop proposals
+
+**Stage-2 (Expert)**:
+- Input: K=8 crops from saliency map
+- Pooling: MIL (Set Transformer)
+- Output: Refined binary prediction
+
+### Key Features
+- ✅ Binary classification (2 classes only)
+- ✅ MIL for crop aggregation
+- ✅ Saliency-guided cropping
+- ✅ Modality-aware (CT/MRI)
+- ✅ No tumor type hierarchy needed
+
+---
+
+## 📖 Documentation Guide
+
+### 🌟 Essential Reading
+
+1. **`FINAL_SETUP_SUMMARY.md`** 📌 START HERE
+   - Complete overview
+   - Quick start commands
+   - All you need to know
+
+2. **`README_BINARY_TASK.md`** 📚 Quick Reference
+   - Training commands
+   - Expected results
+   - Troubleshooting
+
+3. **`BINARY_CLASSIFICATION_SETUP.md`** 🔧 Technical Details
+   - Architecture deep dive
+   - Configuration options
+   - Advanced topics
+
+### 📋 Supporting Docs
+
+4. **`MIGRATION_TO_BINARY.md`** - What changed from multi-class
+5. **`notebooks/README_HIERACASCADE_FINAL.md`** - Notebook guide
+
+### 🔍 Context (Optional)
+
+6. **`README_BINARY_MIL_QUESTION.md`** - Original analysis
+7. **`LABEL_ANALYSIS.md`** - Dataset breakdown
+8. **`DOES_BINARY_MIL_APPLY.md`** - Design decisions
+
+---
+
+## What Was Created & Updated
+
+### 🎯 Main Documentation
+- **`README_BINARY_TASK.md`** - 📌 START HERE - Quick reference
+- **`BINARY_CLASSIFICATION_SETUP.md`** - Complete technical guide
+- **`MIGRATION_TO_BINARY.md`** - What changed from multi-class
+
+### 📓 Notebook
+- **`notebooks/hieracascade_final.ipynb`** - Ready to use
+  - 32 cells (markdown + code)
+  - Binary classification using `Diagnosis_binary`
+  - Automatic conversion: 0→benign, 1→malignant
+
+### 🔧 Model Updates
+- **`hieracascade/models/stage1.py`** - Binary classification head
+- **`hieracascade/models/stage2.py`** - Simplified to binary + MIL
+- **`hieracascade/dataio/utils.py`** - Binary class mappings
+
+### 📚 Context (Previous Analysis)
+- `README_BINARY_MIL_QUESTION.md` - Original question about simplification
+- `LABEL_ANALYSIS.md` - Dataset structure analysis
+- `DOES_BINARY_MIL_APPLY.md` - Why we adapted the approach
 
 ---
 
 ## Quick Start
 
-### Open the Notebook
+### 🚀 Train Now
 ```bash
 cd notebooks
 jupyter notebook hieracascade_final.ipynb

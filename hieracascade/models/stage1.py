@@ -9,18 +9,20 @@ from .swin3d import build_swin3d_tiny, build_swin3d_small
 
 
 class Stage1Model(nn.Module):
-    """Stage-1: Full volume → coarse predictions + saliency map
+    """Stage-1: Full volume → binary prediction + saliency map
     
     Architecture:
     - 3D Swin Transformer backbone (Tiny/Small)
-    - Classification head for auxiliary predictions
+    - Binary classification head (benign vs. malignant)
     - Saliency head for foreground detection
     - Modality embedding (CT vs MRI)
+    
+    For binary classification: n_classes = 2 (benign=0, malignant=1)
     """
     
     def __init__(
         self,
-        n_classes: int,
+        n_classes: int = 2,  # Binary: benign vs. malignant
         backbone: str = 'swin3d_t',
         embed_dim: int = 96,
         saliency_channels: int = 1,
@@ -28,7 +30,7 @@ class Stage1Model(nn.Module):
     ):
         """
         Args:
-            n_classes: Number of fine-grained classes
+            n_classes: Number of classes (2 for binary: benign vs. malignant)
             backbone: 'swin3d_t' or 'swin3d_s'
             embed_dim: Embedding dimension
             saliency_channels: Number of saliency channels (typically 1)

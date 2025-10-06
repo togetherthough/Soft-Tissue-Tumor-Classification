@@ -1,4 +1,4 @@
-"""Stage-2 Model: Fine-grained hierarchical classification from crops"""
+"""Stage-2 Model (Hierarchical): Multi-class tumor classification with hierarchy"""
 
 import torch
 import torch.nn as nn
@@ -8,21 +8,26 @@ from .swin3d import build_swin3d_small, build_swin3d_base
 from .pooling import build_pooling
 
 
-class Stage2Model(nn.Module):
-    """Stage-2: Crops → binary classification via MIL
+class Stage2HierarchicalModel(nn.Module):
+    """Stage-2: Crops → hierarchical multi-class classification
+    
+    For multi-class tumor type classification with hierarchical structure.
     
     Architecture:
     - 3D Swin Transformer encoder for each crop
     - Set-based pooling (Set Transformer or Attention MIL)
-    - Binary classification head (benign vs. malignant)
+    - Dual classification heads (fine tumor types + coarse families)
     - Modality embedding
     
-    For binary classification: n_classes = 2 (benign=0, malignant=1)
+    For hierarchical classification: 
+    - n_fine = 6 (CRLM, Desmoid, GIST, Lipo, Liver, Melanoma)
+    - n_coarse = 3 (malignant, benign, other)
     """
     
     def __init__(
         self,
-        n_classes: int = 2,  # Binary: benign vs. malignant
+        n_fine: int = 6,  # Fine tumor types
+        n_coarse: int = 3,  # Coarse families
         backbone: str = 'swin3d_b',
         embed_dim: int = 768,
         pooling: str = 'set_transformer',
@@ -31,7 +36,8 @@ class Stage2Model(nn.Module):
     ):
         """
         Args:
-            n_classes: Number of classes (2 for binary: benign vs. malignant)
+            n_fine: Number of fine-grained classes (tumor types)
+            n_coarse: Number of coarse family classes
             backbone: 'swin3d_s' or 'swin3d_b'
             embed_dim: Embedding dimension for projection
             pooling: 'set_transformer', 'attention_mil', or 'gated_attention_mil'
@@ -66,10 +72,15 @@ class Stage2Model(nn.Module):
         pooling_kwargs = pooling_kwargs or {}
         self.pool = build_pooling(pooling, dim=embed_dim, **pooling_kwargs)
         
-        # Binary classification head
-        self.head = nn.Sequential(
+        # Hierarchical classification heads
+        self.head_fine = nn.Sequential(
             nn.Dropout(dropout),
-            nn.Linear(embed_dim, n_classes)
+            nn.Linear(embed_dim, n_fine)
+        )
+        
+        self.head_coarse = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(embed_dim, n_coarse)
         )
     
     def encode_crops(self, crops: torch.Tensor) -> torch.Tensor:
@@ -89,14 +100,15 @@ class Stage2Model(nn.Module):
         self,
         crops: torch.Tensor,
         modality_id: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Args:
             crops: Cropped volumes (B, K, 1, S, S, S)
             modality_id: Modality indices (B,) - 0 for CT, 1 for MRI
             
         Returns:
-            logits: Binary logits (B, n_classes) - typically (B, 2) for benign vs. malignant
+            logits_fine: Fine-grained logits (B, n_fine)
+            logits_coarse: Coarse family logits (B, n_coarse)
             study_embedding: Pooled study embedding (B, embed_dim)
         """
         B, K = crops.shape[:2]
@@ -118,35 +130,39 @@ class Stage2Model(nn.Module):
         # Pool crops to study-level embedding (MIL aggregation)
         study_embedding = self.pool(crop_embeddings)  # (B, embed_dim)
         
-        # Binary classification head
-        logits = self.head(study_embedding)  # (B, n_classes)
+        # Hierarchical classification heads
+        logits_fine = self.head_fine(study_embedding)  # (B, n_fine)
+        logits_coarse = self.head_coarse(study_embedding)  # (B, n_coarse)
         
-        return logits, study_embedding
+        return logits_fine, logits_coarse, study_embedding
     
     def get_num_params(self) -> int:
         """Get number of parameters"""
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
 
-def build_stage2_model(
-    n_classes: int = 2,  # Binary: benign vs. malignant
+def build_stage2_hierarchical_model(
+    n_fine: int = 6,
+    n_coarse: int = 3,
     backbone: str = 'swin3d_b',
     pooling: str = 'set_transformer',
     **kwargs
-) -> Stage2Model:
-    """Factory function for Stage-2 model
+) -> Stage2HierarchicalModel:
+    """Factory function for Stage-2 hierarchical model
     
     Args:
-        n_classes: Number of classes (2 for binary: benign vs. malignant)
+        n_fine: Number of fine classes (tumor types)
+        n_coarse: Number of coarse classes (families)
         backbone: Backbone architecture
         pooling: Pooling strategy
         **kwargs: Additional arguments
         
     Returns:
-        Stage2Model instance
+        Stage2HierarchicalModel instance
     """
-    return Stage2Model(
-        n_classes=n_classes,
+    return Stage2HierarchicalModel(
+        n_fine=n_fine,
+        n_coarse=n_coarse,
         backbone=backbone,
         pooling=pooling,
         **kwargs
