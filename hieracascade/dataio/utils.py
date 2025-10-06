@@ -16,6 +16,10 @@ CLASS_HIERARCHY = {
     'lipo': 'benign',     # lipoma/liposarcoma (depends on grade)
     'desmoid': 'benign',  # desmoid tumor
     'liver': 'other',     # liver lesions
+    # Binary classification (when using Diagnosis_binary column)
+    'malignant': 'malignant',
+    'benign': 'benign',
+    'unknown': 'other',
 }
 
 FINE_TO_IDX = {
@@ -25,6 +29,10 @@ FINE_TO_IDX = {
     'lipo': 3,
     'desmoid': 4,
     'liver': 5,
+    # Binary classification labels
+    'malignant': 6,
+    'benign': 7,
+    'unknown': 8,
 }
 
 COARSE_TO_IDX = {

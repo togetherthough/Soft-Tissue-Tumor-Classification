@@ -60,6 +60,24 @@ def load_from_sheet_csv(
     for idx, row in df.iterrows():
         study_id = str(row[study_id_col])
         category = str(row[label_column]).lower().strip()
+        
+        # Handle numeric binary labels (convert to text)
+        if label_column == 'Diagnosis_binary' or label_column.endswith('_binary'):
+            try:
+                numeric_val = int(float(category))
+                if numeric_val == 1:
+                    category = 'malignant'
+                elif numeric_val == 0:
+                    category = 'benign'
+                elif numeric_val == -1:
+                    category = 'unknown'
+                else:
+                    print(f"Warning: Unknown binary label value '{numeric_val}' for {study_id}, skipping")
+                    continue
+            except (ValueError, TypeError):
+                # Already text, keep as is
+                pass
+        
         unique_categories.add(category)
         
         # Get modality from column or infer from study ID

@@ -4,15 +4,20 @@ This guide explains how to select different label columns from your `sheet.csv` 
 
 ## Available Label Columns
 
-Your dataset supports two label configurations:
+Your dataset supports three label configurations:
 
-1. **`Diagnosis`** - Multi-class classification (fine-grained tumor types)
-   - melanoma, crlm, gist, lipo, desmoid, liver, etc.
-   - Use for detailed tumor classification
-
-2. **`Diagnosis_binary`** - Binary classification (malignant vs benign)
-   - malignant, benign
+1. **`Diagnosis_binary`** - Binary classification (RECOMMENDED for clinical use)
+   - 0 → benign, 1 → malignant, -1 → unknown
+   - Automatically converted from numeric to text labels
    - Use for simplified clinical decision making
+
+2. **`Dataset`** - Multi-class tumor type classification
+   - CRLM, Desmoid, GIST, Lipo, Liver, Melanoma
+   - Use for main tumor type classification
+
+3. **`Diagnosis`** - Multi-class sub-type classification
+   - rHGP, dHGP, DTF, non-DTF, WDLPS, Lipoma, etc.
+   - Use for detailed sub-type classification within tumor categories
 
 ## Usage
 
@@ -21,20 +26,31 @@ Your dataset supports two label configurations:
 #### Quick Start Script
 
 ```bash
-# Multi-class classification (default)
-python -m hieracascade.quick_start \
-    --data_root data \
-    --sheet_csv data/sheet.csv \
-    --label_column Diagnosis \
-    --output_dir outputs/multiclass \
-    --fold 0
-
-# Binary classification
+# Binary classification (malignant vs benign) - RECOMMENDED - default
 python -m hieracascade.quick_start \
     --data_root data \
     --sheet_csv data/sheet.csv \
     --label_column Diagnosis_binary \
+    --study_id_col Subject \
     --output_dir outputs/binary \
+    --fold 0
+
+# Tumor type classification
+python -m hieracascade.quick_start \
+    --data_root data \
+    --sheet_csv data/sheet.csv \
+    --label_column Dataset \
+    --study_id_col Subject \
+    --output_dir outputs/tumor_types \
+    --fold 0
+
+# Sub-type classification
+python -m hieracascade.quick_start \
+    --data_root data \
+    --sheet_csv data/sheet.csv \
+    --label_column Diagnosis \
+    --study_id_col Subject \
+    --output_dir outputs/subtypes \
     --fold 0
 ```
 
@@ -48,8 +64,9 @@ from hieracascade.dataio import create_index_from_sheet
 create_index_from_sheet(
     data_root='data',
     sheet_path='data/sheet.csv',
-    label_column='Diagnosis',  # or 'Diagnosis_binary'
-    output_csv='labels_multiclass.csv'
+    label_column='Diagnosis_binary',  # Use 'Diagnosis_binary' for binary classification
+    study_id_col='Subject',
+    output_csv='labels_binary.csv'
 )
 "
 
@@ -333,10 +350,18 @@ plt.show()
 
 ## Summary
 
-- Use `--label_column Diagnosis` for **multi-class** tumor classification
-- Use `--label_column Diagnosis_binary` for **binary** malignant/benign classification
+- Use `--label_column Diagnosis_binary` (RECOMMENDED) for **binary** malignant/benign classification
+  - Numeric values (0, 1, -1) are automatically converted to text labels (benign, malignant, unknown)
+- Use `--label_column Dataset` for **tumor type** classification (CRLM, Desmoid, GIST, Lipo, Liver, Melanoma)
+- Use `--label_column Diagnosis` for **sub-type** classification (rHGP, dHGP, DTF, etc.)
+- Use `--study_id_col Subject` to match your CSV structure
 - Stratified sampling is **enabled by default** and verified in console output
 - Keep separate output directories for different label configurations
 - Check printed statistics to verify correct categories are loaded
+
+**Automatic Conversion**: The `Diagnosis_binary` column values are automatically converted:
+- `0` → `benign`
+- `1` → `malignant`
+- `-1` → `unknown`
 
 For questions or issues, refer to the main documentation in `hieracascade/README.md` and `hieracascade/TUTORIAL.md`.

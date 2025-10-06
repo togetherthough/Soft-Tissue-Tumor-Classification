@@ -37,9 +37,14 @@ def main():
     parser.add_argument(
         '--label_column',
         type=str,
-        default='Diagnosis',
-        choices=['Diagnosis', 'Diagnosis_binary'],
-        help='Column to use for labels (default: Diagnosis). Options: Diagnosis (multi-class), Diagnosis_binary (binary classification)'
+        default='Diagnosis_binary',
+        help='Column to use for labels (default: Diagnosis_binary). Common options: Diagnosis_binary (binary 0/1), Dataset (tumor types), Diagnosis (sub-types)'
+    )
+    parser.add_argument(
+        '--study_id_col',
+        type=str,
+        default='Subject',
+        help='Column name for study/case ID (default: Subject)'
     )
     parser.add_argument(
         '--output_dir',
@@ -84,6 +89,7 @@ def main():
         data_root=args.data_root,
         sheet_path=args.sheet_csv,
         label_column=args.label_column,
+        study_id_col=args.study_id_col,
         output_csv=str(labels_csv)
     )
     
