@@ -1,12 +1,38 @@
 # Soft-Tissue-Tumor-Classification
-This is my master thesis work. It centers around the classification of multiple types of STS from 3D scans. The proposed technique uses SAM-Med3D as an encoder of tabular features that are then used for the classification task by TabPFN. In the study two subsequent improvements of the model are proposed.
+
+**Master Thesis**: Classification of soft tissue tumors from 3D medical imaging  
+**Data**: 930 studies (CT/MRI) from `sheet.csv`
+
+## Three Approaches
+
+### 1. BinaryCascade ⭐ (Deep Learning - Binary)
+End-to-end deep learning for benign vs. malignant classification
+```bash
+python -m hieracascade.quick_start --data_root data --fold 0
+```
+
+### 2. HieraCascade (Deep Learning - Multi-class)
+End-to-end deep learning for tumor type classification (CRLM, GIST, Desmoid, Lipo, Liver, Melanoma)
+```bash
+python -m hieracascade.quick_start_hierarchical --data_root data --fold 0
+```
+
+### 3. Med3Pipe (Transfer Learning)
+SAM-Med3D feature extraction + TabPFN/LoCalPFN for binary classification (baseline)
+
+**New**: Test SAM-Med3D feature quality before running full pipeline:
+```bash
+python scripts/test_sam_features.py --dataset gist --epochs 10 --freeze
+```
 
 ## What's included
 - `notebooks/Med3D-TabPFN.ipynb`: step-by-step single-dataset pipeline (GIST example)
 - `notebooks/Med3D-LoCalPFN-fast.ipynb`: LoCalPFN experiment (single dataset)
 - `notebooks/MultiDataset-PFNs-sequential.ipynb`: run multiple datasets and both methods (TabPFN then LoCalPFN) sequentially via YAML
+- `notebooks/Test-SAM-Features.ipynb`: evaluate SAM-Med3D feature quality with classification head
 - `configs/datasets.yaml`: register datasets and their metadata once
 - `docs/MULTI_DATASET.md`: documentation for running multiple datasets and adding new ones
+- `docs/SAM_FEATURE_EVALUATION.md`: guide for testing SAM-Med3D feature quality
 
 ## Quick start (multi-dataset)
 1. Ensure your datasets are placed as either:
@@ -70,3 +96,33 @@ Both methods share Steps 1–7 (prepare, folder split for caching, build SAM-Med
 - GPU is used if available for SAM-Med3D and TabPFN; otherwise CPU is used.
 - Fine-tuning of SAM-Med3D is available via `med3pipe.finetune_sam3d` but is disabled in the multi-dataset notebook for speed.
 - Outputs per run are timestamped and organized by dataset/method.
+
+---
+
+## Documentation
+
+### Essential
+- **`docs/hieracascade/TWO_CASCADES_EXPLAINED.md`** - Complete explanation of BinaryCascade vs HieraCascade
+- **`docs/MULTI_DATASET.md`** - Med3Pipe multi-dataset workflows
+- **`docs/SAM_FEATURE_EVALUATION.md`** - SAM-Med3D feature quality evaluation
+- **`med3pipe/README.md`** - Med3Pipe API reference
+
+### Additional
+- `docs/hieracascade/` - All cascade pipeline documentation
+- `scripts/` - Utility scripts
+  - `analyze_labels.py` - Dataset analysis
+  - `run_hieracascade.sh` / `.bat` - Training scripts
+
+### Project Structure
+```
+├── hieracascade/          # Cascade pipelines (BinaryCascade & HieraCascade)
+├── med3pipe/              # Med3Pipe (transfer learning)
+├── notebooks/             # Jupyter notebooks
+├── configs/               # Configuration files
+├── docs/                  # Documentation
+│   ├── hieracascade/      # Cascade docs
+│   └── MULTI_DATASET.md   # Med3Pipe docs
+├── scripts/               # Utility scripts
+└── data/                  # Data directory
+    └── sheet.csv          # Labels (930 studies)
+```

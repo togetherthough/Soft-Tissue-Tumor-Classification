@@ -33,6 +33,9 @@ from .sam import (
 )
 from .training import (
     finetune_sam3d,
+    patch_sam3d_data_paths,
+    run_classification_head_experiment,
+    SAMWithClassificationHead,
 )
 from .tabular import (
     standardize_pca,
@@ -69,37 +72,23 @@ from .vision.v3d import (
 __all__ = [
     "__version__",
     # Prepare/split
-    "Sam3DPaths",
-    "find_default_sam3d_root",
     "prepare_for_sam3d",
     "split_validation",
-    # Model/embeddings/ROI/labels
-    "Sam3DModelSpec",
+    "Sam3DPaths",
+    "find_default_sam3d_root",
+    # Build SAM3D, extract embeddings, ROI pool, labels (steps 4-6)
     "build_sam3d_model",
-    "make_pre_transform",
-    "load_volume_tensor",
     "extract_embeddings",
-    "FeatureDirs",
-    "default_feature_dirs",
     "extract_embeddings_train_val",
-    "load_mask_tensor",
-    "roi_pool_embedding",
     "load_roi_features",
     "load_labels_from_sheet",
     "build_y",
-    # Fine-tune
+    # Training / fine-tuning
     "finetune_sam3d",
-    # TabPFN (steps 7–8)
-    "standardize_pca",
-    "train_eval_tabpfn",
-    "tabpfn_pipeline",
-    "default_tabpfn_out_dir",
-    # LoCalPFN
-    "LocalPFNConfig",
-    "localpfn_infer",
-    "localpfn_pipeline",
-    "default_localpfn_out_dir",
-    # End-to-end (Steps 1–8)
+    "patch_sam3d_data_paths",
+    "run_classification_head_experiment",
+    "SAMWithClassificationHead",
+    # Pipelines (all steps 1-8)
     "run_end_to_end",
     "run_from_prepared_to_tabpfn",
     "local_end_to_end",
