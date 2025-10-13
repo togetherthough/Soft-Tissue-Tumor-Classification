@@ -1,4 +1,4 @@
-gist/*
+**/gist/**
 data/
 features/*
 notebooks/baselines/*
