@@ -86,12 +86,17 @@ def build_sam3d_model(
     return model
 
 
+def _znorm_masking_method(x):
+    """Masking method for ZNormalization. Defined at module level for pickling."""
+    return x > 0
+
+
 def make_pre_transform(img_size: int = 128) -> tio.Compose:
     return tio.Compose(
         [
             tio.ToCanonical(),
             tio.CropOrPad(target_shape=(img_size, img_size, img_size)),
-            tio.ZNormalization(masking_method=lambda x: x > 0),
+            tio.ZNormalization(masking_method=_znorm_masking_method),
         ]
     )
 

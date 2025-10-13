@@ -152,12 +152,23 @@ def prepare_dataloaders(
     """Prepare train and val dataloaders from prepared SAM-Med3D paths."""
     pre_transform = make_pre_transform(img_size=img_size)
     
+    # Helper to extract case ID from .nii.gz filename
+    def get_case_id(img_path: Path) -> str:
+        """Extract case ID from filename, handling .nii.gz extension."""
+        name = img_path.name
+        if name.endswith('.nii.gz'):
+            return name[:-7]  # Remove .nii.gz
+        elif name.endswith('.nii'):
+            return name[:-4]  # Remove .nii
+        else:
+            return img_path.stem
+    
     # Training data
     train_imgs = sorted(paths.images_tr.glob("*.nii.gz"))
     train_labels = []
     train_valid = []
     for img_path in train_imgs:
-        case_id = img_path.stem
+        case_id = get_case_id(img_path)
         if case_id in lab_map:
             train_labels.append(lab_map[case_id])
             train_valid.append(img_path)
@@ -167,12 +178,28 @@ def prepare_dataloaders(
     val_labels = []
     val_valid = []
     for img_path in val_imgs:
-        case_id = img_path.stem
+        case_id = get_case_id(img_path)
         if case_id in lab_map:
             val_labels.append(lab_map[case_id])
             val_valid.append(img_path)
     
     print(f"[INFO] Train samples: {len(train_valid)}, Val samples: {len(val_valid)}")
+    
+    # Debug info if no samples found
+    if len(train_valid) == 0:
+        print(f"[WARNING] No training samples found!")
+        print(f"  Images in {paths.images_tr}: {len(train_imgs)}")
+        if train_imgs:
+            sample_img = train_imgs[0]
+            sample_case_id = get_case_id(sample_img)
+            print(f"  Sample image: {sample_img.name}")
+            print(f"  Extracted case ID: '{sample_case_id}'")
+            print(f"  Available label IDs (first 5): {list(lab_map.keys())[:5]}")
+            print(f"  Case ID in lab_map: {sample_case_id in lab_map}")
+    
+    if len(val_valid) == 0:
+        print(f"[WARNING] No validation samples found!")
+        print(f"  Images in {paths.images_val}: {len(val_imgs)}")
     
     train_ds = TumorDataset(train_valid, train_labels, pre_transform=pre_transform)
     val_ds = TumorDataset(val_valid, val_labels, pre_transform=pre_transform)

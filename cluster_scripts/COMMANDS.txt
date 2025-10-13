@@ -1,0 +1,223 @@
+================================================================================
+GPU CLUSTER COMMAND REFERENCE - Experiment 1 Benchmarks
+================================================================================
+
+INITIAL SETUP
+-------------
+cd /trinity/home/r112276/Med3Tab-PFN/cluster_scripts
+chmod +x slurm_experiment1.sh check_setup.sh
+bash check_setup.sh
+
+
+ENVIRONMENT ACTIVATION
+----------------------
+# Conda:
+conda activate sammed3d
+
+# Virtualenv:
+source /trinity/home/r112276/Med3Tab-PFN/venv/bin/activate
+
+
+JOB SUBMISSION
+--------------
+# Submit job
+sbatch slurm_experiment1.sh
+
+# Submit with custom name
+sbatch --job-name=my_experiment slurm_experiment1.sh
+
+
+JOB MONITORING
+--------------
+# View your jobs
+squeue -u r112276
+
+# View specific job details
+scontrol show job JOBID
+
+# Watch output log (replace JOBID)
+tail -f /trinity/home/r112276/Med3Tab-PFN/logs/experiment1_benchmarks_JOBID.log
+
+# Watch error log
+tail -f /trinity/home/r112276/Med3Tab-PFN/logs/experiment1_benchmarks_error_JOBID.log
+
+# Job efficiency (after completion)
+seff JOBID
+
+
+JOB CONTROL
+-----------
+# Cancel job
+scancel JOBID
+
+# Cancel all your jobs
+scancel -u r112276
+
+
+INTERACTIVE SESSION
+-------------------
+# Request interactive GPU node
+srun --partition=interactive --gres=gpu:1 --mem=32G --time=01:00:00 --pty bash
+
+# Then run manually
+cd /trinity/home/r112276/Med3Tab-PFN/cluster_scripts
+conda activate sammed3d
+python run_experiment1_benchmarks.py --datasets gist --epochs-3d 2
+
+
+VIEWING RESULTS
+---------------
+# Summary table
+cat /trinity/home/r112276/Med3Tab-PFN/results/experiment1/combined_benchmarks_summary.csv
+
+# Formatted view
+column -t -s, /trinity/home/r112276/Med3Tab-PFN/results/experiment1/combined_benchmarks_summary.csv
+
+# List all outputs
+ls -lh /trinity/home/r112276/Med3Tab-PFN/results/experiment1/
+
+
+PARTITION INFO
+--------------
+# View available partitions
+sinfo
+
+# View partition limits
+scontrol show partition long
+
+
+NODE INFO
+---------
+# List all nodes
+sinfo -N
+
+# Node details
+scontrol show node NODENAME
+
+
+QUEUE PRIORITY
+--------------
+# Your job priority
+squeue -u r112276 -o "%.18i %.9P %.8j %.8u %.2t %.10M %.6D %.20S %.10Q"
+
+
+DOWNLOAD RESULTS (FROM LOCAL MACHINE)
+--------------------------------------
+# All results
+scp -r r112276@gpu-login.erasmusmc.nl:/trinity/home/r112276/Med3Tab-PFN/results/experiment1 ./
+
+# Summary only
+scp r112276@gpu-login.erasmusmc.nl:/trinity/home/r112276/Med3Tab-PFN/results/experiment1/combined_benchmarks_summary.csv ./
+
+# Logs
+scp r112276@gpu-login.erasmusmc.nl:/trinity/home/r112276/Med3Tab-PFN/logs/experiment1_benchmarks_JOBID.log ./
+
+
+DISK USAGE
+----------
+# Check your quota
+quota -s
+
+# Directory size
+du -sh /trinity/home/r112276/Med3Tab-PFN
+du -sh /data/scratch/r112276
+
+
+PYTHON ENVIRONMENT CHECK
+------------------------
+# Verify imports
+python -c "import torch; print(f'PyTorch: {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
+
+# List installed packages
+pip list | grep -E "(torch|numpy|pandas|sklearn)"
+
+# Test med3pipe import
+python -c "from med3pipe.pipelines import run_multi_tabpfn; print('OK')"
+
+
+CUSTOMIZATION FLAGS
+-------------------
+Run with specific options by editing slurm_experiment1.sh line ~171:
+
+# Run only specific datasets
+--datasets gist lipo
+
+# Skip methods
+--skip-tabpfn
+--skip-localpfn
+--skip-baselines
+
+# Adjust training
+--epochs-3d 20
+
+
+COMMON SBATCH PARAMETERS
+------------------------
+#SBATCH --partition=short          # short, long, express, interactive
+#SBATCH --time=1-12:00:00          # days-hours:minutes:seconds
+#SBATCH --ntasks=1                 # number of tasks
+#SBATCH --cpus-per-task=8          # CPU cores
+#SBATCH --gres=gpu:1               # number of GPUs
+#SBATCH --mem=64G                  # memory (K|M|G|T)
+#SBATCH --job-name=my_job          # job name
+#SBATCH --output=output_%j.log     # output file (%j = job ID)
+#SBATCH --error=error_%j.log       # error file
+
+
+TROUBLESHOOTING COMMANDS
+------------------------
+# Check failed job details
+sacct -j JOBID --format=JobID,JobName,State,ExitCode,Elapsed,MaxRSS,MaxVMSize
+
+# Check job history
+sacct -u r112276 --starttime=2025-01-01 --format=JobID,JobName,Partition,State,Elapsed
+
+# Test data access
+ls -la /data/scratch/r112276/data/gist/sheet.csv
+
+# Check GPU availability on compute node (when in interactive session)
+nvidia-smi
+
+# Module information
+module avail               # available modules
+module list                # loaded modules
+module show Python/3.10    # module details
+
+
+HELPFUL ALIASES (add to ~/.bashrc)
+-----------------------------------
+alias myq='squeue -u r112276'
+alias myjobs='sacct -u r112276 --starttime=$(date -d "7 days ago" +%Y-%m-%d) --format=JobID,JobName,State,Elapsed'
+alias cdexp='cd /trinity/home/r112276/Med3Tab-PFN/cluster_scripts'
+alias watchlogs='tail -f /trinity/home/r112276/Med3Tab-PFN/logs/experiment1_benchmarks_*.log'
+
+
+TYPICAL WORKFLOW
+----------------
+1. ssh r112276@gpu-login.erasmusmc.nl
+2. cd /trinity/home/r112276/Med3Tab-PFN/cluster_scripts
+3. conda activate sammed3d
+4. bash check_setup.sh
+5. nano slurm_experiment1.sh               # edit config
+6. sbatch slurm_experiment1.sh
+7. squeue -u r112276                        # check status
+8. tail -f ../logs/experiment1_benchmarks_*.log  # monitor
+9. cat ../results/experiment1/combined_benchmarks_summary.csv  # view results
+
+
+EMERGENCY STOPS
+---------------
+# Cancel all running jobs
+scancel -u r112276 -t RUNNING
+
+# Cancel all pending jobs
+scancel -u r112276 -t PENDING
+
+
+GET HELP
+--------
+# Cluster documentation (check your institution's wiki)
+# SLURM documentation: https://slurm.schedmd.com/documentation.html
+# Contact cluster admin for node/resource issues
+
+================================================================================
