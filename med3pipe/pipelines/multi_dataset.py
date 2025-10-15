@@ -348,6 +348,8 @@ def run_multi_tabpfn(
     model_type: str = "vit_b_ori",
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
+    # Extraction control
+    skip_existing_embeddings: bool = True,
     # Shared Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
@@ -389,6 +391,8 @@ def run_multi_localpfn(
     model_type: str = "vit_b_ori",
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
+    # Extraction control
+    skip_existing_embeddings: bool = True,
     # Shared Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
