@@ -4,7 +4,7 @@ datasets:
     category: gist
     ct_name: ct_GIST
     labels:
-      sheet_csv: sheet.csv
+      sheet_csv: ../sheet.csv
       dataset_name: GIST
       subject_col: Subject
       label_col: Diagnosis_binary
@@ -23,8 +23,8 @@ datasets:
     category: lipo
     ct_name: ct_LIPO
     labels:
-      sheet_csv: sheet.csv
-      dataset_name: null
+      sheet_csv: ../sheet.csv
+      dataset_name: Lipo
       subject_col: Subject
       label_col: Diagnosis_binary
       case_suffix: _MR

@@ -172,16 +172,22 @@ def extract_embeddings_train_val(
     img_size: int = 128,
     feature_dirs: Optional[FeatureDirs] = None,
     device: Optional[torch.device] = None,
+    skip_existing: bool = True,
 ) -> FeatureDirs:
-    """Extract embeddings for TRAIN imagesTr and VAL imagesVal into default feature dirs."""
+    """Extract embeddings for TRAIN imagesTr and VAL imagesVal into default feature dirs.
+    
+    Args:
+        skip_existing: If True (default), skip extraction for files that already exist.
+                      Set to False to force re-extraction (e.g., after loading new checkpoint).
+    """
     if sam3d_root is None:
         sam3d_root = find_default_sam3d_root()
     if feature_dirs is None:
         feature_dirs = default_feature_dirs(sam3d_root, category=paths.category, ct_name=paths.ct_name)
 
     pre_transform = make_pre_transform(img_size=img_size)
-    extract_embeddings(model, paths.images_tr, feature_dirs.train_dir, device=device, pre_transform=pre_transform)
-    extract_embeddings(model, paths.images_val, feature_dirs.val_dir, device=device, pre_transform=pre_transform)
+    extract_embeddings(model, paths.images_tr, feature_dirs.train_dir, device=device, pre_transform=pre_transform, skip_existing=skip_existing)
+    extract_embeddings(model, paths.images_val, feature_dirs.val_dir, device=device, pre_transform=pre_transform, skip_existing=skip_existing)
     return feature_dirs
 
 

@@ -94,6 +94,7 @@ def run_single_dataset(
     checkpoint: Optional[Path] = None,
     img_size: int = 128,
     device: Optional[str] = None,
+    skip_existing_embeddings: bool = True,
     # Labels
     sheet_csv: Optional[Path] = None,
     dataset_name: Optional[str] = "GIST",
@@ -157,6 +158,7 @@ def run_single_dataset(
         img_size=img_size,
         feature_dirs=feat_dirs,
         device=torch_device,
+        skip_existing=skip_existing_embeddings,
     )
 
     # 6) Labels -> build map
