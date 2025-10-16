@@ -121,8 +121,18 @@ def finetune_sam3d(
     rel_dataset = dataset_dir.relative_to(sam3d_root)
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = ",".join(str(i) for i in gpu_ids)
+    # Fix OpenMP library conflict
+    env["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
     proc: subprocess.Popen
     with patch_sam3d_data_paths(sam3d_root, [rel_dataset]):
-        proc = subprocess.Popen(cmd, cwd=str(sam3d_root), env=env)
+        proc = subprocess.Popen(
+            cmd, 
+            cwd=str(sam3d_root), 
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
     return proc

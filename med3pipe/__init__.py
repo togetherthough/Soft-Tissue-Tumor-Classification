@@ -28,6 +28,8 @@ from .sam import (
     load_mask_tensor,
     roi_pool_embedding,
     load_roi_features,
+    summarize_embedding_shapes_dir,
+    summarize_train_val_embedding_shapes,
     load_labels_from_sheet,
     build_y,
 )
@@ -81,6 +83,8 @@ __all__ = [
     "extract_embeddings",
     "extract_embeddings_train_val",
     "load_roi_features",
+    "summarize_embedding_shapes_dir",
+    "summarize_train_val_embedding_shapes",
     "load_labels_from_sheet",
     "build_y",
     # Training / fine-tuning

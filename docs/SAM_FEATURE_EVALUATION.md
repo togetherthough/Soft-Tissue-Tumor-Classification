@@ -4,6 +4,34 @@
 
 This module provides tools to evaluate the quality of SAM-Med3D features for tumor classification before running the full TabPFN/LoCalPFN pipeline. It adds a simple classification head on top of the 3D encodings to directly assess feature discriminability.
 
+## Quick Feature Test (TL;DR)
+
+Run a fast check to see if SAM-Med3D features are decent before deeper experiments:
+
+```bash
+# Test GIST dataset with frozen encoder (10 epochs)
+python scripts/test_sam_features.py --dataset gist --epochs 10 --freeze
+```
+
+Interpretation (Validation AUC):
+
+- AUC > 0.7 → Features are good. Proceed with TabPFN/LoCalPFN.
+- 0.6–0.7 → Moderate. Try fine-tuning: `--no-freeze --epochs 20`.
+- < 0.6 → Poor. Check data, masks, or try different checkpoints/architectures.
+
+Common tweaks:
+
+```bash
+# Faster run
+python scripts/test_sam_features.py --dataset gist --epochs 5
+
+# Lower memory
+python scripts/test_sam_features.py --dataset gist --batch-size 2
+
+# CPU only (slower)
+python scripts/test_sam_features.py --dataset gist --device cpu --epochs 5
+```
+
 ## Motivation
 
 When your Med3Pipe pipeline (SAM-Med3D → TabPFN/LoCalPFN) is not performing well, it's important to diagnose where the issue lies:

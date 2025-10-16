@@ -179,9 +179,23 @@ class BaseTrainer:
         if os.path.exists(ckp_path):
             if self.args.multi_gpu:
                 dist.barrier()
-                last_ckpt = torch.load(ckp_path, map_location=self.args.device, weights_only=False)
+                try:
+                    last_ckpt = torch.load(ckp_path, map_location=self.args.device, weights_only=False)
+                except RuntimeError as e:
+                    # Fallback for CPU-only environments when checkpoint was saved on CUDA
+                    if 'torch.cuda.is_available() is False' in str(e):
+                        last_ckpt = torch.load(ckp_path, map_location='cpu', weights_only=False)
+                    else:
+                        raise
             else:
-                last_ckpt = torch.load(ckp_path, map_location=self.args.device, weights_only=False)
+                try:
+                    last_ckpt = torch.load(ckp_path, map_location=self.args.device, weights_only=False)
+                except RuntimeError as e:
+                    # Fallback for CPU-only environments when checkpoint was saved on CUDA
+                    if 'torch.cuda.is_available() is False' in str(e):
+                        last_ckpt = torch.load(ckp_path, map_location='cpu', weights_only=False)
+                    else:
+                        raise
 
         if last_ckpt:
             if (self.args.allow_partial_weight):
@@ -344,8 +358,11 @@ class BaseTrainer:
                 image3D = image3D.unsqueeze(dim=1)
 
                 image3D = image3D.to(device)
-                gt3D = gt3D.to(device).type(torch.long)
-                with torch.amp.autocast("cuda"):
+                # DiceCELoss with sigmoid=True expects a floating target (0/1). Avoid Long dtype errors on CPU.
+                gt3D = gt3D.to(device).float()
+                # Use CPU-safe autocast context
+                _amp_ctx = torch.amp.autocast("cuda") if torch.cuda.is_available() else nullcontext()
+                with _amp_ctx:
                     image_embedding = sam_model.image_encoder(image3D)
 
                     self.click_points = []
@@ -475,9 +492,12 @@ def init_seeds(seed=0, cuda_deterministic=True):
 def device_config(args):
     try:
         if not args.multi_gpu:
-            # Single GPU
+            # Single device selection
             if args.device == 'mps':
                 args.device = torch.device('mps')
+            elif str(args.device).startswith('cpu') or not torch.cuda.is_available():
+                # Respect explicit CPU selection, or fall back to CPU when CUDA is unavailable
+                args.device = torch.device('cpu')
             else:
                 args.device = torch.device(f"cuda:{args.gpu_ids[0]}")
         else:

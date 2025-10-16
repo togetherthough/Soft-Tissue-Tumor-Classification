@@ -18,23 +18,25 @@ python scripts/analyze_labels.py
 
 ---
 
-### `run_hieracascade.sh` / `run_hieracascade.bat`
-Quick start scripts for training BinaryCascade.
+### `test_sam_features.py`
+Evaluate SAM-Med3D feature quality quickly with a small classification head.
 
-**Linux/Mac**:
+**Usage**:
 ```bash
-./scripts/run_hieracascade.sh
+python scripts/test_sam_features.py --dataset gist --epochs 10 --freeze
 ```
 
-**Windows**:
-```cmd
-scripts\run_hieracascade.bat
-```
+See `docs/SAM_FEATURE_EVALUATION.md` for details.
 
 ---
 
-### `update_nb_paths.py`
-Update paths in notebooks (internal utility).
+### `update_nb_paths.py` (legacy)
+Internal path-fix utility for notebooks. Safe to remove if not used.
+
+---
+
+### `cleanup_docs.ps1` (one-off)
+Deletes redundant docs per the minimal set. Run once, then remove.
 
 ---
 

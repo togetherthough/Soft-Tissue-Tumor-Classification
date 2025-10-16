@@ -100,28 +100,25 @@ Both methods share Steps 1–7 (prepare, folder split for caching, build SAM-Med
 ---
 
 ## Documentation
+Start here: `docs/README.md`
 
 ### Essential
-- **`docs/hieracascade/TWO_CASCADES_EXPLAINED.md`** - Complete explanation of BinaryCascade vs HieraCascade
 - **`docs/MULTI_DATASET.md`** - Med3Pipe multi-dataset workflows
 - **`docs/SAM_FEATURE_EVALUATION.md`** - SAM-Med3D feature quality evaluation
 - **`med3pipe/README.md`** - Med3Pipe API reference
+- **`docs/TROUBLESHOOTING.md`** - Troubleshooting fine-tuning & PFN workflows
 
 ### Additional
-- `docs/hieracascade/` - All cascade pipeline documentation
 - `scripts/` - Utility scripts
   - `analyze_labels.py` - Dataset analysis
   - `run_hieracascade.sh` / `.bat` - Training scripts
 
 ### Project Structure
 ```
-├── hieracascade/          # Cascade pipelines (BinaryCascade & HieraCascade)
 ├── med3pipe/              # Med3Pipe (transfer learning)
 ├── notebooks/             # Jupyter notebooks
 ├── configs/               # Configuration files
-├── docs/                  # Documentation
-│   ├── hieracascade/      # Cascade docs
-│   └── MULTI_DATASET.md   # Med3Pipe docs
+├── docs/                  # Documentation (index + guides)
 ├── scripts/               # Utility scripts
 └── data/                  # Data directory
     └── sheet.csv          # Labels (930 studies)

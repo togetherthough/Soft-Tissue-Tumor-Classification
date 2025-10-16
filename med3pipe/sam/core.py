@@ -275,6 +275,58 @@ def load_roi_features(
 
 
 # ------------------------------
+# Diagnostics (Embedding shapes before PCA)
+# ------------------------------
+
+def _embedding_shape_from_pt(pt: Path) -> Tuple[int, ...]:
+    d = torch.load(str(pt), map_location="cpu")
+    emb = d["embedding"]
+    return tuple(emb.shape)
+
+
+def summarize_embedding_shapes_dir(feat_dir: Path) -> tuple[set[Tuple[int, ...]], list[tuple[str, Tuple[int, ...]]]]:
+    """Return (unique_shapes, differing_files) for all *_embedding.pt in feat_dir."""
+    uniq: set[Tuple[int, ...]] = set()
+    diffs: list[tuple[str, Tuple[int, ...]]] = []
+    pts = sorted(Path(feat_dir).glob("*_embedding.pt"))
+    for pt in pts:
+        shp = _embedding_shape_from_pt(pt)
+        if uniq and shp not in uniq:
+            diffs.append((pt.name, shp))
+        uniq.add(shp)
+    return uniq, diffs
+
+
+def summarize_train_val_embedding_shapes(feature_dirs: FeatureDirs) -> dict:
+    """Summarize embedding shapes for train/val feature dirs."""
+    train_shapes, train_diff = summarize_embedding_shapes_dir(feature_dirs.train_dir)
+    val_shapes, val_diff = summarize_embedding_shapes_dir(feature_dirs.val_dir)
+
+    def channel_dims(shapes: set[Tuple[int, ...]]) -> set[int]:
+        ch: set[int] = set()
+        for s in shapes:
+            if len(s) >= 2:
+                ch.add(int(s[1]))
+            elif len(s) == 1:
+                ch.add(int(s[0]))
+        return ch
+
+    return {
+        "train": {
+            "dir": str(feature_dirs.train_dir),
+            "unique_shapes": sorted([list(s) for s in train_shapes]),
+            "channel_dims": sorted(list(channel_dims(train_shapes))),
+            "diff_files": [(n, list(s)) for n, s in train_diff],
+        },
+        "val": {
+            "dir": str(feature_dirs.val_dir),
+            "unique_shapes": sorted([list(s) for s in val_shapes]),
+            "channel_dims": sorted(list(channel_dims(val_shapes))),
+            "diff_files": [(n, list(s)) for n, s in val_diff],
+        },
+    }
+
+# ------------------------------
 # Labels (Step 6)
 # ------------------------------
 
