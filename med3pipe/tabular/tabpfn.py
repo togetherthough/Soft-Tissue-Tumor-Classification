@@ -76,6 +76,13 @@ def standardize_pca(
     - If save_dir is provided, saves scaler, pca, and transformed arrays.
     """
     assert X_train.ndim == 2 and X_val.ndim == 2, "X arrays must be 2D"
+    
+    # Print dimensions before PCA
+    print(f"\n{'='*60}")
+    print(f"ENCODER OUTPUT DIMENSIONS (before PCA):")
+    print(f"  Train shape: {X_train.shape} (samples x features)")
+    print(f"  Val shape:   {X_val.shape} (samples x features)")
+    print(f"{'='*60}\n")
     # Import sklearn components here to avoid heavy import at module level
     try:
         from sklearn import set_config as _sk_set_config  # type: ignore

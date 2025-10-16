@@ -142,6 +142,9 @@ def extract_embeddings(
                 continue
             vol = load_volume_tensor(ipath, pre_transform=pre_transform).to(device)
             emb = model.image_encoder(vol)
+            # Validate embedding shape
+            if emb.dim() != 5:
+                print(f"[WARN] Unexpected embedding dims for {ipath.name}: {emb.shape} (expected 5D tensor)")
             torch.save({"path": str(ipath), "embedding": emb.cpu()}, str(out_pt))
             cnt += 1
             if cnt % 25 == 0:
@@ -256,10 +259,18 @@ def load_roi_features(
                     m = load_mask_tensor(mp, pre_transform=pre_transform)
                 except Exception as e:
                     print(f"[WARN] mask load failed {cid}: {e}")
-        X.append(roi_pool_embedding(emb, m))
+        feat = roi_pool_embedding(emb, m)
+        X.append(feat)
         ids.append(cid)
     if not X:
         return np.empty((0,)), []
+    # Check for shape consistency before stacking
+    shapes = [x.shape for x in X]
+    if len(set(shapes)) > 1:
+        print(f"[ERROR] Shape mismatch in features:")
+        for i, (cid, shape) in enumerate(zip(ids, shapes)):
+            print(f"  {cid}: {shape}")
+        raise ValueError(f"all input arrays must have the same shape\nTraining shapes: {set(shapes)}")
     return np.stack(X), ids
 
 
