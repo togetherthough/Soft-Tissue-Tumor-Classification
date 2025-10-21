@@ -53,14 +53,6 @@ else
     ((ERRORS++))
 fi
 
-if [ -d "$CODE_DIR/hieracascade" ]; then
-    echo -e "   ${GREEN}✓${NC} hieracascade package found"
-    ((SUCCESS++))
-else
-    echo -e "   ${YELLOW}⚠${NC} hieracascade package NOT found (may not be needed)"
-    ((WARNINGS++))
-fi
-
 if [ -d "$CODE_DIR/SAM-Med3D-main" ]; then
     echo -e "   ${GREEN}✓${NC} SAM-Med3D directory found"
     ((SUCCESS++))

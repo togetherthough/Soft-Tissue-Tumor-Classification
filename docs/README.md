@@ -52,7 +52,6 @@ See `docs/TROUBLESHOOTING.md` for concrete fixes.
 ## Project Structure (high level)
 
 ```
-├── hieracascade/          # BinaryCascade & HieraCascade pipelines
 ├── med3pipe/              # Med3Pipe (transfer learning APIs/CLI)
 ├── SAM-Med3D-main/        # Upstream SAM-Med3D repo (training/extraction)
 ├── configs/               # Datasets config (YAML)

@@ -3,24 +3,10 @@
 **Master Thesis**: Classification of soft tissue tumors from 3D medical imaging  
 **Data**: 930 studies (CT/MRI) from `sheet.csv`
 
-## Three Approaches
+## Med3Pipe (Transfer Learning)
+SAM-Med3D feature extraction + TabPFN/LoCalPFN for binary classification
 
-### 1. BinaryCascade ⭐ (Deep Learning - Binary)
-End-to-end deep learning for benign vs. malignant classification
-```bash
-python -m hieracascade.quick_start --data_root data --fold 0
-```
-
-### 2. HieraCascade (Deep Learning - Multi-class)
-End-to-end deep learning for tumor type classification (CRLM, GIST, Desmoid, Lipo, Liver, Melanoma)
-```bash
-python -m hieracascade.quick_start_hierarchical --data_root data --fold 0
-```
-
-### 3. Med3Pipe (Transfer Learning)
-SAM-Med3D feature extraction + TabPFN/LoCalPFN for binary classification (baseline)
-
-**New**: Test SAM-Med3D feature quality before running full pipeline:
+**Test SAM-Med3D feature quality before running full pipeline:**
 ```bash
 python scripts/test_sam_features.py --dataset gist --epochs 10 --freeze
 ```
@@ -111,7 +97,7 @@ Start here: `docs/README.md`
 ### Additional
 - `scripts/` - Utility scripts
   - `analyze_labels.py` - Dataset analysis
-  - `run_hieracascade.sh` / `.bat` - Training scripts
+  - `test_sam_features.py` - Feature quality evaluation
 
 ### Project Structure
 ```

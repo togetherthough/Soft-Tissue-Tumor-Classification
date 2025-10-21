@@ -99,7 +99,7 @@ def _run_multi_core(
     model_type: str = "vit_b_ori",
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
-    skip_existing_embeddings: bool = True,
+    skip_existing_embeddings: bool = False,
     n_components_max: int = 500,
     random_state: int = 42,
     tabpfn_src: Optional[Path] = None,
@@ -119,10 +119,12 @@ def _run_multi_core(
 ) -> Dict[str, Any]:
     """Core implementation shared by YAML-driven and folder-driven runners.
     
-    IMPORTANT: Each dataset is checked individually for embeddings. If a dataset
-    is missing embeddings, extraction is forced regardless of skip_existing_embeddings.
-    This ensures all datasets get processed correctly even when run separately or
-    in different orders (e.g., GIST first, then LIPO).
+    IMPORTANT: 
+    - skip_existing_embeddings=False (default): Reuse existing embeddings, extract only if missing
+    - skip_existing_embeddings=True: Ignore existing embeddings and always re-extract
+    
+    Each dataset is checked individually, ensuring correct processing even when run
+    separately or in different orders (e.g., GIST first, then LIPO).
     """
     if "datasets" not in cfg or not isinstance(cfg["datasets"], dict):
         raise ValueError("Config must contain a 'datasets:' mapping")
@@ -222,14 +224,24 @@ def _run_multi_core(
             and list(feat_val_dir.glob("*_embedding.pt"))
         )
         
-        # Force extraction if embeddings don't exist for this dataset, regardless of skip_existing_embeddings
-        force_extraction = not embeddings_exist
-        skip_for_this_dataset = skip_existing_embeddings and not force_extraction
-        
-        if force_extraction:
-            print(f"\n⚠️  {ds_key}: Embeddings missing. Forcing extraction...")
-        elif skip_existing_embeddings:
-            print(f"\n✅ {ds_key}: Embeddings exist. Skipping extraction...")
+        # Determine extraction behavior:
+        # skip_existing_embeddings=True → ignore existing, always extract
+        # skip_existing_embeddings=False → use existing if available, only extract if missing
+        if skip_existing_embeddings:
+            # User wants to skip/ignore existing embeddings → force re-extraction
+            skip_for_this_dataset = False
+            if embeddings_exist:
+                print(f"\n🔄 {ds_key}: Skipping existing embeddings. Re-extracting...")
+            else:
+                print(f"\n⚠️  {ds_key}: No existing embeddings. Extracting...")
+        else:
+            # User wants to use existing embeddings if available
+            if embeddings_exist:
+                skip_for_this_dataset = True
+                print(f"\n✅ {ds_key}: Reusing existing embeddings...")
+            else:
+                skip_for_this_dataset = False
+                print(f"\n⚠️  {ds_key}: Embeddings missing. Extracting...")
         
         # Execute the chosen method for this dataset via the unified single-dataset pipeline
         try:
@@ -375,7 +387,7 @@ def run_multi_tabpfn(
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
     # Extraction control
-    skip_existing_embeddings: bool = True,
+    skip_existing_embeddings: bool = False,
     # Shared Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
@@ -388,9 +400,17 @@ def run_multi_tabpfn(
 ) -> Dict[str, Any]:
     """Run TabPFN only across datasets defined in a YAML config.
     
-    Note: Embeddings are automatically checked per-dataset. If any dataset is missing
-    embeddings, they will be extracted regardless of skip_existing_embeddings setting.
-    This ensures all datasets are processed correctly even if run in different orders.
+    Args:
+        skip_existing_embeddings: If True, skip/ignore existing embeddings and re-extract.
+                                  If False (default), reuse existing embeddings when available.
+                                  Missing embeddings are always extracted regardless of this setting.
+    
+    Embedding behavior:
+        - skip_existing_embeddings=False (recommended): Reuse embeddings if they exist, extract if missing
+        - skip_existing_embeddings=True: Always re-extract, ignoring existing embeddings
+    
+    The pipeline automatically checks each dataset individually, so you can safely run
+    datasets in any order without worrying about missing embeddings.
     """
     cfg_path = Path(config_path)
     cfg = _load_yaml(cfg_path)
@@ -423,7 +443,7 @@ def run_multi_localpfn(
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
     # Extraction control
-    skip_existing_embeddings: bool = True,
+    skip_existing_embeddings: bool = False,
     # Shared Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
@@ -442,9 +462,17 @@ def run_multi_localpfn(
 ) -> Dict[str, Any]:
     """Run LoCalPFN only across datasets defined in a YAML config.
     
-    Note: Embeddings are automatically checked per-dataset. If any dataset is missing
-    embeddings, they will be extracted regardless of skip_existing_embeddings setting.
-    This ensures all datasets are processed correctly even if run in different orders.
+    Args:
+        skip_existing_embeddings: If True, skip/ignore existing embeddings and re-extract.
+                                  If False (default), reuse existing embeddings when available.
+                                  Missing embeddings are always extracted regardless of this setting.
+    
+    Embedding behavior:
+        - skip_existing_embeddings=False (recommended): Reuse embeddings if they exist, extract if missing
+        - skip_existing_embeddings=True: Always re-extract, ignoring existing embeddings
+    
+    The pipeline automatically checks each dataset individually, so you can safely run
+    datasets in any order without worrying about missing embeddings.
     """
     cfg_path = Path(config_path)
     cfg = _load_yaml(cfg_path)

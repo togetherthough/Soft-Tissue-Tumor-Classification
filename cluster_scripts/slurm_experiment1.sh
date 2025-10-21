@@ -78,7 +78,6 @@ echo "=========================================="
 # source ${CODE_DIR}/venv/bin/activate
 
 # Option 3: If using module-based Python, ensure packages are installed
-# pip install --user -r ${CODE_DIR}/hieracascade/requirements.txt
 # pip install --user -r ${CODE_DIR}/med3pipe/requirements.txt
 
 # Verify Python and CUDA

@@ -362,9 +362,9 @@ After evaluating features:
    - Then run TabPFN/LoCalPFN
 
 3. **If features are poor** (AUC < 0.6):
-   - Consider alternative approaches (see hieracascade)
    - Check data quality
    - Try different architectures
+   - Consider fine-tuning SAM-Med3D on your specific data
 
 ## References
 
@@ -374,5 +374,5 @@ After evaluating features:
 ## See Also
 
 - `docs/MULTI_DATASET.md`: Running full Med3Pipe pipeline
-- `docs/hieracascade/TWO_CASCADES_EXPLAINED.md`: Alternative deep learning approach
 - `med3pipe/README.md`: Med3Pipe API reference
+- `docs/TROUBLESHOOTING.md`: Troubleshooting guide
