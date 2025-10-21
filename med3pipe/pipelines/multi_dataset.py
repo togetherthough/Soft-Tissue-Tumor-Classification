@@ -117,7 +117,13 @@ def _run_multi_core(
     save_summary: bool = True,
     summary_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    """Core implementation shared by YAML-driven and folder-driven runners."""
+    """Core implementation shared by YAML-driven and folder-driven runners.
+    
+    IMPORTANT: Each dataset is checked individually for embeddings. If a dataset
+    is missing embeddings, extraction is forced regardless of skip_existing_embeddings.
+    This ensures all datasets get processed correctly even when run separately or
+    in different orders (e.g., GIST first, then LIPO).
+    """
     if "datasets" not in cfg or not isinstance(cfg["datasets"], dict):
         raise ValueError("Config must contain a 'datasets:' mapping")
 
@@ -205,6 +211,26 @@ def _run_multi_core(
                 return None
             return default_localpfn_out_dir(category, ct_name, base_dir=outputs_base_dir)
 
+        # Check if embeddings exist for this specific dataset
+        feat_train_dir = sam3d_root / "features" / category / f"{ct_name}_train"
+        feat_val_dir = sam3d_root / "features" / category / ct_name
+        
+        embeddings_exist = (
+            feat_train_dir.exists() 
+            and feat_val_dir.exists()
+            and list(feat_train_dir.glob("*_embedding.pt"))
+            and list(feat_val_dir.glob("*_embedding.pt"))
+        )
+        
+        # Force extraction if embeddings don't exist for this dataset, regardless of skip_existing_embeddings
+        force_extraction = not embeddings_exist
+        skip_for_this_dataset = skip_existing_embeddings and not force_extraction
+        
+        if force_extraction:
+            print(f"\n⚠️  {ds_key}: Embeddings missing. Forcing extraction...")
+        elif skip_existing_embeddings:
+            print(f"\n✅ {ds_key}: Embeddings exist. Skipping extraction...")
+        
         # Execute the chosen method for this dataset via the unified single-dataset pipeline
         try:
             res = run_single_dataset(
@@ -221,7 +247,7 @@ def _run_multi_core(
                 checkpoint=checkpoint,
                 img_size=img_size,
                 device=device,
-                skip_existing_embeddings=skip_existing_embeddings,
+                skip_existing_embeddings=skip_for_this_dataset,
                 sheet_csv=sheet_csv,
                 dataset_name=dataset_name,
                 subject_col=subject_col,
@@ -360,7 +386,12 @@ def run_multi_tabpfn(
     save_summary: bool = True,
     summary_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    """Run TabPFN only across datasets defined in a YAML config."""
+    """Run TabPFN only across datasets defined in a YAML config.
+    
+    Note: Embeddings are automatically checked per-dataset. If any dataset is missing
+    embeddings, they will be extracted regardless of skip_existing_embeddings setting.
+    This ensures all datasets are processed correctly even if run in different orders.
+    """
     cfg_path = Path(config_path)
     cfg = _load_yaml(cfg_path)
     return _run_multi_core(
@@ -409,7 +440,12 @@ def run_multi_localpfn(
     save_summary: bool = True,
     summary_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    """Run LoCalPFN only across datasets defined in a YAML config."""
+    """Run LoCalPFN only across datasets defined in a YAML config.
+    
+    Note: Embeddings are automatically checked per-dataset. If any dataset is missing
+    embeddings, they will be extracted regardless of skip_existing_embeddings setting.
+    This ensures all datasets are processed correctly even if run in different orders.
+    """
     cfg_path = Path(config_path)
     cfg = _load_yaml(cfg_path)
     return _run_multi_core(

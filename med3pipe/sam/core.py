@@ -91,10 +91,52 @@ def _znorm_masking_method(x):
     return x > 0
 
 
+class ResizeLargestTo(tio.Transform):
+    """Resize volume so that the largest dimension becomes target_size.
+    
+    This preserves aspect ratio and minimizes data loss compared to CropOrPad.
+    Useful for preparing data for SAM-Med3D where we want 128^3 format.
+    """
+    def __init__(self, target_size: int = 128, **kwargs):
+        super().__init__(**kwargs)
+        self.target_size = target_size
+    
+    def apply_transform(self, subject: tio.Subject) -> tio.Subject:
+        # Get the first image to determine spatial shape
+        first_image = subject.get_first_image()
+        spatial_shape = first_image.spatial_shape  # (D, H, W)
+        
+        # Find largest dimension
+        max_dim = max(spatial_shape)
+        
+        # Calculate scale factor to make largest dimension = target_size
+        if max_dim > 0:
+            scale = self.target_size / max_dim
+        else:
+            scale = 1.0
+        
+        # Calculate new shape (all dimensions scaled proportionally)
+        new_shape = tuple(int(dim * scale) for dim in spatial_shape)
+        
+        # Apply resize to all images in subject
+        resize_transform = tio.Resize(target_shape=new_shape)
+        subject = resize_transform(subject)
+        
+        return subject
+
+
 def make_pre_transform(img_size: int = 128) -> tio.Compose:
+    """Create preprocessing transform pipeline for SAM-Med3D.
+    
+    Uses resize-then-pad approach to minimize data loss:
+    1. Resize so largest dimension becomes img_size (preserves aspect ratio)
+    2. Pad to img_size^3 (adds minimal padding since largest dim is already correct)
+    3. Z-normalize
+    """
     return tio.Compose(
         [
             tio.ToCanonical(),
+            ResizeLargestTo(target_size=img_size),
             tio.CropOrPad(target_shape=(img_size, img_size, img_size)),
             tio.ZNormalization(masking_method=_znorm_masking_method),
         ]

@@ -9,6 +9,40 @@ from torch.utils.data import DataLoader, Dataset
 from torchio.data.io import sitk_to_nib
 
 
+class ResizeLargestTo(tio.Transform):
+    """Resize volume so that the largest dimension becomes target_size.
+    
+    This preserves aspect ratio and minimizes data loss compared to CropOrPad.
+    Useful for preparing data for SAM-Med3D where we want 128^3 format.
+    """
+    def __init__(self, target_size: int = 128, **kwargs):
+        super().__init__(**kwargs)
+        self.target_size = target_size
+    
+    def apply_transform(self, subject: tio.Subject) -> tio.Subject:
+        # Get the first image to determine spatial shape
+        first_image = subject.get_first_image()
+        spatial_shape = first_image.spatial_shape  # (D, H, W)
+        
+        # Find largest dimension
+        max_dim = max(spatial_shape)
+        
+        # Calculate scale factor to make largest dimension = target_size
+        if max_dim > 0:
+            scale = self.target_size / max_dim
+        else:
+            scale = 1.0
+        
+        # Calculate new shape (all dimensions scaled proportionally)
+        new_shape = tuple(int(dim * scale) for dim in spatial_shape)
+        
+        # Apply resize to all images in subject
+        resize_transform = tio.Resize(target_shape=new_shape)
+        subject = resize_transform(subject)
+        
+        return subject
+
+
 class Dataset_Union_ALL(Dataset):
 
     def __init__(
@@ -302,7 +336,8 @@ if __name__ == "__main__":
         data_type='infer',
         transform=tio.Compose([
             tio.ToCanonical(),
-            tio.CropOrPad(target_shape=(128, 128, 128)),
+            ResizeLargestTo(target_size=128),  # Resize so largest dim = 128, preserving aspect ratio
+            tio.CropOrPad(target_shape=(128, 128, 128)),  # Pad remaining dimensions to 128^3
         ]),
         pcc=False,
         get_all_meta_info=True,
@@ -316,7 +351,8 @@ if __name__ == "__main__":
     # transform=tio.Compose(
     # [
     # tio.ToCanonical(),
-    # tio.CropOrPad(target_shape=(128, 128, 128)),
+    # ResizeLargestTo(target_size=128),  # Resize so largest dim = 128
+    # tio.CropOrPad(target_shape=(128, 128, 128)),  # Pad to 128^3
     # ]
     # ),
     # threshold=0,

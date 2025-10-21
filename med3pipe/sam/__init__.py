@@ -17,8 +17,11 @@ from .core import (
     load_mask_tensor,
     roi_pool_embedding,
     load_roi_features,
+    summarize_embedding_shapes_dir,
+    summarize_train_val_embedding_shapes,
     load_labels_from_sheet,
     build_y,
+    ResizeLargestTo,
 )
 
 __all__ = [
@@ -33,6 +36,9 @@ __all__ = [
     "load_mask_tensor",
     "roi_pool_embedding",
     "load_roi_features",
+    "summarize_embedding_shapes_dir",
+    "summarize_train_val_embedding_shapes",
     "load_labels_from_sheet",
     "build_y",
+    "ResizeLargestTo",
 ]
