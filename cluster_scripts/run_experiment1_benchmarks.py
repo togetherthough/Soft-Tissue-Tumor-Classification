@@ -68,13 +68,16 @@ def _resolve_dataset_root(dataset_root: Optional[str], category: str, project_ro
                           f'Tried: {dataset_root!r}, {c1}, {c2}')
 
 
-def run_experiment(config_path: Path, 
-                  outputs_base: Path,
-                  dataset_filter: Optional[List[str]] = None,
-                  skip_tabpfn: bool = False,
-                  skip_localpfn: bool = False,
-                  skip_baselines: bool = False,
-                  epochs_3d: int = 4):
+def run_experiment(
+    config_path: Path,
+    outputs_base: Path,
+    dataset_filter: Optional[List[str]] = None,
+    skip_tabpfn: bool = False,
+    skip_localpfn: bool = False,
+    skip_baselines: bool = False,
+    epochs_3d: int = 4,
+    dry_run: bool = False,
+):
     """
     Run the full benchmark experiment
     
@@ -110,6 +113,48 @@ def run_experiment(config_path: Path,
     all_ds = list(cfg['datasets'].keys())
     datasets_to_run = dataset_filter or all_ds
     print(f'Datasets to run: {datasets_to_run}\n')
+    
+    # Dry run mode - print what will run and exit
+    if dry_run:
+        print(f'{"="*80}')
+        print('DRY RUN MODE - No training will be executed')
+        print(f'{"="*80}\n')
+        
+        print(f'📊 Total datasets: {len(datasets_to_run)}')
+        for i, ds in enumerate(datasets_to_run, 1):
+            print(f'   {i}. {ds}')
+        
+        print(f'\n🔬 Methods to run:')
+        methods_count = 0
+        if not skip_tabpfn:
+            methods_count += 1
+            print(f'   ✓ Med3-TabPFN')
+        else:
+            print(f'   ✗ Med3-TabPFN (skipped)')
+            
+        if not skip_localpfn:
+            methods_count += 1
+            print(f'   ✓ Med3-LoCalPFN')
+        else:
+            print(f'   ✗ Med3-LoCalPFN (skipped)')
+            
+        if not skip_baselines:
+            methods_count += 2
+            print(f'   ✓ DenseNet121-3D ({epochs_3d} epochs)')
+            print(f'   ✓ ViT-3D ({epochs_3d} epochs)')
+        else:
+            print(f'   ✗ DenseNet121-3D (skipped)')
+            print(f'   ✗ ViT-3D (skipped)')
+        
+        total_runs = len(datasets_to_run) * methods_count
+        print(f'\n📈 Total training runs: {total_runs}')
+        print(f'   ({len(datasets_to_run)} datasets × {methods_count} methods)')
+        
+        print(f'\n📁 Outputs will be saved to: {outputs_base}')
+        print(f'\n✅ Dry run complete. Everything looks good!')
+        print(f'   Remove --dry-run flag to execute actual training.\n')
+        
+        return None
     
     results = {}
     
@@ -351,6 +396,11 @@ def main():
         default=4,
         help='Number of epochs for 3D models (default: 4)'
     )
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='Print what will be executed without running (for verification)'
+    )
     
     args = parser.parse_args()
     
@@ -374,6 +424,7 @@ def main():
             skip_localpfn=args.skip_localpfn,
             skip_baselines=args.skip_baselines,
             epochs_3d=args.epochs_3d,
+            dry_run=args.dry_run,
         )
         
         print(f'\n{"="*80}')
