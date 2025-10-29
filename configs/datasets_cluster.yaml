@@ -3,6 +3,10 @@
 # Data location: /data/scratch/r112276/{dataset_name}/
 # Code location: /trinity/home/r112276/Med3Tab-PFN/
 # For local machine use, see datasets.yaml with relative paths
+#
+# SHARED sheet.csv: All datasets use the same sheet.csv file
+# Located at: /data/scratch/r112276/sheet.csv
+# Just copy your sheet.csv once to this location!
 
 datasets:
   gist:
@@ -10,7 +14,7 @@ datasets:
     category: gist
     ct_name: ct_GIST
     labels:
-      sheet_csv: sheet.csv
+      sheet_csv: /data/scratch/r112276/sheet.csv  # Shared sheet.csv for all datasets
       dataset_name: GIST
       subject_col: Subject
       label_col: Diagnosis_binary
@@ -29,7 +33,7 @@ datasets:
     category: lipo
     ct_name: ct_LIPO
     labels:
-      sheet_csv: sheet.csv
+      sheet_csv: /data/scratch/r112276/sheet.csv  # Shared sheet.csv for all datasets
       dataset_name: Lipo
       subject_col: Subject
       label_col: Diagnosis_binary
