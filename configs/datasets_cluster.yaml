@@ -1,14 +1,16 @@
-# Local machine configuration
-# Use relative paths when running on local machine where data is in the repo
-# For cluster use, see datasets_cluster.yaml with absolute paths to /data/scratch/
+# GPU Cluster configuration
+# Use absolute paths to /data/scratch/ where datasets are stored on the cluster
+# Data location: /data/scratch/r112276/{dataset_name}/
+# Code location: /trinity/home/r112276/Med3Tab-PFN/
+# For local machine use, see datasets.yaml with relative paths
 
 datasets:
   gist:
-    dataset_root: data/gist
+    dataset_root: /data/scratch/r112276/gist
     category: gist
     ct_name: ct_GIST
     labels:
-      sheet_csv: ../sheet.csv
+      sheet_csv: sheet.csv
       dataset_name: GIST
       subject_col: Subject
       label_col: Diagnosis_binary
@@ -23,11 +25,11 @@ datasets:
       img_size: 128
 
   lipo:
-    dataset_root: data/lipo
+    dataset_root: /data/scratch/r112276/lipo
     category: lipo
     ct_name: ct_LIPO
     labels:
-      sheet_csv: ../sheet.csv
+      sheet_csv: sheet.csv
       dataset_name: Lipo
       subject_col: Subject
       label_col: Diagnosis_binary

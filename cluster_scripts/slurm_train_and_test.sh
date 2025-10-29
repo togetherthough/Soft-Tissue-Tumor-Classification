@@ -47,7 +47,8 @@ DATA_DIR="${CODE_DIR}"
 RESULTS_DIR="${CODE_DIR}/results/experiment1"
 
 # Which config file to use
-CONFIG_FILE="${CODE_DIR}/configs/datasets.yaml"
+# Use cluster-specific config with absolute paths to /data/scratch/
+CONFIG_FILE="${CODE_DIR}/configs/datasets_cluster.yaml"
 
 echo ""
 echo "Code directory: $CODE_DIR"

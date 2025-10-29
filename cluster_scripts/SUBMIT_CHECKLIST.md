@@ -16,9 +16,10 @@ Use this checklist before submitting your SLURM job to train and test your metho
   - Download from: https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth
 
 ### 3. Configuration Files
-- [ ] `configs/datasets.yaml` exists and is properly configured
-- [ ] Dataset paths in config match your cluster setup
-- [ ] `sheet.csv` files exist for each dataset
+- [ ] `configs/datasets_cluster.yaml` exists with absolute paths to `/data/scratch/r112276/`
+- [ ] Dataset paths in cluster config point to actual data locations
+- [ ] `sheet.csv` files exist in each dataset directory (e.g., `/data/scratch/r112276/gist/sheet.csv`)
+- [ ] **Note**: Cluster uses `datasets_cluster.yaml`, local uses `datasets.yaml` (see `configs/README.md`)
 
 ### 4. SLURM Script Configuration
 Edit `cluster_scripts/slurm_train_and_test.sh`:

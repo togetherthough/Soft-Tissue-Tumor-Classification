@@ -17,10 +17,13 @@ This directory contains SLURM scripts and Python runners for executing Experimen
 
 Before running on the cluster, ensure:
 
-- [ ] Your data is accessible on the cluster
+- [ ] Your data is accessible on the cluster at `/data/scratch/r112276/`
 - [ ] Python environment with dependencies is set up
 - [ ] SAM-Med3D checkpoint is downloaded
-- [ ] Config file (`configs/datasets.yaml`) is properly configured
+- [ ] Cluster config file (`configs/datasets_cluster.yaml`) has correct paths
+  - **Note**: The cluster uses `datasets_cluster.yaml` with absolute paths to `/data/scratch/`
+  - The local config `datasets.yaml` uses relative paths for local development
+  - See `configs/README.md` for details on the two-config system
 
 ### 2. Transfer Files to Cluster
 
