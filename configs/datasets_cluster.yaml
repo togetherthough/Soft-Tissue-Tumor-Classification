@@ -46,3 +46,23 @@ datasets:
       seed: 2025
     extraction:
       img_size: 128
+
+  # ADD MORE DATASETS HERE - Template:
+  # dataset_name:
+  #   dataset_root: /data/scratch/r112276/dataset_name
+  #   category: dataset_name
+  #   ct_name: ct_DATASET_NAME
+  #   labels:
+  #     sheet_csv: /data/scratch/r112276/sheet.csv
+  #     dataset_name: DATASET_NAME  # Name in sheet.csv Dataset column
+  #     subject_col: Subject
+  #     label_col: Diagnosis_binary
+  #     case_suffix: _CT  # or _MR for MRI datasets
+  #   prepare:
+  #     case_glob: null
+  #     max_cases: null
+  #   split:
+  #     ratio: 0.8
+  #     seed: 2025
+  #   extraction:
+  #     img_size: 128
