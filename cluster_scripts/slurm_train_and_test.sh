@@ -85,14 +85,16 @@ echo "=========================================="
 # Option C: Activate virtualenv
 # source ${CODE_DIR}/venv/bin/activate
 
-# Set threading environment variables for optimal performance
+# Set threading environment variables for optimal GPU performance
+# Using 1 thread prevents CPU contention when GPU does the heavy lifting
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
-# Optional: Limit to first GPU if multiple are available
-export CUDA_VISIBLE_DEVICES=0
+# Let SLURM manage GPU assignment (it sets CUDA_VISIBLE_DEVICES automatically)
+# Don't override unless you have a specific reason
+echo "SLURM assigned GPU(s): $CUDA_VISIBLE_DEVICES"
 
 # Verify environment
 echo ""

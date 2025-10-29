@@ -1,15 +1,27 @@
-# Cluster Scripts for Experiment 1
+# Cluster Scripts
 
-This directory contains SLURM scripts and Python runners for executing Experiment 1 on HPC clusters.
+This directory contains SLURM scripts and Python runners for executing experiments on HPC clusters.
 
-## 📋 Overview
+## 📋 Available Experiments
 
-**Experiment 1** trains and tests the following methods on your datasets:
+### Experiment 1: Head-to-Head Benchmarks
+Trains and tests all methods on your datasets:
 
 1. **Med3-TabPFN** - PFN-based classification head on SAM-Med3D features
 2. **Med3-LoCalPFN** - Local context-aware PFN variant
 3. **DenseNet121-3D** - 3D convolutional baseline
 4. **ViT-3D** - 3D Vision Transformer baseline
+
+**Script**: `slurm_train_and_test.sh` → `run_experiment1_benchmarks.py`
+
+### Experiment 3: Classification Head on SAM-Med3D
+Tests if SAM-Med3D features are discriminative by training a simple classification head:
+
+- Trains linear classifier on frozen SAM-Med3D features
+- Evaluates feature quality before running full PFN pipeline
+- Option to fine-tune encoder
+
+**Script**: `slurm_experiment3.sh` → `run_experiment3_classification_head.py`
 
 ## 🚀 Quick Start
 
@@ -197,11 +209,42 @@ conda activate sammed3d
 
 ## 🎯 Example Workflows
 
-### Run All Methods on All Datasets
+### Experiment 1: Run All Methods on All Datasets
 
 ```bash
 sbatch cluster_scripts/slurm_train_and_test.sh
 ```
+
+### Experiment 3: Test Feature Quality
+
+Run classification head experiment to test if SAM-Med3D features are good:
+
+```bash
+# Submit job
+sbatch cluster_scripts/slurm_experiment3.sh
+
+# Or run directly with custom options
+python cluster_scripts/run_experiment3_classification_head.py \
+    --config configs/datasets_cluster.yaml \
+    --epochs 20 \
+    --batch-size 8 \
+    --freeze-encoder
+
+# Fine-tune encoder instead of freezing
+python cluster_scripts/run_experiment3_classification_head.py \
+    --fine-tune \
+    --epochs 50 \
+    --lr 1e-4
+```
+
+**Available options**:
+- `--freeze-encoder`: Freeze SAM-Med3D encoder (default: True)
+- `--fine-tune`: Fine-tune encoder (overrides freeze)
+- `--epochs N`: Number of training epochs (default: 10)
+- `--batch-size N`: Batch size (default: 4)
+- `--lr FLOAT`: Learning rate (default: 1e-3)
+- `--dropout FLOAT`: Dropout rate (default: 0.3)
+- `--datasets gist lipo`: Run on specific datasets only
 
 ### Run Only PFN Methods
 
