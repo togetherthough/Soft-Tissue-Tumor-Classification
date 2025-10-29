@@ -9,6 +9,119 @@
 # Just copy your sheet.csv once to this location!
 
 datasets:
+  crlm:
+    dataset_root: /data/scratch/r112276/crlm
+    category: crlm
+    ct_name: ct_CRLM
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: CRLM  # Check sheet.csv for exact name
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  desmoid:
+    dataset_root: /data/scratch/r112276/desmoid
+    category: desmoid
+    ct_name: ct_DESMOID
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: DESMOID  # Check sheet.csv for exact name
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  gist:
+    dataset_root: /data/scratch/r112276/gist
+    category: gist
+    ct_name: ct_GIST
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: GIST  # Check sheet.csv for exact name
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  lipo:
+    dataset_root: /data/scratch/r112276/lipo
+    category: lipo
+    ct_name: ct_LIPO
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: LIPO  # Check sheet.csv for exact name
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  liver:
+    dataset_root: /data/scratch/r112276/liver
+    category: liver
+    ct_name: ct_LIVER
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: LIVER  # Check sheet.csv for exact name
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  melanoma:
+    dataset_root: /data/scratch/r112276/melanoma
+    category: melanoma
+    ct_name: ct_MELANOMA
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: MELANOMA  # Check sheet.csv for exact name
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
   gist:
     dataset_root: /data/scratch/r112276/gist
     category: gist
