@@ -10,12 +10,19 @@ source ~/anaconda3/etc/profile.d/conda.sh
 conda activate thesis_peron  # CHANGE THIS to your actual environment name
 
 echo ""
-echo "1. Installing torchvision..."
-pip install torchvision
+echo "1. Installing missing packages..."
+pip install torchvision tabpfn
 
 echo ""
 echo "2. Verifying installation..."
-python -c "import torch; import torchvision; print(f'✓ PyTorch: {torch.__version__}'); print(f'✓ torchvision: {torchvision.__version__}')"
+python -c "
+import torch
+import torchvision
+import tabpfn
+print(f'✓ PyTorch: {torch.__version__}')
+print(f'✓ torchvision: {torchvision.__version__}')
+print(f'✓ tabpfn: {tabpfn.__version__}')
+"
 
 echo ""
 echo "3. Setting up shared sheet.csv file..."
