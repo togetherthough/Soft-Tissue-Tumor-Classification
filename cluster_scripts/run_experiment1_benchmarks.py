@@ -346,6 +346,56 @@ def run_experiment(
         print('\nFinal Results:')
         print(combined.to_string())
         
+        # ========== Compute Average Scores Per Method ==========
+        print(f'\n{"="*80}')
+        print('COMPUTING AVERAGE SCORES PER METHOD')
+        print(f'{"="*80}\n')
+        
+        # Only compute averages for numeric columns
+        numeric_cols = ['accuracy', 'macro_f1', 'roc_auc']
+        
+        # Filter to only successful runs (non-null accuracy)
+        successful_runs = combined[combined['accuracy'].notna()].copy()
+        
+        if len(successful_runs) > 0:
+            # Compute averages per method
+            avg_scores = successful_runs.groupby('method')[numeric_cols].agg(['mean', 'std', 'count'])
+            
+            # Flatten multi-index columns
+            avg_scores.columns = ['_'.join(col).strip() for col in avg_scores.columns.values]
+            avg_scores = avg_scores.reset_index()
+            
+            # Rename for clarity
+            avg_scores.rename(columns={
+                'accuracy_mean': 'avg_accuracy',
+                'accuracy_std': 'std_accuracy',
+                'accuracy_count': 'n_datasets',
+                'macro_f1_mean': 'avg_macro_f1',
+                'macro_f1_std': 'std_macro_f1',
+                'macro_f1_count': 'n_datasets_f1',
+                'roc_auc_mean': 'avg_roc_auc',
+                'roc_auc_std': 'std_roc_auc',
+                'roc_auc_count': 'n_datasets_auc'
+            }, inplace=True)
+            
+            # Keep only useful columns
+            avg_scores = avg_scores[['method', 'n_datasets', 'avg_accuracy', 'std_accuracy', 
+                                     'avg_macro_f1', 'std_macro_f1', 'avg_roc_auc', 'std_roc_auc']]
+            
+            # Sort by average ROC AUC (best first)
+            avg_scores = avg_scores.sort_values('avg_roc_auc', ascending=False)
+            
+            # Save average scores
+            avg_csv = outputs_base / 'average_scores_per_method.csv'
+            avg_scores.to_csv(avg_csv, index=False)
+            
+            print(f'[SUCCESS] Average scores saved to: {avg_csv}')
+            print('\nAverage Scores Per Method:')
+            print(avg_scores.to_string(index=False))
+            print(f'\n(Sorted by ROC AUC, higher is better)')
+        else:
+            print('[WARNING] No successful runs to compute averages')
+        
         return combined
     else:
         print('[WARNING] No results to combine')

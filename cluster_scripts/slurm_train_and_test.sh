@@ -166,18 +166,33 @@ if [ $EXIT_CODE -eq 0 ]; then
     
     # Display CSV summary if it exists
     SUMMARY_CSV="${RESULTS_DIR}/combined_benchmarks_summary.csv"
+    AVG_CSV="${RESULTS_DIR}/average_scores_per_method.csv"
+    
     if [ -f "$SUMMARY_CSV" ]; then
         echo ""
         echo "=========================================="
-        echo "Results Summary:"
+        echo "Detailed Results (All Runs):"
         echo "=========================================="
         cat $SUMMARY_CSV
         echo ""
     fi
     
+    # Display average scores per method
+    if [ -f "$AVG_CSV" ]; then
+        echo ""
+        echo "=========================================="
+        echo "⭐ AVERAGE SCORES PER METHOD:"
+        echo "=========================================="
+        cat $AVG_CSV
+        echo ""
+        echo "(Sorted by ROC AUC - higher is better)"
+        echo ""
+    fi
+    
     echo ""
-    echo "To view detailed results:"
-    echo "  cat ${SUMMARY_CSV}"
+    echo "To view results:"
+    echo "  Detailed:  cat ${SUMMARY_CSV}"
+    echo "  Averages:  cat ${AVG_CSV}"
     echo ""
     
 else
