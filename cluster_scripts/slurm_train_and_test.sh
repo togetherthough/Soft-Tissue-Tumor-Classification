@@ -133,7 +133,7 @@ echo ""
 #   --skip-baselines            : skip 3D baselines (DenseNet & ViT)
 #   --epochs-3d N               : number of training epochs for 3D models
 
-srun python cluster_scripts/run_experiment1_benchmarks.py \
+python cluster_scripts/run_experiment1_benchmarks.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
     --epochs-3d 10
