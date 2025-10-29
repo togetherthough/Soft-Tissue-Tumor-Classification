@@ -3,7 +3,7 @@
 # Cluster Setup Verification Script
 # =============================================================================
 # Run this script on the cluster to verify your environment is ready
-# Usage: bash check_cluster_setup.sh
+# Usage: bash check_setup.sh
 
 echo "=========================================="
 echo "Med3Tab-PFN Cluster Setup Verification"
@@ -25,8 +25,10 @@ ERRORS=0
 # -----------------------------------------------------------------------------
 echo "1. Checking directory structure..."
 
-CODE_DIR="/trinity/home/r112276/Med3Tab-PFN"
-DATA_DIR="/data/scratch/r112276"
+# Auto-detect code directory (where this script is located)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CODE_DIR="$(dirname "$SCRIPT_DIR")"  # Go up one level from cluster_scripts/
+DATA_DIR="${CODE_DIR}"  # Assume data is in the same repo by default
 
 if [ -d "$CODE_DIR" ]; then
     echo -e "   ${GREEN}✓${NC} Code directory exists: $CODE_DIR"
@@ -154,46 +156,79 @@ echo ""
 # -----------------------------------------------------------------------------
 echo "5. Checking data files..."
 
-# Check GIST dataset
-if [ -d "$DATA_DIR/data/gist" ]; then
-    echo -e "   ${GREEN}✓${NC} GIST dataset directory found"
-    if [ -f "$DATA_DIR/data/gist/sheet.csv" ]; then
-        echo -e "   ${GREEN}✓${NC} GIST sheet.csv found"
-        GIST_CASES=$(ls -1 $DATA_DIR/data/gist/*.nii* 2>/dev/null | wc -l)
-        echo -e "   ${GREEN}✓${NC} GIST data files: ~$GIST_CASES files"
-        ((SUCCESS+=3))
-    else
-        echo -e "   ${RED}✗${NC} GIST sheet.csv NOT found"
-        ((ERRORS++))
-    fi
+# Check for datasets from config
+if [ -f "$CODE_DIR/configs/datasets.yaml" ]; then
+    # Try to parse dataset names from YAML
+    DATASETS=$(grep -E '^\s+[a-z]+:' "$CODE_DIR/configs/datasets.yaml" | sed 's/://g' | tr -d ' ')
+    echo -e "   Datasets in config: $(echo $DATASETS | tr '\n' ' ')"
+    
+    for ds in $DATASETS; do
+        # Check if dataset directory exists
+        if [ -d "$CODE_DIR/data/$ds" ] || [ -d "$CODE_DIR/$ds" ]; then
+            DS_DIR="$CODE_DIR/data/$ds"
+            [ ! -d "$DS_DIR" ] && DS_DIR="$CODE_DIR/$ds"
+            echo -e "   ${GREEN}✓${NC} $ds dataset directory found: $DS_DIR"
+            
+            # Check for sheet.csv
+            if [ -f "$DS_DIR/sheet.csv" ] || [ -f "$CODE_DIR/sheet.csv" ]; then
+                echo -e "   ${GREEN}✓${NC} $ds sheet.csv found"
+                ((SUCCESS++))
+            else
+                echo -e "   ${YELLOW}⚠${NC} $ds sheet.csv not found at expected location"
+                ((WARNINGS++))
+            fi
+            ((SUCCESS++))
+        else
+            echo -e "   ${YELLOW}⚠${NC} $ds dataset directory not found (will be checked at runtime)"
+            ((WARNINGS++))
+        fi
+    done
 else
-    echo -e "   ${RED}✗${NC} GIST dataset directory NOT found"
-    ((ERRORS++))
+    echo -e "   ${YELLOW}⚠${NC} Cannot check datasets - config file not found"
+    ((WARNINGS++))
 fi
 
-# Check LIPO dataset
-if [ -d "$DATA_DIR/data/lipo" ]; then
-    echo -e "   ${GREEN}✓${NC} LIPO dataset directory found"
-    if [ -f "$DATA_DIR/data/lipo/sheet.csv" ]; then
-        echo -e "   ${GREEN}✓${NC} LIPO sheet.csv found"
-        LIPO_CASES=$(ls -1 $DATA_DIR/data/lipo/*.nii* 2>/dev/null | wc -l)
-        echo -e "   ${GREEN}✓${NC} LIPO data files: ~$LIPO_CASES files"
-        ((SUCCESS+=3))
+echo ""
+
+# -----------------------------------------------------------------------------
+# Check 6: SAM-Med3D Checkpoint
+# -----------------------------------------------------------------------------
+echo "6. Checking SAM-Med3D checkpoint..."
+
+CHECKPOINT_FOUND=0
+if [ -d "$CODE_DIR/SAM-Med3D-main/SAM-Med3D-main/ckpt" ]; then
+    CKPT_DIR="$CODE_DIR/SAM-Med3D-main/SAM-Med3D-main/ckpt"
+    echo -e "   ${GREEN}✓${NC} Checkpoint directory found"
+    ((SUCCESS++))
+    
+    if [ -f "$CKPT_DIR/sam_med3d_turbo.pth" ]; then
+        CKPT_SIZE=$(du -h "$CKPT_DIR/sam_med3d_turbo.pth" | cut -f1)
+        echo -e "   ${GREEN}✓${NC} sam_med3d_turbo.pth found (${CKPT_SIZE})"
+        CHECKPOINT_FOUND=1
+        ((SUCCESS++))
+    elif [ -f "$CKPT_DIR/SAM-Med3D-turbo.pth" ]; then
+        CKPT_SIZE=$(du -h "$CKPT_DIR/SAM-Med3D-turbo.pth" | cut -f1)
+        echo -e "   ${GREEN}✓${NC} SAM-Med3D-turbo.pth found (${CKPT_SIZE})"
+        CHECKPOINT_FOUND=1
+        ((SUCCESS++))
     else
-        echo -e "   ${RED}✗${NC} LIPO sheet.csv NOT found"
+        echo -e "   ${RED}✗${NC} SAM-Med3D checkpoint NOT found"
+        echo -e "   ${YELLOW}⚠${NC} Download from: https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth"
+        echo -e "   ${YELLOW}⚠${NC} Save to: $CKPT_DIR/sam_med3d_turbo.pth"
         ((ERRORS++))
     fi
 else
-    echo -e "   ${RED}✗${NC} LIPO dataset directory NOT found"
+    echo -e "   ${RED}✗${NC} SAM-Med3D checkpoint directory NOT found"
+    echo -e "   ${YELLOW}⚠${NC} Create: mkdir -p $CODE_DIR/SAM-Med3D-main/SAM-Med3D-main/ckpt"
     ((ERRORS++))
 fi
 
 echo ""
 
 # -----------------------------------------------------------------------------
-# Check 6: SLURM Availability
+# Check 7: SLURM Availability
 # -----------------------------------------------------------------------------
-echo "6. Checking SLURM..."
+echo "7. Checking SLURM..."
 
 if command -v sbatch &> /dev/null; then
     echo -e "   ${GREEN}✓${NC} SLURM is available (sbatch found)"
@@ -211,32 +246,26 @@ fi
 echo ""
 
 # -----------------------------------------------------------------------------
-# Check 7: Script Files
+# Check 8: Script Files
 # -----------------------------------------------------------------------------
-echo "7. Checking experiment scripts..."
+echo "8. Checking experiment scripts..."
 
-if [ -f "$CODE_DIR/run_experiment1_benchmarks.py" ]; then
+if [ -f "$CODE_DIR/cluster_scripts/run_experiment1_benchmarks.py" ]; then
     echo -e "   ${GREEN}✓${NC} Python experiment script found"
     ((SUCCESS++))
 else
-    echo -e "   ${RED}✗${NC} run_experiment1_benchmarks.py NOT found"
+    echo -e "   ${RED}✗${NC} cluster_scripts/run_experiment1_benchmarks.py NOT found"
     ((ERRORS++))
 fi
 
-if [ -f "$CODE_DIR/slurm_experiment1_benchmarks.sh" ]; then
-    echo -e "   ${GREEN}✓${NC} SLURM batch script found"
+if [ -f "$CODE_DIR/cluster_scripts/slurm_train_and_test.sh" ]; then
+    echo -e "   ${GREEN}✓${NC} SLURM batch script found (slurm_train_and_test.sh)"
     ((SUCCESS++))
-    
-    # Check if executable
-    if [ -x "$CODE_DIR/slurm_experiment1_benchmarks.sh" ]; then
-        echo -e "   ${GREEN}✓${NC} SLURM script is executable"
-        ((SUCCESS++))
-    else
-        echo -e "   ${YELLOW}⚠${NC} SLURM script not executable (run: chmod +x slurm_experiment1_benchmarks.sh)"
-        ((WARNINGS++))
-    fi
+elif [ -f "$CODE_DIR/cluster_scripts/slurm_experiment1.sh" ]; then
+    echo -e "   ${GREEN}✓${NC} SLURM batch script found (slurm_experiment1.sh)"
+    ((SUCCESS++))
 else
-    echo -e "   ${RED}✗${NC} slurm_experiment1_benchmarks.sh NOT found"
+    echo -e "   ${RED}✗${NC} SLURM batch script NOT found"
     ((ERRORS++))
 fi
 
@@ -265,9 +294,10 @@ if [ $ERRORS -eq 0 ]; then
     echo -e "${GREEN}✓ Your environment is ready!${NC}"
     echo ""
     echo "Next steps:"
-    echo "  1. Review and customize: slurm_experiment1_benchmarks.sh"
-    echo "  2. Submit job: sbatch slurm_experiment1_benchmarks.sh"
-    echo "  3. Monitor: squeue -u r112276"
+    echo "  1. Review and customize: cluster_scripts/slurm_train_and_test.sh"
+    echo "  2. Submit job: sbatch cluster_scripts/slurm_train_and_test.sh"
+    echo "  3. Monitor: squeue -u \$USER"
+    echo "  4. View logs: tail -f logs/exp1_*.log"
     echo ""
     exit 0
 elif [ $ERRORS -le 3 ]; then
@@ -280,7 +310,7 @@ else
     echo -e "${RED}✗ Your environment has critical issues${NC}"
     echo ""
     echo "Please fix the errors above before proceeding."
-    echo "See CLUSTER_EXPERIMENT_GUIDE.md for setup instructions."
+    echo "See cluster_scripts/README.md for setup instructions."
     echo ""
     exit 2
 fi
