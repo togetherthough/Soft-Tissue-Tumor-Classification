@@ -7,6 +7,10 @@
 # SHARED sheet.csv: All datasets use the same sheet.csv file
 # Located at: /data/scratch/r112276/sheet.csv
 # Just copy your sheet.csv once to this location!
+#
+# NOTE: Dataset names are CASE-SENSITIVE!
+# All 6 datasets configured with correct names from sheet.csv:
+# - CRLM (77 samples), Desmoid (203), GIST (246), Lipo (115), Liver (186), Melanoma (103)
 
 datasets:
   crlm:
@@ -34,7 +38,7 @@ datasets:
     ct_name: ct_DESMOID
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
-      dataset_name: DESMOID  # Check sheet.csv for exact name
+      dataset_name: Desmoid  # Fixed: Title case (203 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
       case_suffix: _CT
@@ -72,7 +76,7 @@ datasets:
     ct_name: ct_LIPO
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
-      dataset_name: LIPO  # Check sheet.csv for exact name
+      dataset_name: Lipo  # Fixed: Title case (115 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
       case_suffix: _CT
@@ -91,7 +95,7 @@ datasets:
     ct_name: ct_LIVER
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
-      dataset_name: LIVER  # Check sheet.csv for exact name
+      dataset_name: Liver  # Fixed: Title case (186 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
       case_suffix: _CT
@@ -110,7 +114,7 @@ datasets:
     ct_name: ct_MELANOMA
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
-      dataset_name: MELANOMA  # Check sheet.csv for exact name
+      dataset_name: Melanoma  # Fixed: Title case (103 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
       case_suffix: _CT

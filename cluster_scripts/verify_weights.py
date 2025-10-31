@@ -1,10 +1,36 @@
 #!/usr/bin/env python
 """
 Verify SAM-Med3D weights are loading correctly
+Compatible with Python 2.7+ and Python 3.x
 """
 
+from __future__ import print_function
 import sys
-from pathlib import Path
+import os
+
+# Try pathlib for Python 3, fallback for Python 2
+try:
+    from pathlib import Path
+except ImportError:
+    # Python 2 fallback
+    class Path(object):
+        def __init__(self, path):
+            self.path = os.path.abspath(str(path))
+        def __truediv__(self, other):
+            return Path(os.path.join(self.path, str(other)))
+        def __str__(self):
+            return self.path
+        def exists(self):
+            return os.path.exists(self.path)
+        def stat(self):
+            class Stat:
+                def __init__(self, path):
+                    self.st_size = os.path.getsize(path)
+            return Stat(self.path)
+        @property
+        def parent(self):
+            return Path(os.path.dirname(self.path))
+
 import torch
 
 # Add repo to path
@@ -17,55 +43,56 @@ print("="*80)
 
 # Check checkpoint file
 ckpt_path = repo_root / "SAM-Med3D-main" / "SAM-Med3D-main" / "ckpt" / "sam_med3d_turbo.pth"
-print(f"\n1. Checking checkpoint file...")
-print(f"   Path: {ckpt_path}")
+print("\n1. Checking checkpoint file...")
+print("   Path: {}".format(ckpt_path))
 
 if not ckpt_path.exists():
     print("   ❌ CHECKPOINT NOT FOUND!")
-    print(f"   Please download it to: {ckpt_path}")
+    print("   Please download it to: {}".format(ckpt_path))
     sys.exit(1)
 
 file_size_mb = ckpt_path.stat().st_size / (1024**2)
-print(f"   ✓ Checkpoint exists: {file_size_mb:.1f} MB")
+print("   ✓ Checkpoint exists: {:.1f} MB".format(file_size_mb))
 
 if file_size_mb < 700:
-    print(f"   ⚠️  WARNING: File seems too small (expected ~750MB)")
+    print("   ⚠️  WARNING: File seems too small (expected ~750MB)")
 
 # Load checkpoint
-print(f"\n2. Loading checkpoint...")
+print("\n2. Loading checkpoint...")
 try:
-    checkpoint = torch.load(ckpt_path, map_location='cpu')
-    print(f"   ✓ Checkpoint loaded successfully")
+    checkpoint = torch.load(str(ckpt_path), map_location='cpu')
+    print("   ✓ Checkpoint loaded successfully")
 except Exception as e:
-    print(f"   ❌ ERROR loading checkpoint: {e}")
+    print("   ❌ ERROR loading checkpoint: {}".format(e))
     sys.exit(1)
 
 # Inspect checkpoint structure
-print(f"\n3. Checkpoint structure:")
+print("\n3. Checkpoint structure:")
 if isinstance(checkpoint, dict):
-    print(f"   Keys in checkpoint: {list(checkpoint.keys())}")
+    print("   Keys in checkpoint: {}".format(list(checkpoint.keys())))
     
     # Check for model weights
     if 'model' in checkpoint:
         model_dict = checkpoint['model']
-        print(f"   ✓ Found 'model' key with {len(model_dict)} parameters")
+        print("   ✓ Found 'model' key with {} parameters".format(len(model_dict)))
     elif 'state_dict' in checkpoint:
         model_dict = checkpoint['state_dict']
-        print(f"   ✓ Found 'state_dict' key with {len(model_dict)} parameters")
+        print("   ✓ Found 'state_dict' key with {} parameters".format(len(model_dict)))
     else:
         model_dict = checkpoint
-        print(f"   ✓ Direct state dict with {len(model_dict)} parameters")
+        print("   ✓ Direct state dict with {} parameters".format(len(model_dict)))
     
     # Show some parameter names and shapes
-    print(f"\n4. Sample parameters:")
+    print("\n4. Sample parameters:")
     for i, (name, param) in enumerate(list(model_dict.items())[:5]):
         if isinstance(param, torch.Tensor):
-            print(f"   {i+1}. {name}: shape={tuple(param.shape)}, mean={param.float().mean().item():.6f}")
+            print("   {}. {}: shape={}, mean={:.6f}".format(
+                i+1, name, tuple(param.shape), param.float().mean().item()))
         else:
-            print(f"   {i+1}. {name}: {type(param)}")
+            print("   {}. {}: {}".format(i+1, name, type(param)))
     
     # Check if weights look reasonable (not all zeros or random)
-    print(f"\n5. Weight sanity checks:")
+    print("\n5. Weight sanity checks:")
     weight_values = []
     for name, param in list(model_dict.items())[:10]:
         if isinstance(param, torch.Tensor) and param.numel() > 0:
@@ -73,25 +100,25 @@ if isinstance(checkpoint, dict):
     
     if weight_values:
         avg_weight = sum(weight_values) / len(weight_values)
-        print(f"   Average absolute weight value: {avg_weight:.6f}")
+        print("   Average absolute weight value: {:.6f}".format(avg_weight))
         
         if avg_weight < 1e-6:
-            print(f"   ⚠️  WARNING: Weights are very small (might be all zeros)")
+            print("   ⚠️  WARNING: Weights are very small (might be all zeros)")
         elif avg_weight > 100:
-            print(f"   ⚠️  WARNING: Weights are very large (might be corrupted)")
+            print("   ⚠️  WARNING: Weights are very large (might be corrupted)")
         else:
-            print(f"   ✓ Weights look reasonable")
+            print("   ✓ Weights look reasonable")
 else:
-    print(f"   ⚠️  Unexpected checkpoint format: {type(checkpoint)}")
+    print("   ⚠️  Unexpected checkpoint format: {}".format(type(checkpoint)))
 
 # Try loading into actual model
-print(f"\n6. Testing model loading...")
+print("\n6. Testing model loading...")
 try:
     sys.path.insert(0, str(repo_root / "SAM-Med3D-main" / "SAM-Med3D-main"))
     from segment_anything.build_sam3D import sam_model_registry3D
     
     sam3d = sam_model_registry3D['vit_b_ori'](checkpoint=None)
-    print(f"   ✓ Model architecture created")
+    print("   ✓ Model architecture created")
     
     # Load weights
     if isinstance(checkpoint, dict) and 'model' in checkpoint:
@@ -102,18 +129,18 @@ try:
         state_dict = checkpoint
     
     sam3d.load_state_dict(state_dict, strict=False)
-    print(f"   ✓ Weights loaded into model")
+    print("   ✓ Weights loaded into model")
     
     # Check a specific layer to verify it's not random
     first_conv = None
     for name, param in sam3d.named_parameters():
         if 'conv' in name.lower() and len(param.shape) >= 2:
             first_conv = param
-            print(f"   ✓ Checking layer '{name}': shape={tuple(param.shape)}")
-            print(f"     Mean: {param.data.mean().item():.6f}")
-            print(f"     Std:  {param.data.std().item():.6f}")
-            print(f"     Min:  {param.data.min().item():.6f}")
-            print(f"     Max:  {param.data.max().item():.6f}")
+            print("   ✓ Checking layer '{}': shape={}".format(name, tuple(param.shape)))
+            print("     Mean: {:.6f}".format(param.data.mean().item()))
+            print("     Std:  {:.6f}".format(param.data.std().item()))
+            print("     Min:  {:.6f}".format(param.data.min().item()))
+            print("     Max:  {:.6f}".format(param.data.max().item()))
             break
     
     if first_conv is not None:
@@ -121,15 +148,15 @@ try:
         # Pretrained weights should have different statistics
         std_val = first_conv.data.std().item()
         if std_val < 1e-6:
-            print(f"   ❌ WARNING: Weights might be all zeros!")
+            print("   ❌ WARNING: Weights might be all zeros!")
         else:
-            print(f"   ✓ Weights appear to be loaded (not random init)")
+            print("   ✓ Weights appear to be loaded (not random init)")
     
 except Exception as e:
-    print(f"   ⚠️  Could not test model loading: {e}")
+    print("   ⚠️  Could not test model loading: {}".format(e))
     import traceback
     traceback.print_exc()
 
-print(f"\n{'='*80}")
+print("\n" + "="*80)
 print("Verification complete!")
-print(f"{'='*80}\n")
+print("="*80 + "\n")

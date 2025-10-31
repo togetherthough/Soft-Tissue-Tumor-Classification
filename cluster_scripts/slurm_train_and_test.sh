@@ -139,7 +139,7 @@ echo ""
 python cluster_scripts/run_experiment1_benchmarks.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
-    --epochs-3d 20
+    --epochs-3d ${EPOCHS:-20}  # Can override with EPOCHS env var
 
 # Capture exit status
 EXIT_CODE=$?

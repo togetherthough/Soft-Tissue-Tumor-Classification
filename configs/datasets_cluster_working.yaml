@@ -1,0 +1,129 @@
+# GPU Cluster configuration - WORKING DATASETS ONLY
+# Use absolute paths to /data/scratch/ where datasets are stored on the cluster
+# Data location: /data/scratch/r112276/{dataset_name}/
+# Code location: /trinity/home/r112276/Med3Tab-PFN/
+#
+# SHARED sheet.csv: All datasets use the same sheet.csv file
+# Located at: /data/scratch/r112276/sheet.csv
+#
+# CONFIRMED WORKING: crlm, gist, lipo (have entries in sheet.csv)
+# NOT WORKING: desmoid, liver, melanoma (no matching entries in sheet.csv)
+
+datasets:
+  crlm:
+    dataset_root: /data/scratch/r112276/crlm
+    category: crlm
+    ct_name: ct_CRLM
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: CRLM  # Confirmed in sheet.csv
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  gist:
+    dataset_root: /data/scratch/r112276/gist
+    category: gist
+    ct_name: ct_GIST
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: GIST  # Confirmed in sheet.csv
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  lipo:
+    dataset_root: /data/scratch/r112276/lipo
+    category: lipo
+    ct_name: ct_LIPO
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: LIPO  # Confirmed in sheet.csv (might be "Lipo")
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+# ==============================================================================
+# DISABLED DATASETS - Uncomment and fix dataset_name after checking sheet.csv
+# ==============================================================================
+#
+# desmoid:
+#   dataset_root: /data/scratch/r112276/desmoid
+#   category: desmoid
+#   ct_name: ct_DESMOID
+#   labels:
+#     sheet_csv: /data/scratch/r112276/sheet.csv
+#     dataset_name: ???  # CHECK sheet.csv - might be "Desmoid", "DESMOID", etc.
+#     subject_col: Subject
+#     label_col: Diagnosis_binary
+#     case_suffix: _CT
+#   prepare:
+#     case_glob: null
+#     max_cases: null
+#   split:
+#     ratio: 0.8
+#     seed: 2025
+#   extraction:
+#     img_size: 128
+#
+# liver:
+#   dataset_root: /data/scratch/r112276/liver
+#   category: liver
+#   ct_name: ct_LIVER
+#   labels:
+#     sheet_csv: /data/scratch/r112276/sheet.csv
+#     dataset_name: ???  # CHECK sheet.csv - might be "Liver", "LIVER", etc.
+#     subject_col: Subject
+#     label_col: Diagnosis_binary
+#     case_suffix: _CT
+#   prepare:
+#     case_glob: null
+#     max_cases: null
+#   split:
+#     ratio: 0.8
+#     seed: 2025
+#   extraction:
+#     img_size: 128
+#
+# melanoma:
+#   dataset_root: /data/scratch/r112276/melanoma
+#   category: melanoma
+#   ct_name: ct_MELANOMA
+#   labels:
+#     sheet_csv: /data/scratch/r112276/sheet.csv
+#     dataset_name: ???  # CHECK sheet.csv - might be "Melanoma", "MELANOMA", etc.
+#     subject_col: Subject
+#     label_col: Diagnosis_binary
+#     case_suffix: _CT
+#   prepare:
+#     case_glob: null
+#     max_cases: null
+#   split:
+#     ratio: 0.8
+#     seed: 2025
+#   extraction:
+#     img_size: 128
