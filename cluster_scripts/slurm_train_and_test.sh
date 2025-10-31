@@ -71,19 +71,11 @@ echo "=========================================="
 echo "Setting up environment..."
 echo "=========================================="
 
-# Option A: Load modules (uncomment and adjust for your cluster)
-# module purge
-# module load Python/3.10.8
-# module load CUDA/11.8.0
-# module load cuDNN/8.7.0.84-CUDA-11.8.0
+# Load modules
+module load Python/3.10
 
-# Option B: Activate conda environment (recommended)
-# Adjust the path to your conda installation
-# source /path/to/conda/etc/profile.d/conda.sh
-# conda activate sammed3d
-
-# Option C: Activate virtualenv
-# source ${CODE_DIR}/venv/bin/activate
+# Activate virtual environment
+source /trinity/home/r112276/Med3Tab-PFN/venv/bin/activate
 
 # Set threading environment variables for optimal GPU performance
 # Using 1 thread prevents CPU contention when GPU does the heavy lifting

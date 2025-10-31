@@ -48,6 +48,12 @@ echo "=========================================="
 echo "Setting up environment..."
 echo "=========================================="
 
+# Load modules
+module load Python/3.10
+
+# Activate virtual environment
+source /trinity/home/r112276/Med3Tab-PFN/venv/bin/activate
+
 # Threading optimization for GPU
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1

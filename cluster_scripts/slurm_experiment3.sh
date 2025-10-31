@@ -50,9 +50,11 @@ echo "=========================================="
 echo "Setting up environment..."
 echo "=========================================="
 
-# Activate your conda environment (EDIT THIS LINE)
-# source ~/anaconda3/etc/profile.d/conda.sh
-# conda activate sammed3d
+# Load modules
+module load Python/3.10
+
+# Activate virtual environment
+source /trinity/home/r112276/Med3Tab-PFN/venv/bin/activate
 
 # Set threading environment variables for optimal GPU performance
 # Using 1 thread prevents CPU contention when GPU does the heavy lifting

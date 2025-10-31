@@ -51,9 +51,11 @@ echo "=========================================="
 echo "Setting up environment..."
 echo "=========================================="
 
-# Activate your conda environment (EDIT THIS LINE)
-# source ~/anaconda3/etc/profile.d/conda.sh
-# conda activate thesis_peron
+# Load modules
+module load Python/3.10
+
+# Activate virtual environment
+source /trinity/home/r112276/Med3Tab-PFN/venv/bin/activate
 
 # Set threading environment variables for optimal GPU performance
 export OMP_NUM_THREADS=1
