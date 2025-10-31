@@ -2,8 +2,8 @@
 #SBATCH --job-name=exp3_clf_head
 #SBATCH --output=logs/exp3_%j.log
 #SBATCH --error=logs/exp3_error_%j.log
-#SBATCH --partition=long     # CHANGE THIS: long, short, express, gpu, etc.
-#SBATCH --time=1-00:00:00    # ADJUST TIME: for all 6 datasets, may need more
+#SBATCH --partition=short    # ← Using SHORT partition
+#SBATCH --time=0-12:00:00    # 12 hours max for short partition
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
@@ -12,19 +12,20 @@
 #SBATCH --mail-user=YOUR_EMAIL@example.com
 
 # =============================================================================
-# Experiment 3: Classification Head on SAM-Med3D Features
+# Experiment 3: Classification Head on SAM-Med3D Features (SHORT PARTITION)
 # =============================================================================
 # Tests if SAM-Med3D features are discriminative for tumor classification
 # by training a simple classification head on top of the frozen encoder.
 #
 # Usage:
-#   sbatch cluster_scripts/slurm_experiment3.sh
+#   sbatch cluster_scripts/slurm_experiment3_short.sh
 # =============================================================================
 
 echo "=========================================="
 echo "SLURM Job ID: $SLURM_JOB_ID"
 echo "Job Name: $SLURM_JOB_NAME"
 echo "Node: $SLURM_NODELIST"
+echo "Partition: $SLURM_JOB_PARTITION"
 echo "Start Time: $(date)"
 echo "=========================================="
 
@@ -52,17 +53,15 @@ echo "=========================================="
 
 # Activate your conda environment (EDIT THIS LINE)
 # source ~/anaconda3/etc/profile.d/conda.sh
-# conda activate sammed3d
+# conda activate thesis_peron
 
 # Set threading environment variables for optimal GPU performance
-# Using 1 thread prevents CPU contention when GPU does the heavy lifting
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
-# Let SLURM manage GPU assignment (it sets CUDA_VISIBLE_DEVICES automatically)
-# Don't override unless you have a specific reason
+# Let SLURM manage GPU assignment
 echo "SLURM assigned GPU(s): $CUDA_VISIBLE_DEVICES"
 
 # Verify environment
@@ -82,16 +81,16 @@ if torch.cuda.is_available():
     print(f'GPU name: {torch.cuda.get_device_name(0)}')
 "
 
-# Run experiment
+# Run experiment on ALL datasets (no --datasets flag = runs all from config)
 echo ""
 echo "=========================================="
-echo "Starting Experiment 3"
+echo "Starting Experiment 3 - All 6 Datasets"
 echo "=========================================="
 
 python cluster_scripts/run_experiment3_classification_head.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
-    --epochs 20 \
+    --epochs 10 \
     --batch-size 4 \
     --freeze-encoder
 
