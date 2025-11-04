@@ -1,0 +1,67 @@
+# Dataset Analysis Configuration
+# Simplified config for exploring and analyzing datasets
+# No train/test splits - just load all available data for analysis
+#
+# This config is used for:
+# - Dataset property analysis
+# - Visualization and exploration
+# - Quality checks
+# - Statistical analysis
+#
+# All 6 tumor datasets available
+
+datasets:
+  crlm:
+    dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\crlm
+    category: crlm
+    ct_name: ct_CRLM
+    modality: CT
+    description: Colorectal Liver Metastases
+    expected_samples: 77
+    
+  desmoid:
+    dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\desmoid
+    category: desmoid
+    ct_name: ct_DESMOID
+    modality: CT
+    description: Desmoid Tumors
+    expected_samples: 203
+    
+  gist:
+    dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\gist
+    category: gist
+    ct_name: ct_GIST
+    modality: CT
+    description: Gastrointestinal Stromal Tumors
+    expected_samples: 246
+    
+  lipo:
+    dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\lipo
+    category: lipo
+    ct_name: ct_LIPO
+    modality: MR
+    description: Liposarcoma (MRI)
+    expected_samples: 115
+    
+  liver:
+    dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\liver
+    category: liver
+    ct_name: ct_LIVER
+    modality: CT
+    description: Liver Tumors
+    expected_samples: 186
+    
+  melanoma:
+    dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\melanoma
+    category: melanoma
+    ct_name: ct_MELANOMA
+    modality: CT
+    description: Melanoma
+    expected_samples: 103
+
+# Analysis settings (optional)
+analysis:
+  img_size: 128  # Standard preprocessing size
+  visualization:
+    n_samples_per_dataset: 3  # Number of samples to visualize per dataset
+    slices_per_sample: 5  # Number of slices to show per sample
