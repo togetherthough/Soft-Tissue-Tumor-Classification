@@ -49,7 +49,7 @@ echo "Setting up environment..."
 echo "=========================================="
 
 # Load modules
-module load Python/3.10
+module load Python/3.9
 
 # Activate virtual environment (thesis_peron)
 source /trinity/home/r112276/Med3Tab-PFN/thesis_peron/bin/activate
