@@ -51,9 +51,8 @@ echo "=========================================="
 # Load modules
 module load Python/3.10
 
-# Activate conda environment (thesis_peron)
-source ~/anaconda3/etc/profile.d/conda.sh
-conda activate thesis_peron
+# Activate virtual environment (thesis_peron)
+source /trinity/home/r112276/Med3Tab-PFN/thesis_peron/bin/activate
 
 # Threading optimization for GPU
 export OMP_NUM_THREADS=1
