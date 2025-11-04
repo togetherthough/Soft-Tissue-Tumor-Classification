@@ -114,6 +114,20 @@ def run_experiment(
     datasets_to_run = dataset_filter or all_ds
     print(f'Datasets to run: {datasets_to_run}\n')
     
+    # Find SAM-Med3D root and checkpoint
+    print("Checking SAM-Med3D checkpoint...")
+    sam3d_root = find_default_sam3d_root()
+    checkpoint_path = sam3d_root / 'ckpt' / 'sam_med3d_turbo.pth'
+    if not checkpoint_path.exists():
+        checkpoint_path = sam3d_root / 'ckpt' / 'SAM-Med3D-turbo.pth'
+    if not checkpoint_path.exists():
+        print("⚠️  WARNING: No SAM-Med3D checkpoint found! Will use random weights.")
+        print(f"   Download from: https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth")
+        print(f"   Save to: {sam3d_root / 'ckpt' / 'sam_med3d_turbo.pth'}")
+        checkpoint_path = None
+    else:
+        print(f"✅ Checkpoint found: {checkpoint_path}\n")
+    
     # Dry run mode - print what will run and exit
     if dry_run:
         print(f'{"="*80}')
@@ -169,6 +183,7 @@ def run_experiment(
                 config_path=config_path,
                 dataset_names=datasets_to_run,
                 outputs_base_dir=outputs_base,
+                checkpoint=checkpoint_path,
             )
             results['tabpfn'] = res_tab
             print('\n[SUCCESS] TabPFN completed')
@@ -188,6 +203,7 @@ def run_experiment(
                 config_path=config_path,
                 dataset_names=datasets_to_run,
                 outputs_base_dir=outputs_base,
+                checkpoint=checkpoint_path,
                 local_k=8,
                 local_fit_adapter=True,
                 local_adapter_epochs=8,
