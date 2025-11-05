@@ -85,7 +85,10 @@ echo "=========================================="
 echo "Running Experiment 1 - TEST MODE (3 epochs)"
 echo "=========================================="
 
-python cluster_scripts/run_experiment1_benchmarks.py \
+# Force unbuffered output for Python
+export PYTHONUNBUFFERED=1
+
+python -u cluster_scripts/run_experiment1_benchmarks.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
     --epochs-3d 3

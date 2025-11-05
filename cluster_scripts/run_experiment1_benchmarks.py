@@ -30,11 +30,15 @@ os.environ['NUMEXPR_NUM_THREADS'] = '1'
 usr = site.getusersitepackages()
 sys.path = [p for p in sys.path if p != usr]
 
+print("[DEBUG] Importing torch...", flush=True)
 import torch
 torch.set_num_threads(1)
+print("[DEBUG] Torch imported successfully", flush=True)
 
+print("[DEBUG] Importing yaml and pandas...", flush=True)
 import yaml
 import pandas as pd
+print("[DEBUG] YAML and pandas imported successfully", flush=True)
 
 
 def _add_repo_root_to_sys_path():
@@ -92,9 +96,13 @@ def run_experiment(
     """
     
     # Import after path setup
+    print("[DEBUG] Importing med3pipe modules...", flush=True)
     from med3pipe.pipelines import run_multi_tabpfn, run_multi_localpfn
+    print("[DEBUG] Imported pipelines", flush=True)
     from med3pipe.data.prepare import Sam3DPaths, find_default_sam3d_root
+    print("[DEBUG] Imported data.prepare", flush=True)
     from med3pipe.vision.v3d import train_eval_densenet121_3d, train_eval_vit_3d
+    print("[DEBUG] All med3pipe imports complete", flush=True)
     
     print(f'\n{"="*80}')
     print(f'EXPERIMENT 1: BENCHMARKS')
@@ -419,6 +427,7 @@ def run_experiment(
 
 
 def main():
+    print("[DEBUG] Script started, parsing arguments...", flush=True)
     parser = argparse.ArgumentParser(
         description='Run Experiment 1: Head-to-head Benchmarks'
     )
@@ -469,9 +478,12 @@ def main():
     )
     
     args = parser.parse_args()
+    print("[DEBUG] Arguments parsed successfully", flush=True)
     
     # Setup paths
+    print("[DEBUG] Adding repo root to sys.path...", flush=True)
     repo_root = _add_repo_root_to_sys_path()
+    print("[DEBUG] Repo root added", flush=True)
     config_path = Path(args.config)
     if not config_path.is_absolute():
         config_path = repo_root / config_path
@@ -481,6 +493,7 @@ def main():
         outputs_base = repo_root / outputs_base
     
     # Run experiment
+    print(f"[DEBUG] Calling run_experiment with config: {config_path}", flush=True)
     try:
         results = run_experiment(
             config_path=config_path,
