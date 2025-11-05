@@ -2,7 +2,7 @@
 #SBATCH --job-name=exp3_clf_head
 #SBATCH --output=logs/exp3_%j.log
 #SBATCH --error=logs/exp3_error_%j.log
-#SBATCH --partition=gpu      # ← Using GPU partition
+#SBATCH --partition=long
 #SBATCH --time=1-00:00:00    # 1 day max
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
