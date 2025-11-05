@@ -35,13 +35,13 @@ datasets:
   desmoid:
     dataset_root: /data/scratch/r112276/desmoid
     category: desmoid
-    ct_name: ct_DESMOID
+    ct_name: mr_DESMOID  # MR modality, not CT
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
       dataset_name: Desmoid  # Fixed: Title case (203 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _CT
+      case_suffix: _MR  # MR modality
     prepare:
       case_glob: null
       max_cases: null
@@ -73,13 +73,13 @@ datasets:
   lipo:
     dataset_root: /data/scratch/r112276/lipo
     category: lipo
-    ct_name: ct_LIPO
+    ct_name: mr_LIPO
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
       dataset_name: Lipo  # Fixed: Title case (115 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _CT
+      case_suffix: _MR
     prepare:
       case_glob: null
       max_cases: null
@@ -92,13 +92,13 @@ datasets:
   liver:
     dataset_root: /data/scratch/r112276/liver
     category: liver
-    ct_name: ct_LIVER
+    ct_name: mr_LIVER  # MR modality, not CT
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
       dataset_name: Liver  # Fixed: Title case (186 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _CT
+      case_suffix: _MR  # MR modality
     prepare:
       case_glob: null
       max_cases: null
@@ -148,7 +148,7 @@ datasets:
   lipo:
     dataset_root: /data/scratch/r112276/lipo
     category: lipo
-    ct_name: ct_LIPO
+    ct_name: mr_LIPO
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv  # Shared sheet.csv for all datasets
       dataset_name: Lipo
