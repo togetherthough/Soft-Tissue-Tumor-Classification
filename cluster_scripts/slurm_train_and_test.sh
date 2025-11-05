@@ -129,7 +129,10 @@ echo ""
 #   --skip-baselines            : skip 3D baselines (DenseNet & ViT)
 #   --epochs-3d N               : number of training epochs for 3D models
 
-python cluster_scripts/run_experiment1_benchmarks.py \
+# Force unbuffered output for Python
+export PYTHONUNBUFFERED=1
+
+python -u cluster_scripts/run_experiment1_benchmarks.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
     --epochs-3d ${EPOCHS:-20}  # Can override with EPOCHS env var
