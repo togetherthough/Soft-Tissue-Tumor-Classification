@@ -3,9 +3,9 @@
 #SBATCH --output=logs/exp3_%j.log
 #SBATCH --error=logs/exp3_error_%j.log
 #SBATCH --partition=hm
-#SBATCH --nodes=1
-#SBATCH --nodelist=gpu005,gpu006
+#SBATCH --nodelist=gpu[005-006]
 #SBATCH --time=1-00:00:00    # ADJUST TIME: for all 6 datasets, may need more
+#SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1

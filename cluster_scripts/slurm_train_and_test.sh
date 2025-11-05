@@ -3,9 +3,9 @@
 #SBATCH --output=logs/exp1_%j.log
 #SBATCH --error=logs/exp1_error_%j.log
 #SBATCH --partition=hm
-#SBATCH --nodes=1
-#SBATCH --nodelist=gpu005,gpu006
+#SBATCH --nodelist=gpu[005-006]
 #SBATCH --time=2-00:00:00
+#SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
