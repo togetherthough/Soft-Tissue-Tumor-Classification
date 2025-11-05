@@ -85,6 +85,7 @@ def run_single_dataset(
     # Discovery/prepare
     case_glob: Optional[str] = None,
     max_cases: Optional[int] = None,
+    segmentation_pattern: Optional[str] = None,
     # Split
     split_ratio: float = 0.8,
     seed: int = 2025,
@@ -134,6 +135,7 @@ def run_single_dataset(
         ct_name=ct_name,
         case_glob=case_glob,
         max_cases=max_cases,
+        segmentation_pattern=segmentation_pattern,
     )
 
     # 3) Split into imagesVal/labelsVal (copy by default)

@@ -177,13 +177,35 @@ def find_image_files(nifti_dir: Path) -> List[Path]:
     return lesion_images
 
 
-def find_segmentation_files(nifti_dir: Path) -> List[Path]:
-    """Find all segmentation files in the directory."""
+def find_segmentation_files(nifti_dir: Path, pattern: Optional[str] = None) -> List[Path]:
+    """Find all segmentation files in the directory.
+    
+    Args:
+        nifti_dir: Directory to search for segmentation files
+        pattern: Optional specific pattern to match (e.g., "segmentation_lesion0_RAD.nii.gz" for CRLM)
+    """
     nifti_dir = Path(nifti_dir)
+    
+    # If a specific pattern is provided, look for that exact file
+    if pattern:
+        specific_seg = nifti_dir / pattern
+        if specific_seg.exists():
+            return [specific_seg]
+        # If not found as exact match, try as glob pattern
+        pattern_segs = sorted(nifti_dir.glob(pattern))
+        if pattern_segs:
+            return pattern_segs
+    
+    # Default behavior: try standard patterns
     main_seg = nifti_dir / "segmentation.nii.gz"
     if main_seg.exists():
         return [main_seg]
+    
+    # Try multiple patterns for lesion segmentations
     lesion_segs = sorted(nifti_dir.glob("segmentation_lesion_*.nii.gz"))
+    if not lesion_segs:
+        # CRLM-specific pattern: segmentation_lesion0_RAD.nii.gz
+        lesion_segs = sorted(nifti_dir.glob("segmentation_lesion*_*.nii.gz"))
     if not lesion_segs:
         lesion_segs = sorted(nifti_dir.glob("segmentation_*.nii.gz"))
     return lesion_segs
@@ -257,6 +279,7 @@ def prepare_for_sam3d(
     ct_name: str = "ct_GIST",
     case_glob: Optional[str] = None,
     max_cases: Optional[int] = None,
+    segmentation_pattern: Optional[str] = None,
 ) -> Tuple[int, Sam3DPaths]:
     """Prepare dataset into SAM-Med3D folder layout under `sam3d_root`.
 
@@ -288,7 +311,7 @@ def prepare_for_sam3d(
 
         try:
             image_files = find_image_files(case_dir)
-            seg_files = find_segmentation_files(case_dir)
+            seg_files = find_segmentation_files(case_dir, pattern=segmentation_pattern)
 
             if not image_files:
                 print(f"[SKIP] {case_id}: No image files found in {case_dir}")

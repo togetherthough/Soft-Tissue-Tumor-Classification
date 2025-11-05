@@ -97,6 +97,7 @@ def run_classification_head_for_dataset(
     labels_cfg = dataset_config.get('labels', {}) or {}
     split_cfg = dataset_config.get('split', {}) or {}
     extraction_cfg = dataset_config.get('extraction', {}) or {}
+    prepare_cfg = dataset_config.get('prepare', {}) or {}
     
     # Resolve dataset root
     ds_root_raw = dataset_config.get('dataset_root')
@@ -179,6 +180,7 @@ def run_classification_head_for_dataset(
     
     # Step 1: Prepare dataset
     print(f'\n[1/4] Preparing dataset...')
+    segmentation_pattern = prepare_cfg.get('segmentation_pattern', None)
     prepared, paths = prepare_for_sam3d(
         dataset_root=ds_root,
         sam3d_root=sam3d_root,
@@ -186,6 +188,7 @@ def run_classification_head_for_dataset(
         ct_name=ct_name,
         case_glob=None,
         max_cases=None,
+        segmentation_pattern=segmentation_pattern,
     )
     print(f'✓ Prepared {prepared} cases')
     

@@ -194,6 +194,7 @@ def _run_multi_core(
         prep = ds_cfg.get("prepare", {}) or {}
         case_glob = prep.get("case_glob")
         max_cases = prep.get("max_cases")
+        segmentation_pattern = prep.get("segmentation_pattern")
 
         split = ds_cfg.get("split", {}) or {}
         split_ratio = float(split.get("ratio", 0.8))
@@ -252,6 +253,7 @@ def _run_multi_core(
                 ct_name=ct_name,
                 case_glob=case_glob,
                 max_cases=max_cases,
+                segmentation_pattern=segmentation_pattern,
                 split_ratio=split_ratio,
                 seed=seed,
                 sam3d_root=sam3d_root,
