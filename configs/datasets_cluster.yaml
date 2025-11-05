@@ -26,7 +26,8 @@ datasets:
     prepare:
       case_glob: null
       max_cases: null
-      segmentation_pattern: "segmentation_lesion0_RAD.nii.gz"  # CRLM-specific segmentation naming
+      image_pattern: image_lesion0_RAD.nii.gz  # CRLM-specific file naming
+      seg_pattern: segmentation_lesion0_RAD.nii.gz  # CRLM-specific file naming
     split:
       ratio: 0.8
       seed: 2025
@@ -36,13 +37,13 @@ datasets:
   desmoid:
     dataset_root: /data/scratch/r112276/desmoid
     category: desmoid
-    ct_name: mr_DESMOID  # MR modality, not CT
+    ct_name: ct_DESMOID
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
       dataset_name: Desmoid  # Fixed: Title case (203 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _MR  # MR modality
+      case_suffix: _CT
     prepare:
       case_glob: null
       max_cases: null
@@ -74,13 +75,13 @@ datasets:
   lipo:
     dataset_root: /data/scratch/r112276/lipo
     category: lipo
-    ct_name: mr_LIPO
+    ct_name: ct_LIPO
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
       dataset_name: Lipo  # Fixed: Title case (115 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _MR
+      case_suffix: _CT
     prepare:
       case_glob: null
       max_cases: null
@@ -93,13 +94,13 @@ datasets:
   liver:
     dataset_root: /data/scratch/r112276/liver
     category: liver
-    ct_name: mr_LIVER  # MR modality, not CT
+    ct_name: ct_LIVER
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
       dataset_name: Liver  # Fixed: Title case (186 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _MR  # MR modality
+      case_suffix: _CT
     prepare:
       case_glob: null
       max_cases: null
@@ -149,7 +150,7 @@ datasets:
   lipo:
     dataset_root: /data/scratch/r112276/lipo
     category: lipo
-    ct_name: mr_LIPO
+    ct_name: ct_LIPO
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv  # Shared sheet.csv for all datasets
       dataset_name: Lipo
@@ -179,6 +180,8 @@ datasets:
   #   prepare:
   #     case_glob: null
   #     max_cases: null
+  #     image_pattern: null  # Optional: specific filename (e.g., "image_lesion0_RAD.nii.gz" for CRLM)
+  #     seg_pattern: null    # Optional: specific filename (e.g., "segmentation_lesion0_RAD.nii.gz" for CRLM)
   #   split:
   #     ratio: 0.8
   #     seed: 2025

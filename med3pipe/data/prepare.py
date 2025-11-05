@@ -167,9 +167,30 @@ def to_binary_mask(label_img: sitk.Image) -> sitk.Image:
     return out
 
 
-def find_image_files(nifti_dir: Path) -> List[Path]:
-    """Find all image files in the directory (image.nii.gz or image_lesion_*.nii.gz)."""
+def find_image_files(nifti_dir: Path, pattern: Optional[str] = None) -> List[Path]:
+    """Find all image files in the directory.
+    
+    Args:
+        nifti_dir: Directory to search for image files
+        pattern: Optional specific pattern to match (e.g., "image_lesion0_RAD.nii.gz" for CRLM)
+                If provided, looks for exact filename first, then falls back to default patterns
+    
+    Returns:
+        List of paths to image files found
+    """
     nifti_dir = Path(nifti_dir)
+    
+    # If specific pattern provided, try it first
+    if pattern:
+        specific = nifti_dir / pattern
+        if specific.exists():
+            return [specific]
+        # Also try as a glob pattern
+        pattern_matches = sorted(nifti_dir.glob(pattern))
+        if pattern_matches:
+            return pattern_matches
+    
+    # Fall back to default patterns
     main_image = nifti_dir / "image.nii.gz"
     if main_image.exists():
         return [main_image]
@@ -183,29 +204,28 @@ def find_segmentation_files(nifti_dir: Path, pattern: Optional[str] = None) -> L
     Args:
         nifti_dir: Directory to search for segmentation files
         pattern: Optional specific pattern to match (e.g., "segmentation_lesion0_RAD.nii.gz" for CRLM)
+                If provided, looks for exact filename first, then falls back to default patterns
+    
+    Returns:
+        List of paths to segmentation files found
     """
     nifti_dir = Path(nifti_dir)
     
-    # If a specific pattern is provided, look for that exact file
+    # If specific pattern provided, try it first
     if pattern:
-        specific_seg = nifti_dir / pattern
-        if specific_seg.exists():
-            return [specific_seg]
-        # If not found as exact match, try as glob pattern
-        pattern_segs = sorted(nifti_dir.glob(pattern))
-        if pattern_segs:
-            return pattern_segs
+        specific = nifti_dir / pattern
+        if specific.exists():
+            return [specific]
+        # Also try as a glob pattern
+        pattern_matches = sorted(nifti_dir.glob(pattern))
+        if pattern_matches:
+            return pattern_matches
     
-    # Default behavior: try standard patterns
+    # Fall back to default patterns
     main_seg = nifti_dir / "segmentation.nii.gz"
     if main_seg.exists():
         return [main_seg]
-    
-    # Try multiple patterns for lesion segmentations
     lesion_segs = sorted(nifti_dir.glob("segmentation_lesion_*.nii.gz"))
-    if not lesion_segs:
-        # CRLM-specific pattern: segmentation_lesion0_RAD.nii.gz
-        lesion_segs = sorted(nifti_dir.glob("segmentation_lesion*_*.nii.gz"))
     if not lesion_segs:
         lesion_segs = sorted(nifti_dir.glob("segmentation_*.nii.gz"))
     return lesion_segs
@@ -279,7 +299,8 @@ def prepare_for_sam3d(
     ct_name: str = "ct_GIST",
     case_glob: Optional[str] = None,
     max_cases: Optional[int] = None,
-    segmentation_pattern: Optional[str] = None,
+    image_pattern: Optional[str] = None,
+    seg_pattern: Optional[str] = None,
 ) -> Tuple[int, Sam3DPaths]:
     """Prepare dataset into SAM-Med3D folder layout under `sam3d_root`.
 
@@ -287,6 +308,16 @@ def prepare_for_sam3d(
     - For each case, merges multiple images/segmentations when present.
     - Aligns image geometry to label geometry; converts labels to binary.
     - Writes outputs into `data/train/<category>/<ct_name>/{imagesTr,labelsTr}` as `<case_id>.nii.gz`.
+
+    Args:
+        dataset_root: Root directory containing raw dataset
+        sam3d_root: SAM-Med3D installation root
+        category: Dataset category name
+        ct_name: CT dataset name
+        case_glob: Optional glob pattern for finding case directories
+        max_cases: Optional limit on number of cases to process
+        image_pattern: Optional pattern for finding image files (e.g., "image_lesion0_RAD.nii.gz" for CRLM)
+        seg_pattern: Optional pattern for finding segmentation files (e.g., "segmentation_lesion0_RAD.nii.gz" for CRLM)
 
     Returns (n_prepared, paths).
     """
@@ -310,8 +341,8 @@ def prepare_for_sam3d(
             case_id = case_dir.name  # fallback
 
         try:
-            image_files = find_image_files(case_dir)
-            seg_files = find_segmentation_files(case_dir, pattern=segmentation_pattern)
+            image_files = find_image_files(case_dir, pattern=image_pattern)
+            seg_files = find_segmentation_files(case_dir, pattern=seg_pattern)
 
             if not image_files:
                 print(f"[SKIP] {case_id}: No image files found in {case_dir}")

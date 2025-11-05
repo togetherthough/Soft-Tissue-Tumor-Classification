@@ -25,7 +25,7 @@ datasets:
   lipo:
     dataset_root: data/lipo
     category: lipo
-    ct_name: mr_LIPO
+    ct_name: ct_LIPO
     labels:
       sheet_csv: ../sheet.csv
       dataset_name: Lipo

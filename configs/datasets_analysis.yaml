@@ -22,9 +22,9 @@ datasets:
   desmoid:
     dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\desmoid
     category: desmoid
-    ct_name: mr_DESMOID
-    modality: MR
-    description: Desmoid Tumors (MRI)
+    ct_name: ct_DESMOID
+    modality: CT
+    description: Desmoid Tumors
     expected_samples: 203
     
   gist:
@@ -38,7 +38,7 @@ datasets:
   lipo:
     dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\lipo
     category: lipo
-    ct_name: mr_LIPO
+    ct_name: ct_LIPO
     modality: MR
     description: Liposarcoma (MRI)
     expected_samples: 115
@@ -46,9 +46,9 @@ datasets:
   liver:
     dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\liver
     category: liver
-    ct_name: mr_LIVER
-    modality: MR
-    description: Liver Tumors (MRI)
+    ct_name: ct_LIVER
+    modality: CT
+    description: Liver Tumors
     expected_samples: 186
     
   melanoma:

@@ -23,6 +23,8 @@ datasets:
     prepare:
       case_glob: null
       max_cases: null
+      image_pattern: image_lesion0_RAD.nii.gz  # CRLM-specific file naming
+      seg_pattern: segmentation_lesion0_RAD.nii.gz  # CRLM-specific file naming
     split:
       ratio: 0.8
       seed: 2025
