@@ -60,7 +60,7 @@ if file_size_mb < 700:
 # Load checkpoint
 print("\n2. Loading checkpoint...")
 try:
-    checkpoint = torch.load(str(ckpt_path), map_location='cpu')
+    checkpoint = torch.load(str(ckpt_path), map_location='cpu', weights_only=False)
     print("   ✓ Checkpoint loaded successfully")
 except Exception as e:
     print("   ❌ ERROR loading checkpoint: {}".format(e))

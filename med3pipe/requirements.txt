@@ -1,9 +1,11 @@
 numpy>=1.20
 SimpleITK>=2.0
 torch
+torchvision
 torchio
 pandas
 scikit-learn
 joblib
 monai
 PyYAML
+tabpfn

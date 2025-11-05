@@ -108,7 +108,7 @@ def _build_sam(
     sam.train()
     if checkpoint is not None:
         with open(checkpoint, "rb") as f:
-            state_dict = torch.load(f)
+            state_dict = torch.load(f, weights_only=False)
         try:
             if 'model' in state_dict.keys():
                 sam.load_state_dict(state_dict['model'])

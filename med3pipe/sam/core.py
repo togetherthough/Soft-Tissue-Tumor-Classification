@@ -288,7 +288,7 @@ def load_roi_features(
     X: List[np.ndarray] = []
     ids: List[str] = []
     for pt in sorted(Path(feat_dir).glob("*_embedding.pt")):
-        d = torch.load(str(pt), map_location="cpu")
+        d = torch.load(str(pt), map_location="cpu", weights_only=False)
         emb = d["embedding"]
         if emb.dim() == 2:  # (1, C) -> add spatial dims
             emb = emb.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
@@ -321,7 +321,7 @@ def load_roi_features(
 # ------------------------------
 
 def _embedding_shape_from_pt(pt: Path) -> Tuple[int, ...]:
-    d = torch.load(str(pt), map_location="cpu")
+    d = torch.load(str(pt), map_location="cpu", weights_only=False)
     emb = d["embedding"]
     return tuple(emb.shape)
 

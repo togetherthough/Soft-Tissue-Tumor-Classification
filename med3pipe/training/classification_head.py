@@ -422,7 +422,7 @@ def train_classification_head(
     if output_dir is not None:
         checkpoint_path = output_dir / "best_model.pt"
         if checkpoint_path.exists():
-            checkpoint = torch.load(checkpoint_path, map_location=device)
+            checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
             model.load_state_dict(checkpoint["model_state_dict"])
             print(f"✓ Loaded best model from epoch {checkpoint['epoch']}")
     
