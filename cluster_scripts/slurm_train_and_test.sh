@@ -2,7 +2,6 @@
 #SBATCH --job-name=med3_exp1
 #SBATCH --output=logs/exp1_%j.log
 #SBATCH --error=logs/exp1_error_%j.log
-#SBATCH --partition=hm
 #SBATCH --nodes=1
 # Tip: if you must target specific nodes, export SBATCH_NODELIST=gpuXYZ before calling sbatch.
 #SBATCH --time=2-00:00:00

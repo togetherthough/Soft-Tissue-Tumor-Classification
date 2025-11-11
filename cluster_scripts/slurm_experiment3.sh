@@ -2,7 +2,6 @@
 #SBATCH --job-name=exp3_clf_head
 #SBATCH --output=logs/exp3_%j.log
 #SBATCH --error=logs/exp3_error_%j.log
-#SBATCH --partition=hm
 #SBATCH --nodes=1
 # Tip: export SBATCH_NODELIST=gpuXYZ before submission if you must target a specific node.
 #SBATCH --time=1-00:00:00    # ADJUST TIME: for all 6 datasets, may need more
