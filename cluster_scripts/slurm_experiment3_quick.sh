@@ -33,7 +33,7 @@ echo "=========================================="
 
 # Path configuration
 CODE_DIR="${SLURM_SUBMIT_DIR}"
-RESULTS_DIR="${CODE_DIR}/results/classification_head"
+RESULTS_DIR="${CODE_DIR}/results/classification_head_quick"
 CONFIG_FILE="${CODE_DIR}/configs/datasets_cluster.yaml"
 
 echo ""
