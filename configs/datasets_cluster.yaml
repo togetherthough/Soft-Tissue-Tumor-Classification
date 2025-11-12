@@ -43,7 +43,7 @@ datasets:
       dataset_name: Desmoid  # Fixed: Title case (203 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _CT
+      case_suffix: _MR
     prepare:
       case_glob: null
       max_cases: null
@@ -100,7 +100,7 @@ datasets:
       dataset_name: Liver  # Fixed: Title case (186 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _CT
+      case_suffix: _MR
     prepare:
       case_glob: null
       max_cases: null
