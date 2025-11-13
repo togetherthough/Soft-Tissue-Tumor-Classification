@@ -75,13 +75,13 @@ datasets:
   lipo:
     dataset_root: /data/scratch/r112276/lipo
     category: lipo
-    ct_name: ct_LIPO
+    ct_name: mr_LIPO
     labels:
       sheet_csv: /data/scratch/r112276/sheet.csv
       dataset_name: Lipo  # Fixed: Title case (115 samples)
       subject_col: Subject
       label_col: Diagnosis_binary
-      case_suffix: _CT
+      case_suffix: _MR
     prepare:
       case_glob: null
       max_cases: null
@@ -120,43 +120,6 @@ datasets:
       subject_col: Subject
       label_col: Diagnosis_binary
       case_suffix: _CT
-    prepare:
-      case_glob: null
-      max_cases: null
-    split:
-      ratio: 0.8
-      seed: 2025
-    extraction:
-      img_size: 128
-  gist:
-    dataset_root: /data/scratch/r112276/gist
-    category: gist
-    ct_name: ct_GIST
-    labels:
-      sheet_csv: /data/scratch/r112276/sheet.csv  # Shared sheet.csv for all datasets
-      dataset_name: GIST
-      subject_col: Subject
-      label_col: Diagnosis_binary
-      case_suffix: _CT
-    prepare:
-      case_glob: null
-      max_cases: null
-    split:
-      ratio: 0.8
-      seed: 2025
-    extraction:
-      img_size: 128
-
-  lipo:
-    dataset_root: /data/scratch/r112276/lipo
-    category: lipo
-    ct_name: ct_LIPO
-    labels:
-      sheet_csv: /data/scratch/r112276/sheet.csv  # Shared sheet.csv for all datasets
-      dataset_name: Lipo
-      subject_col: Subject
-      label_col: Diagnosis_binary
-      case_suffix: _MR
     prepare:
       case_glob: null
       max_cases: null
