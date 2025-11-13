@@ -1,74 +1,72 @@
 dataset,category,ct_name,method,accuracy,macro_f1,roc_auc,out_dir,metrics_path,pred_path,error
-crlm,crlm,ct_CRLM,tabpfn,0.6875,0.6862745098039216,0.625,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/crlm_ct_CRLM_20251029_151213,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/crlm_ct_CRLM_20251029_151213/tabpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/crlm_ct_CRLM_20251029_151213/tabpfn_val_predictions.csv,
-desmoid,desmoid,ct_DESMOID,tabpfn,,,,,,,"No rows found after filtering by dataset (if applied)
+crlm,crlm,ct_CRLM,tabpfn,0.6875,0.6862745098039216,0.625,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/crlm_ct_CRLM_20251112_102301,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/crlm_ct_CRLM_20251112_102301/tabpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/crlm_ct_CRLM_20251112_102301/tabpfn_val_predictions.csv,
+desmoid,desmoid,ct_DESMOID,tabpfn,,,,,,,"X arrays must be 2D
 Traceback (most recent call last):
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 248, in _run_multi_core
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 250, in _run_multi_core
     res = run_single_dataset(
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 176, in run_single_dataset
-    df, lab_map = load_labels_from_sheet(
-ValueError: No rows found after filtering by dataset (if applied)
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 202, in run_single_dataset
+    tabpfn_res = tabpfn_pipeline(
+AssertionError: X arrays must be 2D
 "
-gist,gist,ct_GIST,tabpfn,0.58,0.5784825371336813,0.6288,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/gist_ct_GIST_20251029_152023,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/gist_ct_GIST_20251029_152023/tabpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/gist_ct_GIST_20251029_152023/tabpfn_val_predictions.csv,
-lipo,lipo,ct_LIPO,tabpfn,0.5217391304347826,0.5180952380952382,0.6363636363636365,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/lipo_ct_LIPO_20251029_153122,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/lipo_ct_LIPO_20251029_153122/tabpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/lipo_ct_LIPO_20251029_153122/tabpfn_val_predictions.csv,
-liver,liver,ct_LIVER,tabpfn,,,,,,,"No rows found after filtering by dataset (if applied)
+gist,gist,ct_GIST,tabpfn,0.58,0.5784825371336813,0.6272,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/gist_ct_GIST_20251112_102931,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/gist_ct_GIST_20251112_102931/tabpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/gist_ct_GIST_20251112_102931/tabpfn_val_predictions.csv,
+lipo,lipo,ct_LIPO,tabpfn,0.5217391304347826,0.5180952380952382,0.6363636363636365,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/lipo_ct_LIPO_20251112_104451,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/lipo_ct_LIPO_20251112_104451/tabpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/lipo_ct_LIPO_20251112_104451/tabpfn_val_predictions.csv,
+liver,liver,ct_LIVER,tabpfn,,,,,,,"X arrays must be 2D
 Traceback (most recent call last):
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 248, in _run_multi_core
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 250, in _run_multi_core
     res = run_single_dataset(
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 176, in run_single_dataset
-    df, lab_map = load_labels_from_sheet(
-ValueError: No rows found after filtering by dataset (if applied)
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 202, in run_single_dataset
+    tabpfn_res = tabpfn_pipeline(
+AssertionError: X arrays must be 2D
 "
-melanoma,melanoma,ct_MELANOMA,tabpfn,,,,,,,"No rows found after filtering by dataset (if applied)
+melanoma,melanoma,ct_MELANOMA,tabpfn,0.8095238095238095,0.8055555555555556,0.7727272727272727,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/melanoma_ct_MELANOMA_20251112_104935,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/melanoma_ct_MELANOMA_20251112_104935/tabpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/melanoma_ct_MELANOMA_20251112_104935/tabpfn_val_predictions.csv,
+crlm,crlm,ct_CRLM,localpfn,0.375,0.375,0.375,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_crlm_ct_CRLM_20251112_110002,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_crlm_ct_CRLM_20251112_110002/localpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_crlm_ct_CRLM_20251112_110002/localpfn_val_predictions.csv,
+desmoid,desmoid,ct_DESMOID,localpfn,,,,,,,"X arrays must be 2D
 Traceback (most recent call last):
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 248, in _run_multi_core
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 250, in _run_multi_core
     res = run_single_dataset(
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 176, in run_single_dataset
-    df, lab_map = load_labels_from_sheet(
-ValueError: No rows found after filtering by dataset (if applied)
-"
-crlm,crlm,ct_CRLM,localpfn,0.375,0.375,0.375,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_crlm_ct_CRLM_20251029_154545,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_crlm_ct_CRLM_20251029_154545/localpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_crlm_ct_CRLM_20251029_154545/localpfn_val_predictions.csv,
-desmoid,desmoid,ct_DESMOID,localpfn,,,,,,,"No rows found after filtering by dataset (if applied)
-Traceback (most recent call last):
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 248, in _run_multi_core
-    res = run_single_dataset(
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 176, in run_single_dataset
-    df, lab_map = load_labels_from_sheet(
-ValueError: No rows found after filtering by dataset (if applied)
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 230, in run_single_dataset
+    local_res = localpfn_pipeline(
+AssertionError: X arrays must be 2D
 "
 gist,gist,ct_GIST,localpfn,,,,,,,"all input arrays must have the same shape
 Traceback (most recent call last):
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 248, in _run_multi_core
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 250, in _run_multi_core
     res = run_single_dataset(
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 226, in run_single_dataset
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 230, in run_single_dataset
     local_res = localpfn_pipeline(
 ValueError: all input arrays must have the same shape
 "
-lipo,lipo,ct_LIPO,localpfn,0.5652173913043478,0.5576923076923077,0.6212121212121212,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_lipo_ct_LIPO_20251029_160609,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_lipo_ct_LIPO_20251029_160609/localpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_lipo_ct_LIPO_20251029_160609/localpfn_val_predictions.csv,
-liver,liver,ct_LIVER,localpfn,,,,,,,"No rows found after filtering by dataset (if applied)
+lipo,lipo,ct_LIPO,localpfn,0.5652173913043478,0.5576923076923077,0.6212121212121212,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_lipo_ct_LIPO_20251112_114113,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_lipo_ct_LIPO_20251112_114113/localpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_lipo_ct_LIPO_20251112_114113/localpfn_val_predictions.csv,
+liver,liver,ct_LIVER,localpfn,,,,,,,"X arrays must be 2D
 Traceback (most recent call last):
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 248, in _run_multi_core
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 250, in _run_multi_core
     res = run_single_dataset(
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 176, in run_single_dataset
-    df, lab_map = load_labels_from_sheet(
-ValueError: No rows found after filtering by dataset (if applied)
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 230, in run_single_dataset
+    local_res = localpfn_pipeline(
+AssertionError: X arrays must be 2D
 "
-melanoma,melanoma,ct_MELANOMA,localpfn,,,,,,,"No rows found after filtering by dataset (if applied)
-Traceback (most recent call last):
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 248, in _run_multi_core
-    res = run_single_dataset(
-  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 176, in run_single_dataset
-    df, lab_map = load_labels_from_sheet(
-ValueError: No rows found after filtering by dataset (if applied)
-"
-crlm,crlm,ct_CRLM,densenet121_3d,0.75,0.7333333333333334,0.6666666666666667,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/densenet121_3d_20251029_163218,,,
-crlm,crlm,ct_CRLM,vit3d,0.625,0.38461538461538464,0.75,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/vit3d_20251029_164535,,,
-desmoid,desmoid,ct_DESMOID,densenet121_3d,,,,,,,No rows found after filtering by dataset (if applied)
-desmoid,desmoid,ct_DESMOID,vit3d,,,,,,,No rows found after filtering by dataset (if applied)
-gist,gist,ct_GIST,densenet121_3d,0.72,0.6783088235294117,0.7337662337662337,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/densenet121_3d_20251029_172856,,,
-gist,gist,ct_GIST,vit3d,0.44,0.3055555555555556,0.2905844155844156,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/vit3d_20251029_180948,,,
-lipo,lipo,ct_LIPO,densenet121_3d,0.782608695652174,0.731934731934732,0.7416666666666667,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/densenet121_3d_20251029_181817,,,
-lipo,lipo,ct_LIPO,vit3d,0.6521739130434783,0.39473684210526316,0.5583333333333333,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/vit3d_20251029_182603,,,
-liver,liver,ct_LIVER,densenet121_3d,,,,,,,No rows found after filtering by dataset (if applied)
-liver,liver,ct_LIVER,vit3d,,,,,,,No rows found after filtering by dataset (if applied)
-melanoma,melanoma,ct_MELANOMA,densenet121_3d,,,,,,,No rows found after filtering by dataset (if applied)
-melanoma,melanoma,ct_MELANOMA,vit3d,,,,,,,No rows found after filtering by dataset (if applied)
+melanoma,melanoma,ct_MELANOMA,localpfn,0.42857142857142855,0.42727272727272725,0.43636363636363634,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_melanoma_ct_MELANOMA_20251112_115016,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_melanoma_ct_MELANOMA_20251112_115016/localpfn_metrics.json,/trinity/home/r112276/Med3Tab-PFN/results/experiment1/tabpfn_runs/local_melanoma_ct_MELANOMA_20251112_115016/localpfn_val_predictions.csv,
+crlm,crlm,ct_CRLM,densenet121_3d,0.75,0.75,0.7166666666666667,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/densenet121_3d_20251112_132642,,,
+crlm,crlm,ct_CRLM,vit3d,0.625,0.38461538461538464,0.75,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/vit3d_20251112_135304,,,
+desmoid,desmoid,ct_DESMOID,densenet121_3d,,,,,,,"No labeled volumes found under /trinity/home/r112276/Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/data/train/desmoid/ct_DESMOID/imagesTr. This usually means case IDs from files do not match label map keys.
+- Example case IDs on disk (first 10): ['Desmoid-001_MR', 'Desmoid-002_MR', 'Desmoid-003_MR', 'Desmoid-004_MR', 'Desmoid-005_MR', 'Desmoid-006_MR', 'Desmoid-007_MR', 'Desmoid-008_MR', 'Desmoid-009_MR', 'Desmoid-010_MR']
+- Example keys in label map (first 10): ['Desmoid-001_CT', 'Desmoid-002_CT', 'Desmoid-003_CT', 'Desmoid-004_CT', 'Desmoid-005_CT', 'Desmoid-006_CT', 'Desmoid-007_CT', 'Desmoid-008_CT', 'Desmoid-009_CT', 'Desmoid-010_CT']
+Check dataset_name, subject_col, label_col, case_suffix, and sheet_csv path."
+desmoid,desmoid,ct_DESMOID,vit3d,,,,,,,"No labeled volumes found under /trinity/home/r112276/Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/data/train/desmoid/ct_DESMOID/imagesTr. This usually means case IDs from files do not match label map keys.
+- Example case IDs on disk (first 10): ['Desmoid-001_MR', 'Desmoid-002_MR', 'Desmoid-003_MR', 'Desmoid-004_MR', 'Desmoid-005_MR', 'Desmoid-006_MR', 'Desmoid-007_MR', 'Desmoid-008_MR', 'Desmoid-009_MR', 'Desmoid-010_MR']
+- Example keys in label map (first 10): ['Desmoid-001_CT', 'Desmoid-002_CT', 'Desmoid-003_CT', 'Desmoid-004_CT', 'Desmoid-005_CT', 'Desmoid-006_CT', 'Desmoid-007_CT', 'Desmoid-008_CT', 'Desmoid-009_CT', 'Desmoid-010_CT']
+Check dataset_name, subject_col, label_col, case_suffix, and sheet_csv path."
+gist,gist,ct_GIST,densenet121_3d,0.7,0.6703296703296704,0.7646103896103896,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/densenet121_3d_20251112_181542,,,
+gist,gist,ct_GIST,vit3d,0.44,0.3055555555555556,0.2905844155844156,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/vit3d_20251112_193605,,,
+lipo,lipo,ct_LIPO,densenet121_3d,0.782608695652174,0.731934731934732,0.6583333333333333,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/densenet121_3d_20251112_211941,,,
+lipo,lipo,ct_LIPO,vit3d,0.6521739130434783,0.39473684210526316,0.5583333333333333,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/vit3d_20251112_214413,,,
+liver,liver,ct_LIVER,densenet121_3d,,,,,,,"No labeled volumes found under /trinity/home/r112276/Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/data/train/liver/ct_LIVER/imagesTr. This usually means case IDs from files do not match label map keys.
+- Example case IDs on disk (first 10): ['Liver-001_MR', 'Liver-002_MR', 'Liver-003_MR', 'Liver-004_MR', 'Liver-005_MR', 'Liver-006_MR', 'Liver-007_MR', 'Liver-008_MR', 'Liver-009_MR', 'Liver-010_MR']
+- Example keys in label map (first 10): ['Liver-001_CT', 'Liver-002_CT', 'Liver-003_CT', 'Liver-004_CT', 'Liver-005_CT', 'Liver-006_CT', 'Liver-007_CT', 'Liver-008_CT', 'Liver-009_CT', 'Liver-010_CT']
+Check dataset_name, subject_col, label_col, case_suffix, and sheet_csv path."
+liver,liver,ct_LIVER,vit3d,,,,,,,"No labeled volumes found under /trinity/home/r112276/Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/data/train/liver/ct_LIVER/imagesTr. This usually means case IDs from files do not match label map keys.
+- Example case IDs on disk (first 10): ['Liver-001_MR', 'Liver-002_MR', 'Liver-003_MR', 'Liver-004_MR', 'Liver-005_MR', 'Liver-006_MR', 'Liver-007_MR', 'Liver-008_MR', 'Liver-009_MR', 'Liver-010_MR']
+- Example keys in label map (first 10): ['Liver-001_CT', 'Liver-002_CT', 'Liver-003_CT', 'Liver-004_CT', 'Liver-005_CT', 'Liver-006_CT', 'Liver-007_CT', 'Liver-008_CT', 'Liver-009_CT', 'Liver-010_CT']
+Check dataset_name, subject_col, label_col, case_suffix, and sheet_csv path."
+melanoma,melanoma,ct_MELANOMA,densenet121_3d,0.6666666666666666,0.4,0.5918367346938775,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/densenet121_3d_20251112_234210,,,
+melanoma,melanoma,ct_MELANOMA,vit3d,0.6666666666666666,0.4,0.4693877551020408,/trinity/home/r112276/Med3Tab-PFN/notebooks/baselines/vit3d_20251113_003053,,,
