@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=exp3_clf_head
+#SBATCH --partition=long
 #SBATCH --output=logs/exp3_%j.log
 #SBATCH --error=logs/exp3_error_%j.log
 #SBATCH --nodes=1

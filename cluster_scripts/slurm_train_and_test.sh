@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=med3_exp1
+#SBATCH --partition=long
 #SBATCH --output=logs/exp1_%j.log
 #SBATCH --error=logs/exp1_error_%j.log
 #SBATCH --nodes=1
