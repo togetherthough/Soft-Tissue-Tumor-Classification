@@ -10,7 +10,7 @@ Flow:
 3)    Create validation split (copy by default) into imagesVal/labelsVal (folder-level, for caching only).
 4)    Build SAM-Med3D model (optionally load checkpoint).
 4)    Extract TRAIN and VAL embeddings.
-5)    ROI-pool to per-case vectors using masks.
+5)    Pool to per-case vectors using Global Average Pooling.
 6)    Load labels and build label map.
 6b)   Perform a STRATIFIED feature-level split from the UNION of features (train_ratio).
 7)    Standardize (fit on TRAIN) + PCA.
@@ -34,7 +34,7 @@ from ..sam.core import (
     build_sam3d_model,
     default_feature_dirs,
     extract_embeddings_train_val,
-    load_roi_features,
+    load_pooled_features,
     load_labels_from_sheet,
     build_y,
 )
@@ -116,7 +116,7 @@ def run_single_dataset(
 ) -> EndToEndResult | LocalEndToEndResult:
     """Unified single-dataset pipeline.
 
-    Runs Steps 1–6 (prepare, split, extract, ROI-pool, labels) once, then branches to
+    Runs Steps 1–6 (prepare, split, extract, pool, labels) once, then branches to
     TabPFN or LoCalPFN for Steps 7–8 depending on `method`.
     """
     dataset_root = Path(dataset_root)

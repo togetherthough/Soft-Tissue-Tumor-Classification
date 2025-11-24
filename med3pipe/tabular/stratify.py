@@ -6,7 +6,7 @@ from typing import Dict, Sequence, Tuple, List
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from med3pipe.sam.core import load_roi_features
+from med3pipe.sam.core import load_pooled_features
 
 
 def _clean_id(cid: str) -> str:
@@ -23,7 +23,7 @@ def stratified_features_split(
     seed: int = 2025,
 ) -> Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]:
     """
-    Build a stratified train/val split from the UNION of ROI-pooled features coming
+    Build a stratified train/val split from the UNION of pooled features coming
     from the dataset's train and val feature directories.
 
     Returns: (X_train, y_train, ids_train), (X_val, y_val, ids_val)
@@ -31,16 +31,16 @@ def stratified_features_split(
     - y_* dtype: int
     - ids_*: case_id strings aligned to rows
     """
-    # Load ROI features from both dirs (global pool)
+    # Load features from both dirs
     X_parts: List[np.ndarray] = []
     id_parts: List[List[str]] = []
 
-    Xtr, idtr = load_roi_features(Path(feat_train_dir), labels_tr_dir)
+    Xtr, idtr = load_pooled_features(Path(feat_train_dir), labels_tr_dir)
     if Xtr.size:
         X_parts.append(Xtr)
         id_parts.append(idtr)
 
-    Xva, idva = load_roi_features(Path(feat_val_dir), labels_val_dir)
+    Xva, idva = load_pooled_features(Path(feat_val_dir), labels_val_dir)
     if Xva.size:
         X_parts.append(Xva)
         id_parts.append(idva)

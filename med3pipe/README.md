@@ -15,7 +15,7 @@ and provides methods for steps 4–6 as reusable functions:
 3. Create a validation split by copying (or moving) a subset into
    `data/validation/<category>/<ct_name>/{imagesVal, labelsVal}`.
 4. Build a SAM-Med3D model and extract image-encoder embeddings.
-5. ROI-pool embeddings with lesion masks to get per-case feature vectors.
+5. Pool embeddings using Global Average Pooling to get per-case feature vectors.
 6. Load labels from CSV (e.g., `gist/sheet.csv`) and align to case IDs.
 
 The implementation mirrors the notebook behavior and incorporates the following fixes:
@@ -155,7 +155,7 @@ from pathlib import Path
 from med3pipe import (
     prepare_for_sam3d, split_validation, Sam3DPaths,
     build_sam3d_model, extract_embeddings_train_val, default_feature_dirs,
-    load_roi_features, load_labels_from_sheet, build_y,
+    load_pooled_features, load_labels_from_sheet, build_y,
     find_default_sam3d_root,
 )
 
@@ -179,9 +179,9 @@ model = build_sam3d_model(sam3d_root=SAM3D_ROOT, checkpoint=ckpt, model_type="vi
 feat_dirs = default_feature_dirs(SAM3D_ROOT, category=paths.category, ct_name=paths.ct_name)
 extract_embeddings_train_val(paths, model, sam3d_root=SAM3D_ROOT)
 
-# ROI-pool to per-case vectors
-X_train, ids_train = load_roi_features(feat_dirs.train_dir, paths.labels_tr)
-X_val,   ids_val   = load_roi_features(feat_dirs.val_dir,   paths.labels_val)
+# Pool to per-case vectors using Global Average Pooling
+X_train, ids_train = load_pooled_features(feat_dirs.train_dir, paths.labels_tr)
+X_val,   ids_val   = load_pooled_features(feat_dirs.val_dir,   paths.labels_val)
 
 # Load labels and align to case IDs
 df_gist, lab_map = load_labels_from_sheet(Path("gist") / "sheet.csv")

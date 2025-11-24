@@ -252,37 +252,31 @@ def load_mask_tensor(mask_path: Path, pre_transform: Optional[Callable] = None) 
     return mask
 
 
-def roi_pool_embedding(embedding: torch.Tensor, mask: Optional[torch.Tensor]) -> np.ndarray:
-    """ROI pool a single embedding (1,C,d,h,w) by the provided mask (1,D,H,W).
+def average_pool_embedding(embedding: torch.Tensor, mask: Optional[torch.Tensor]) -> np.ndarray:
+    """Pool a single embedding.
 
-    If mask is None or empty after downsampling, fallback is global average pooling.
-    Returns a numpy array of shape (C,).
+    Previously performed ROI pooling if mask provided.
+    NOW: Always performs Global Average Pooling (GAP) to match classification head,
+    ignoring the mask argument.
     """
     B, C, d, h, w = embedding.shape
     assert B == 1
-    if mask is None:
-        return embedding.mean(dim=(2, 3, 4)).squeeze(0).cpu().numpy()
-    mask_ds = F.interpolate(mask.unsqueeze(0), size=(d, h, w), mode="nearest").squeeze(0)
-    weights = (mask_ds > 0.5).float()
-    wsum = weights.sum()
-    if wsum < 1.0:
-        return embedding.mean(dim=(2, 3, 4)).squeeze(0).cpu().numpy()
-    pooled = (embedding * weights).sum(dim=(2, 3, 4)) / wsum
-    return pooled.squeeze(0).cpu().numpy()
+    # Always use global average pooling, ignoring mask
+    return embedding.mean(dim=(2, 3, 4)).squeeze(0).cpu().numpy()
 
 
 def case_id_from_pt(pt: Path) -> str:
     return pt.stem.replace("_embedding", "")
 
 
-def load_roi_features(
+def load_pooled_features(
     feat_dir: Path,
     label_dir: Optional[Path],
     pre_transform: Optional[Callable] = None,
 ) -> Tuple[np.ndarray, List[str]]:
-    """Load ROI pooled feature vectors from embedding .pt files in `feat_dir`.
+    """Load feature vectors from embedding .pt files in `feat_dir`.
 
-    If `label_dir` is provided, masks will be used for ROI pooling; otherwise global average pooling.
+    Always uses Global Average Pooling (GAP). label_dir is ignored for pooling purposes.
     Returns (X, ids) where X is shape (N, C) and ids are case_id strings.
     """
     X: List[np.ndarray] = []
@@ -293,15 +287,11 @@ def load_roi_features(
         if emb.dim() == 2:  # (1, C) -> add spatial dims
             emb = emb.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
         cid = case_id_from_pt(pt)
+        
+        # Mask loading removed as we switched to GAP
         m = None
-        if label_dir is not None:
-            mp = Path(label_dir) / f"{cid}.nii.gz"
-            if mp.exists():
-                try:
-                    m = load_mask_tensor(mp, pre_transform=pre_transform)
-                except Exception as e:
-                    print(f"[WARN] mask load failed {cid}: {e}")
-        feat = roi_pool_embedding(emb, m)
+        
+        feat = average_pool_embedding(emb, m)
         X.append(feat)
         ids.append(cid)
     if not X:
