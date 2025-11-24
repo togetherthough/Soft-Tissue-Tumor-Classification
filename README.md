@@ -17,8 +17,8 @@ python scripts/test_sam_features.py --dataset gist --epochs 10 --freeze
 - `notebooks/MultiDataset-PFNs-sequential.ipynb`: run multiple datasets and both methods (TabPFN then LoCalPFN) sequentially via YAML
 - `notebooks/Test-SAM-Features.ipynb`: evaluate SAM-Med3D feature quality with classification head
 - `configs/datasets.yaml`: register datasets and their metadata once
-- `docs/MULTI_DATASET.md`: documentation for running multiple datasets and adding new ones
-- `docs/SAM_FEATURE_EVALUATION.md`: guide for testing SAM-Med3D feature quality
+- `docs/technical/multi-dataset.md`: documentation for running multiple datasets and adding new ones
+- `docs/analysis/sam-feature-evaluation.md`: guide for testing SAM-Med3D feature quality
 
 ## Quick start (multi-dataset)
 1. Ensure your datasets are placed as either:
@@ -55,7 +55,7 @@ python scripts/test_sam_features.py --dataset gist --epochs 10 --freeze
      - Save artifacts under `notebooks/tabpfn_runs/`
      - Write a summary table to `notebooks/multi_results_summary.csv`
 
-If you need more detail, see `docs/MULTI_DATASET.md`.
+If you need more detail, see [docs/technical/multi-dataset.md](docs/technical/multi-dataset.md).
 
 ## Requirements
 Install dependencies (prefer a fresh environment). Minimal set is under `med3pipe/requirements.txt`:
@@ -86,18 +86,24 @@ Both methods share Steps 1–7 (prepare, folder split for caching, build SAM-Med
 ---
 
 ## Documentation
-Start here: `docs/README.md`
+Start here: **[docs/README.md](docs/README.md)** - Complete documentation index  
+**Quick navigation**: **[DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md)** - Find any doc by task or keyword
 
-### Essential
-- **`docs/MULTI_DATASET.md`** - Med3Pipe multi-dataset workflows
-- **`docs/SAM_FEATURE_EVALUATION.md`** - SAM-Med3D feature quality evaluation
-- **`med3pipe/README.md`** - Med3Pipe API reference
-- **`docs/TROUBLESHOOTING.md`** - Troubleshooting fine-tuning & PFN workflows
+### Quick Links
+- **[Experiment 3 Guide](docs/experiments/experiment3/README.md)** - SAM-Med3D classification head training
+- **[Embeddings Guide](docs/technical/embeddings.md)** - Embedding extraction and reuse
+- **[Troubleshooting](docs/experiments/experiment3/troubleshooting.md)** - Common errors and fixes
+- **[Cluster Setup](docs/setup/cluster-setup.md)** - HPC environment configuration
 
-### Additional
-- `scripts/` - Utility scripts
-  - `analyze_labels.py` - Dataset analysis
-  - `test_sam_features.py` - Feature quality evaluation
+### Technical Docs
+- **[Preprocessing](docs/technical/preprocessing.md)** - Data preprocessing pipeline
+- **[Multi-Dataset](docs/technical/multi-dataset.md)** - Multi-dataset workflows
+- **[SAM Dice Scores](docs/technical/sam-dice-scores.md)** - SAM evaluation
+- **[Pipeline Testing](docs/technical/pipeline-testing.md)** - End-to-end pipeline testing
+
+### Analysis & Visualization
+- **[Visualization Notes](docs/analysis/visualization-notes.md)** - Spacing, padding explanations
+- **[SAM Features](docs/analysis/sam-feature-evaluation.md)** - SAM feature quality analysis
 
 ### Project Structure
 ```

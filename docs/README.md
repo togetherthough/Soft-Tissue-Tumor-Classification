@@ -1,14 +1,55 @@
-# Documentation Index
+# Documentation
 
-This repository focuses on Med3Pipe (SAM-Med3D features + TabPFN/LoCalPFN). Start here and follow links.
+All project documentation organized by topic.
 
-- **Med3Pipe (Transfer Learning)**
-  - API: `med3pipe/README.md`
-  - Multi-dataset how-to: `docs/MULTI_DATASET.md`
-  - SAM feature quality (+ TL;DR quick test): `docs/SAM_FEATURE_EVALUATION.md`
-  - Experiments overview: `notebooks/README_Experiments.md`
-- **Troubleshooting**
-  - `docs/TROUBLESHOOTING.md` (CPU checkpoints, OpenMP, workers)
+## Structure
+
+```
+docs/
+├── experiments/          # Experiment guides
+│   └── experiment3/
+│       ├── README.md              # Complete experiment 3 guide
+│       └── troubleshooting.md     # Error fixes and debugging
+├── technical/           # Technical implementation details
+│   ├── embeddings.md              # Embedding extraction and reuse
+│   ├── preprocessing.md           # Preprocessing pipeline details
+│   ├── multi-dataset.md           # Multi-dataset experiments
+│   └── sam-dice-scores.md         # SAM Dice score evaluation
+├── setup/              # Environment and cluster setup
+│   └── cluster-setup.md           # Cluster environment configuration
+├── analysis/           # Data analysis and visualization
+│   ├── visualization-notes.md     # Spacing, padding explanations
+│   └── sam-feature-evaluation.md  # SAM feature analysis
+├── QUICK_REFERENCE.md   # Quick commands cheat sheet
+├── TROUBLESHOOTING.md   # General troubleshooting
+└── CHANGES_SUMMARY.md   # Major project changes
+```
+
+## Quick Links
+
+### Getting Started
+- **Experiment 3**: [experiments/experiment3/README.md](experiments/experiment3/README.md)
+- **Cluster Setup**: [setup/cluster-setup.md](setup/cluster-setup.md)
+- **Quick Reference**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+
+### Technical Details
+- **Embeddings**: [technical/embeddings.md](technical/embeddings.md)
+- **Preprocessing**: [technical/preprocessing.md](technical/preprocessing.md)
+- **SAM Dice Scores**: [technical/sam-dice-scores.md](technical/sam-dice-scores.md)
+
+### Troubleshooting
+- **Experiment 3 Issues**: [experiments/experiment3/troubleshooting.md](experiments/experiment3/troubleshooting.md)
+- **General Issues**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+### Analysis
+- **Visualization Notes**: [analysis/visualization-notes.md](analysis/visualization-notes.md)
+- **SAM Features**: [analysis/sam-feature-evaluation.md](analysis/sam-feature-evaluation.md)
+
+## Additional Resources
+
+- **Cluster Scripts**: See `cluster_scripts/` directory for batch job scripts and additional guides
+- **Notebooks**: See `notebooks/` directory for interactive examples
+- **Config Files**: See `configs/` directory for dataset configurations (CPU checkpoints, OpenMP, workers)
 
 ---
 
