@@ -417,15 +417,9 @@ def train_classification_head(
     print(f"Training Complete!")
     print(f"{'='*60}")
     print(f"Best Epoch: {best_epoch} | Best Val AUC: {best_auc:.4f}")
+    print(f"Using final epoch model for evaluation")
     
-    # Load best model and evaluate
-    if output_dir is not None:
-        checkpoint_path = output_dir / "best_model.pt"
-        if checkpoint_path.exists():
-            checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
-            model.load_state_dict(checkpoint["model_state_dict"])
-            print(f"✓ Loaded best model from epoch {checkpoint['epoch']}")
-    
+    # Evaluate using final epoch model (not best checkpoint)
     final_metrics = evaluate_model(model, val_loader, device)
     
     print(f"\n{'='*60}")
