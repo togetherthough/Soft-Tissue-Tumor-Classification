@@ -6,10 +6,19 @@ All project documentation organized by topic.
 
 ```
 docs/
-├── experiments/          # Experiment guides
-│   └── experiment3/
-│       ├── README.md              # Complete experiment 3 guide
-│       └── troubleshooting.md     # Error fixes and debugging
+├── FILTERING.md         # Lesion size filtering (complete guide)
+├── QUICK_REFERENCE.md   # Quick commands cheat sheet
+├── TROUBLESHOOTING.md   # General troubleshooting
+├── CHANGES_SUMMARY.md   # Major project changes
+├── cluster/             # HPC cluster experiments
+│   ├── README.md                  # Cluster overview
+│   ├── QUICK_START.md             # Quick start for HPC
+│   ├── SUBMIT_CHECKLIST.md        # Pre-submission checklist
+│   ├── experiment1/               # Benchmarks (TabPFN, LoCalPFN, baselines)
+│   │   └── README.md
+│   └── experiment3/               # Classification head experiments
+│       ├── README.md
+│       └── troubleshooting.md
 ├── technical/           # Technical implementation details
 │   ├── embeddings.md              # Embedding extraction and reuse
 │   ├── preprocessing.md           # Preprocessing pipeline details
@@ -17,20 +26,24 @@ docs/
 │   └── sam-dice-scores.md         # SAM Dice score evaluation
 ├── setup/              # Environment and cluster setup
 │   └── cluster-setup.md           # Cluster environment configuration
-├── analysis/           # Data analysis and visualization
-│   ├── visualization-notes.md     # Spacing, padding explanations
-│   └── sam-feature-evaluation.md  # SAM feature analysis
-├── QUICK_REFERENCE.md   # Quick commands cheat sheet
-├── TROUBLESHOOTING.md   # General troubleshooting
-└── CHANGES_SUMMARY.md   # Major project changes
+└── analysis/           # Data analysis and visualization
+    ├── visualization-notes.md     # Spacing, padding explanations
+    └── sam-feature-evaluation.md  # SAM feature analysis
 ```
 
 ## Quick Links
 
 ### Getting Started
-- **Experiment 3**: [experiments/experiment3/README.md](experiments/experiment3/README.md)
-- **Cluster Setup**: [setup/cluster-setup.md](setup/cluster-setup.md)
+- **Lesion Filtering**: [FILTERING.md](FILTERING.md) ⭐ (consolidated guide)
+- **Cluster Quick Start**: [cluster/QUICK_START.md](cluster/QUICK_START.md)
 - **Quick Reference**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+
+### Cluster Experiments
+- **Cluster Overview**: [cluster/README.md](cluster/README.md)
+- **Experiment 1 (Benchmarks)**: [cluster/experiment1/README.md](cluster/experiment1/README.md)
+- **Experiment 3 (Classification Head)**: [cluster/experiment3/README.md](cluster/experiment3/README.md)
+- **Submit Checklist**: [cluster/SUBMIT_CHECKLIST.md](cluster/SUBMIT_CHECKLIST.md)
+- **Cluster Setup**: [setup/cluster-setup.md](setup/cluster-setup.md)
 
 ### Technical Details
 - **Embeddings**: [technical/embeddings.md](technical/embeddings.md)
@@ -38,7 +51,7 @@ docs/
 - **SAM Dice Scores**: [technical/sam-dice-scores.md](technical/sam-dice-scores.md)
 
 ### Troubleshooting
-- **Experiment 3 Issues**: [experiments/experiment3/troubleshooting.md](experiments/experiment3/troubleshooting.md)
+- **Experiment 3 Issues**: [cluster/experiment3/troubleshooting.md](cluster/experiment3/troubleshooting.md)
 - **General Issues**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ### Analysis

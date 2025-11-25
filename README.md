@@ -86,14 +86,15 @@ Both methods share Steps 1–7 (prepare, folder split for caching, build SAM-Med
 ---
 
 ## Documentation
-Start here: **[docs/README.md](docs/README.md)** - Complete documentation index  
-**Quick navigation**: **[DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md)** - Find any doc by task or keyword
+Start here: **[docs/README.md](docs/README.md)** - Complete documentation index
 
 ### Quick Links
-- **[Experiment 3 Guide](docs/experiments/experiment3/README.md)** - SAM-Med3D classification head training
+- **[Lesion Filtering](docs/FILTERING.md)** - Filter data by lesion size
+- **[Cluster Quick Start](docs/cluster/QUICK_START.md)** - Get started on HPC
+- **[Experiment 1 (Benchmarks)](docs/cluster/experiment1/README.md)** - TabPFN, LoCalPFN, baselines
+- **[Experiment 3 (Classification Head)](docs/cluster/experiment3/README.md)** - SAM-Med3D classification head
 - **[Embeddings Guide](docs/technical/embeddings.md)** - Embedding extraction and reuse
-- **[Troubleshooting](docs/experiments/experiment3/troubleshooting.md)** - Common errors and fixes
-- **[Cluster Setup](docs/setup/cluster-setup.md)** - HPC environment configuration
+- **[Troubleshooting](docs/cluster/experiment3/troubleshooting.md)** - Common errors and fixes
 
 ### Technical Docs
 - **[Preprocessing](docs/technical/preprocessing.md)** - Data preprocessing pipeline

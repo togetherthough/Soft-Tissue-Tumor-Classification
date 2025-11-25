@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Sequence, Tuple, List
+from typing import Dict, Sequence, Tuple, List, Optional, Set
 
 import numpy as np
 from sklearn.model_selection import train_test_split
 
 from med3pipe.sam.core import load_pooled_features
+from .lesion_filter import LesionSizeFilter
 
 
 def _clean_id(cid: str) -> str:
@@ -21,6 +22,7 @@ def stratified_features_split(
     lab_map: Dict[str, int],
     train_ratio: float = 0.8,
     seed: int = 2025,
+    lesion_filter: Optional[LesionSizeFilter] = None,
 ) -> Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]:
     """
     Build a stratified train/val split from the UNION of pooled features coming
@@ -74,6 +76,29 @@ def stratified_features_split(
     X_l = X_all[mask_lab]
     ids_l = ids_all_arr[mask_lab]
     y_l = np.array([lab_map[_clean_id(c)] for c in ids_l], dtype=int)
+    
+    # Apply lesion size filtering if enabled
+    if lesion_filter is not None and lesion_filter.is_enabled():
+        lesion_filter.print_filter_summary()
+        valid_cases = lesion_filter.get_valid_cases()
+        
+        # Filter to valid lesion sizes
+        mask_lesion = np.array([_clean_id(c) in valid_cases for c in ids_l], dtype=bool)
+        filtered_count = (~mask_lesion).sum()
+        
+        if filtered_count > 0:
+            print(f"[INFO] Filtered out {filtered_count} cases based on lesion size criteria")
+        
+        if not mask_lesion.any():
+            print("[WARNING] No cases remaining after lesion size filtering!")
+            return (
+                (np.empty((0,)), np.empty((0,), dtype=int), []),
+                (np.empty((0,)), np.empty((0,), dtype=int), []),
+            )
+        
+        X_l = X_l[mask_lesion]
+        ids_l = ids_l[mask_lesion]
+        y_l = y_l[mask_lesion]
 
     # Compute split; prefer stratified if at least 2 classes and enough samples
     rs = np.random.RandomState(int(seed))

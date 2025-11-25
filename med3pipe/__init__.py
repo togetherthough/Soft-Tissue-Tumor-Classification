@@ -49,6 +49,9 @@ from .tabular import (
     localpfn_infer,
     localpfn_pipeline,
     default_localpfn_out_dir,
+    # Lesion filtering
+    LesionSizeFilter,
+    load_lesion_filter_from_config,
 )
 from .pipelines import (
     run_end_to_end,
@@ -92,6 +95,9 @@ __all__ = [
     "patch_sam3d_data_paths",
     "run_classification_head_experiment",
     "SAMWithClassificationHead",
+    # Lesion filtering
+    "LesionSizeFilter",
+    "load_lesion_filter_from_config",
     # Pipelines (all steps 1-8)
     "run_end_to_end",
     "run_from_prepared_to_tabpfn",

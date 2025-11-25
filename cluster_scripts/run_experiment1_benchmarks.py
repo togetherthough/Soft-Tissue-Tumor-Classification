@@ -81,6 +81,10 @@ def run_experiment(
     skip_baselines: bool = False,
     epochs_3d: int = 4,
     dry_run: bool = False,
+    # Lesion filtering parameters
+    min_voxels: Optional[int] = None,
+    min_dimension: Optional[int] = None,
+    min_density: Optional[float] = None,
 ):
     """
     Run the full benchmark experiment
@@ -93,6 +97,10 @@ def run_experiment(
         skip_localpfn: Skip LoCalPFN method
         skip_baselines: Skip 3D baseline methods
         epochs_3d: Number of epochs for 3D models training
+        dry_run: Print what will run without executing
+        min_voxels: Minimum voxel count for filtering
+        min_dimension: Minimum dimension for filtering
+        min_density: Minimum density for filtering
     """
     
     # Import after path setup
@@ -102,6 +110,7 @@ def run_experiment(
     from med3pipe.data.prepare import Sam3DPaths, find_default_sam3d_root
     print("[DEBUG] Imported data.prepare", flush=True)
     from med3pipe.vision.v3d import train_eval_densenet121_3d, train_eval_vit_3d
+    from med3pipe.tabular.lesion_filter import LesionSizeFilter
     print("[DEBUG] All med3pipe imports complete", flush=True)
     
     print(f'\n{"="*80}')
@@ -120,7 +129,24 @@ def run_experiment(
     
     all_ds = list(cfg['datasets'].keys())
     datasets_to_run = dataset_filter or all_ds
-    print(f'Datasets to run: {datasets_to_run}\n')
+    print(f'Datasets to run: {datasets_to_run}')
+    
+    # Create lesion filter if filtering is enabled
+    lesion_filter = None
+    is_filtered = (min_voxels is not None or min_dimension is not None or min_density is not None)
+    if is_filtered:
+        lesion_filter = LesionSizeFilter(
+            min_voxels=min_voxels,
+            min_dimension=min_dimension,
+            min_density=min_density,
+        )
+        print(f'\nLesion filtering enabled:')
+        print(f'  min_voxels: {min_voxels}')
+        print(f'  min_dimension: {min_dimension}')
+        print(f'  min_density: {min_density}')
+    else:
+        print(f'\nLesion filtering: DISABLED')
+    print()
     
     # Find SAM-Med3D root and checkpoint
     print("Checking SAM-Med3D checkpoint...")
@@ -192,6 +218,7 @@ def run_experiment(
                 dataset_names=datasets_to_run,
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
+                lesion_filter=lesion_filter,
             )
             results['tabpfn'] = res_tab
             print('\n[SUCCESS] TabPFN completed')
@@ -216,6 +243,7 @@ def run_experiment(
                 local_fit_adapter=True,
                 local_adapter_epochs=8,
                 local_adapter_num_queries=150,
+                lesion_filter=lesion_filter,
             )
             results['localpfn'] = res_loc
             print('\n[SUCCESS] LoCalPFN completed')
@@ -476,6 +504,32 @@ def main():
         action='store_true',
         help='Print what will be executed without running (for verification)'
     )
+    # Lesion filtering arguments
+    parser.add_argument(
+        '--min-voxels',
+        type=int,
+        default=None,
+        help='Minimum preprocessed voxel count for filtering (default: None - no filtering)'
+    )
+    parser.add_argument(
+        '--min-dimension',
+        type=int,
+        default=None,
+        help='Minimum bounding box dimension for filtering (default: None)'
+    )
+    parser.add_argument(
+        '--min-density',
+        type=float,
+        default=None,
+        help='Minimum lesion density for filtering (default: None)'
+    )
+    parser.add_argument(
+        '--filter-preset',
+        type=str,
+        choices=['recommended', 'conservative', 'lenient'],
+        default=None,
+        help='Use preset filtering configuration (overrides individual filters)'
+    )
     
     args = parser.parse_args()
     print("[DEBUG] Arguments parsed successfully", flush=True)
@@ -492,6 +546,26 @@ def main():
     if not outputs_base.is_absolute():
         outputs_base = repo_root / outputs_base
     
+    # Apply filter presets or use individual parameters
+    min_voxels = args.min_voxels
+    min_dimension = args.min_dimension
+    min_density = args.min_density
+    
+    if args.filter_preset:
+        print(f'[INFO] Using filter preset: {args.filter_preset}')
+        if args.filter_preset == 'recommended':
+            min_voxels = 500
+            min_dimension = 5
+            min_density = 0.3
+        elif args.filter_preset == 'conservative':
+            min_voxels = 1000
+            min_dimension = 10
+            min_density = 0.3
+        elif args.filter_preset == 'lenient':
+            min_voxels = 200
+            min_dimension = 3
+            min_density = None
+    
     # Run experiment
     print(f"[DEBUG] Calling run_experiment with config: {config_path}", flush=True)
     try:
@@ -504,6 +578,9 @@ def main():
             skip_baselines=args.skip_baselines,
             epochs_3d=args.epochs_3d,
             dry_run=args.dry_run,
+            min_voxels=min_voxels,
+            min_dimension=min_dimension,
+            min_density=min_density,
         )
         
         print(f'\n{"="*80}')

@@ -16,6 +16,10 @@ from .localpfn import (
     localpfn_pipeline,
     default_localpfn_out_dir,
 )
+from .lesion_filter import (
+    LesionSizeFilter,
+    load_lesion_filter_from_config,
+)
 
 __all__ = [
     "standardize_pca",
@@ -27,4 +31,7 @@ __all__ = [
     "localpfn_infer",
     "localpfn_pipeline",
     "default_localpfn_out_dir",
+    # Lesion filtering
+    "LesionSizeFilter",
+    "load_lesion_filter_from_config",
 ]

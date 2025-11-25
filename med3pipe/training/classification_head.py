@@ -29,6 +29,7 @@ from ..sam.core import (
     load_volume_tensor,
 )
 from ..data.prepare import Sam3DPaths, find_default_sam3d_root
+from ..tabular.lesion_filter import LesionSizeFilter
 
 
 class TumorClassificationHead(nn.Module):
@@ -148,9 +149,16 @@ def prepare_dataloaders(
     batch_size: int = 4,
     num_workers: int = 2,
     img_size: int = 128,
+    lesion_filter: Optional[LesionSizeFilter] = None,
 ) -> Tuple[DataLoader, DataLoader]:
     """Prepare train and val dataloaders from prepared SAM-Med3D paths."""
     pre_transform = make_pre_transform(img_size=img_size)
+    
+    # Get valid cases if filtering is enabled
+    valid_cases = None
+    if lesion_filter is not None and lesion_filter.is_enabled():
+        lesion_filter.print_filter_summary()
+        valid_cases = lesion_filter.get_valid_cases()
     
     # Helper to extract case ID from .nii.gz filename
     def get_case_id(img_path: Path) -> str:
@@ -170,6 +178,9 @@ def prepare_dataloaders(
     for img_path in train_imgs:
         case_id = get_case_id(img_path)
         if case_id in lab_map:
+            # Apply lesion size filter if enabled
+            if valid_cases is not None and case_id not in valid_cases:
+                continue
             train_labels.append(lab_map[case_id])
             train_valid.append(img_path)
     
@@ -180,6 +191,9 @@ def prepare_dataloaders(
     for img_path in val_imgs:
         case_id = get_case_id(img_path)
         if case_id in lab_map:
+            # Apply lesion size filter if enabled
+            if valid_cases is not None and case_id not in valid_cases:
+                continue
             val_labels.append(lab_map[case_id])
             val_valid.append(img_path)
     

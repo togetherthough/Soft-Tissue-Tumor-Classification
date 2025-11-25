@@ -48,6 +48,7 @@ from ..tabular.localpfn import (
     default_localpfn_out_dir,
 )
 from ..tabular.stratify import stratified_features_split
+from ..tabular.lesion_filter import LesionSizeFilter
 
 
 @dataclass
@@ -106,6 +107,11 @@ def run_single_dataset(
     # Shared tabular params
     n_components_max: int = 500,
     random_state: int = 42,
+    # Lesion filtering
+    lesion_filter: Optional[LesionSizeFilter] = None,
+    min_voxels: Optional[int] = None,
+    min_dimension: Optional[int] = None,
+    min_density: Optional[float] = None,
     # TabPFN-specific
     tabpfn_out_dir: Optional[Path] = None,
     tabpfn_src: Optional[Path] = None,
@@ -186,6 +192,14 @@ def run_single_dataset(
     )
 
     # 6b) Stratified feature-level split from the UNION of features
+    # Create lesion filter if parameters provided
+    if lesion_filter is None and (min_voxels is not None or min_dimension is not None or min_density is not None):
+        lesion_filter = LesionSizeFilter(
+            min_voxels=min_voxels,
+            min_dimension=min_dimension,
+            min_density=min_density,
+        )
+    
     (X_train, y_train, ids_train), (X_val, y_val, ids_val) = stratified_features_split(
         feat_train_dir=feat_dirs.train_dir,
         feat_val_dir=feat_dirs.val_dir,
@@ -194,6 +208,7 @@ def run_single_dataset(
         lab_map=lab_map,
         train_ratio=split_ratio,
         seed=seed,
+        lesion_filter=lesion_filter,
     )
 
     method_l = method.lower()
@@ -475,6 +490,11 @@ def run_from_prepared(
     # Shared tabular params
     n_components_max: int = 500,
     random_state: int = 42,
+    # Lesion filtering
+    lesion_filter: Optional[LesionSizeFilter] = None,
+    min_voxels: Optional[int] = None,
+    min_dimension: Optional[int] = None,
+    min_density: Optional[float] = None,
     # TabPFN-specific
     tabpfn_out_dir: Optional[Path] = None,
     tabpfn_src: Optional[Path] = None,
@@ -531,6 +551,15 @@ def run_from_prepared(
     # Use default controls here (run_from_prepared does not expose split controls)
     train_ratio = 0.8
     seed = 2025
+    
+    # Create lesion filter if parameters provided
+    if lesion_filter is None and (min_voxels is not None or min_dimension is not None or min_density is not None):
+        lesion_filter = LesionSizeFilter(
+            min_voxels=min_voxels,
+            min_dimension=min_dimension,
+            min_density=min_density,
+        )
+    
     (X_train, y_train, ids_train), (X_val, y_val, ids_val) = stratified_features_split(
         feat_train_dir=feat_dirs.train_dir,
         feat_val_dir=feat_dirs.val_dir,
@@ -539,6 +568,7 @@ def run_from_prepared(
         lab_map=lab_map,
         train_ratio=train_ratio,
         seed=seed,
+        lesion_filter=lesion_filter,
     )
 
     method_l = method.lower()

@@ -58,6 +58,10 @@ def run_classification_head_for_dataset(
     img_size: int = 128,
     num_workers: int = 2,
     output_base: Path = None,
+    # Lesion filtering parameters
+    min_voxels: Optional[int] = None,
+    min_dimension: Optional[int] = None,
+    min_density: Optional[float] = None,
 ):
     """
     Run classification head experiment for a single dataset
@@ -86,6 +90,7 @@ def run_classification_head_for_dataset(
     )
     from med3pipe.sam.core import load_labels_from_sheet
     from med3pipe.training.classification_head import run_classification_head_experiment
+    from med3pipe.tabular.lesion_filter import LesionSizeFilter
     
     print(f'\n{"="*80}')
     print(f'DATASET: {dataset_key.upper()}')
@@ -169,13 +174,31 @@ def run_classification_head_for_dataset(
     else:
         print(f"✅ Using checkpoint: {checkpoint_path}")
     
-    # Setup output directory
+    # Setup output directory with filtering suffix if applicable
     if output_base is None:
         output_base = repo_root / 'results' / 'classification_head'
-    output_dir = output_base / dataset_key
+    
+    # Add suffix to output dir if filtering is enabled
+    is_filtered = (min_voxels is not None or min_dimension is not None or min_density is not None)
+    if is_filtered:
+        filter_suffix = "_filtered"
+        filter_desc = []
+        if min_voxels is not None:
+            filter_desc.append(f"v{min_voxels}")
+        if min_dimension is not None:
+            filter_desc.append(f"d{min_dimension}")
+        if min_density is not None:
+            filter_desc.append(f"ρ{min_density:.2f}")
+        filter_suffix += "_" + "_".join(filter_desc)
+        output_dir = output_base / f"{dataset_key}{filter_suffix}"
+    else:
+        output_dir = output_base / dataset_key
+    
     output_dir.mkdir(parents=True, exist_ok=True)
     
     print(f'Output directory: {output_dir}')
+    if is_filtered:
+        print(f'  Filtered results: voxels>={min_voxels}, dim>={min_dimension}, density>={min_density}')
     
     # Step 1: Prepare dataset
     print(f'\n[1/4] Preparing dataset...')
@@ -218,6 +241,16 @@ def run_classification_head_for_dataset(
     print(f'  Batch size: {batch_size}')
     print(f'  Learning rate: {learning_rate}')
     
+    # Create lesion filter if filtering is enabled
+    lesion_filter = None
+    if is_filtered:
+        lesion_filter = LesionSizeFilter(
+            min_voxels=min_voxels,
+            min_dimension=min_dimension,
+            min_density=min_density,
+        )
+        print(f'  Lesion filtering: ENABLED')
+    
     results = run_classification_head_experiment(
         paths=paths,
         lab_map=lab_map,
@@ -234,6 +267,7 @@ def run_classification_head_for_dataset(
         dropout=dropout,
         num_workers=num_workers,
         output_dir=output_dir,
+        lesion_filter=lesion_filter,
     )
     
     # Print summary
@@ -334,6 +368,32 @@ def main():
         default=2,
         help='Number of data loader workers (default: 2)'
     )
+    # Lesion filtering arguments
+    parser.add_argument(
+        '--min-voxels',
+        type=int,
+        default=None,
+        help='Minimum preprocessed voxel count for filtering (default: None - no filtering)'
+    )
+    parser.add_argument(
+        '--min-dimension',
+        type=int,
+        default=None,
+        help='Minimum bounding box dimension for filtering (default: None)'
+    )
+    parser.add_argument(
+        '--min-density',
+        type=float,
+        default=None,
+        help='Minimum lesion density for filtering (default: None)'
+    )
+    parser.add_argument(
+        '--filter-preset',
+        type=str,
+        choices=['recommended', 'conservative', 'lenient'],
+        default=None,
+        help='Use preset filtering configuration (overrides individual filters)'
+    )
     
     args = parser.parse_args()
     
@@ -370,7 +430,36 @@ def main():
     print(f'Freeze encoder: {freeze_encoder}')
     print(f'Epochs: {args.epochs}')
     print(f'Batch size: {args.batch_size}')
-    print(f'Learning rate: {args.lr}\n')
+    print(f'Learning rate: {args.lr}')
+    
+    # Apply filter presets or use individual parameters
+    min_voxels = args.min_voxels
+    min_dimension = args.min_dimension
+    min_density = args.min_density
+    
+    if args.filter_preset:
+        print(f'Using filter preset: {args.filter_preset}')
+        if args.filter_preset == 'recommended':
+            min_voxels = 500
+            min_dimension = 5
+            min_density = 0.3
+        elif args.filter_preset == 'conservative':
+            min_voxels = 1000
+            min_dimension = 10
+            min_density = 0.3
+        elif args.filter_preset == 'lenient':
+            min_voxels = 200
+            min_dimension = 3
+            min_density = None
+    
+    if min_voxels or min_dimension or min_density:
+        print(f'Lesion filtering enabled:')
+        print(f'  min_voxels: {min_voxels}')
+        print(f'  min_dimension: {min_dimension}')
+        print(f'  min_density: {min_density}')
+    else:
+        print(f'Lesion filtering: DISABLED')
+    print()
     
     # Run for each dataset
     results_list = []
@@ -390,6 +479,9 @@ def main():
                 img_size=args.img_size,
                 num_workers=args.num_workers,
                 output_base=output_base,
+                min_voxels=min_voxels,
+                min_dimension=min_dimension,
+                min_density=min_density,
             )
             results_list.append(result)
             print(f'✅ SUCCESS: {ds_key}')

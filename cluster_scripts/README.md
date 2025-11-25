@@ -12,7 +12,10 @@ Trains and tests all methods on your datasets:
 3. **DenseNet121-3D** - 3D convolutional baseline
 4. **ViT-3D** - 3D Vision Transformer baseline
 
-**Script**: `slurm_train_and_test.sh` → `run_experiment1_benchmarks.py`
+**Scripts**: 
+- `slurm_train_and_test.sh` → Original (no filtering)
+- `slurm_train_and_test_filtered.sh` → With recommended filtering (NEW)
+- `run_experiment1_benchmarks.py` → Python runner with filtering support
 
 ### Experiment 3: Classification Head on SAM-Med3D
 Tests if SAM-Med3D features are discriminative by training a simple classification head:
@@ -20,8 +23,12 @@ Tests if SAM-Med3D features are discriminative by training a simple classificati
 - Trains linear classifier on frozen SAM-Med3D features
 - Evaluates feature quality before running full PFN pipeline
 - Option to fine-tune encoder
+- Supports lesion size filtering
 
-**Script**: `slurm_experiment3.sh` → `run_experiment3_classification_head.py`
+**Scripts**: 
+- `slurm_experiment3.sh` → Original (no filtering)
+- `slurm_experiment3_filtered.sh` → With recommended filtering (NEW)
+- `run_experiment3_classification_head.py` → Python runner with filtering support
 
 ## 🚀 Quick Start
 
@@ -91,14 +98,73 @@ tail -f logs/exp1_JOBID.log
 tail -f logs/exp1_error_JOBID.log
 ```
 
+## 🔬 Lesion Size Filtering (NEW)
+
+Train models on high-quality lesion subsets by filtering based on size metrics. Filtered and unfiltered results are saved in **separate folders** for easy comparison.
+
+### Quick Start with Filtering
+
+```bash
+# Run Experiment 3 with recommended filtering
+sbatch cluster_scripts/slurm_experiment3_filtered.sh
+
+# Results saved to separate folders:
+#   results/classification_head/gist_filtered_v500_d5_ρ0.30/
+#   results/classification_head/lipo_filtered_v500_d5_ρ0.30/
+```
+
+### Filter Presets
+
+```bash
+# Recommended (good balance) - ~34% of cases
+--filter-preset recommended  # voxels>=500, dimension>=5, density>=0.3
+
+# Conservative (strict quality) - ~20% of cases  
+--filter-preset conservative # voxels>=1000, dimension>=10, density>=0.3
+
+# Lenient (more inclusive) - ~60% of cases
+--filter-preset lenient      # voxels>=200, dimension>=3
+```
+
+### Custom Filtering
+
+```bash
+python cluster_scripts/run_experiment3_classification_head.py \
+    --config configs/datasets.yaml \
+    --min-voxels 500 \
+    --min-dimension 5 \
+    --min-density 0.3
+```
+
+### Documentation
+
+- **Filtering Guide**: [../docs/FILTERING.md](../docs/FILTERING.md)
+- **Cluster Quick Start**: [../docs/cluster/QUICK_START.md](../docs/cluster/QUICK_START.md)
+- **Cluster Overview**: [../docs/cluster/README.md](../docs/cluster/README.md)
+- **Experiment 1**: [../docs/cluster/experiment1/README.md](../docs/cluster/experiment1/README.md)
+- **Experiment 3**: [../docs/cluster/experiment3/README.md](../docs/cluster/experiment3/README.md)
+- **Submit Checklist**: [../docs/cluster/SUBMIT_CHECKLIST.md](../docs/cluster/SUBMIT_CHECKLIST.md)
+
 ## 📁 Files in This Directory
+
+### Experiment Scripts
 
 | File | Description |
 |------|-------------|
-| `slurm_train_and_test.sh` | **Main SLURM script** - Submit this to run the experiment |
-| `run_experiment1_benchmarks.py` | Python runner that executes all methods |
-| `slurm_experiment1.sh` | Original SLURM script (template with more options) |
-| `check_setup.sh` | Helper script to verify environment setup |
+| `slurm_train_and_test.sh` | **Experiment 1** - Benchmarks (no filtering) |
+| `slurm_train_and_test_filtered.sh` | **Experiment 1** - Benchmarks with filtering (NEW) |
+| `run_experiment1_benchmarks.py` | Python runner with filtering support |
+| `slurm_experiment3.sh` | **Experiment 3** - Classification head (no filtering) |
+| `slurm_experiment3_filtered.sh` | **Experiment 3** - With lesion filtering (NEW) |
+| `run_experiment3_classification_head.py` | Python runner with filtering support |
+
+### Helper Scripts
+
+| File | Description |
+|------|-------------|
+| `check_setup.sh` | Verify environment setup |
+| `verify_config.sh` | Check config file validity |
+| `diagnose_experiment3.sh` | Troubleshoot Experiment 3 issues |
 
 ## ⚙️ Configuration Options
 
