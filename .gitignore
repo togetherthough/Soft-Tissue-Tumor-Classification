@@ -1,5 +1,7 @@
 **/gist/**
-/data/
+/data/*
+!/data/lesion_size_analysis.csv
+!/data/README.md
 features/*
 notebooks/baselines/*
 notebooks/Med3Tab/*

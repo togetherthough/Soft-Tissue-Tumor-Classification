@@ -89,7 +89,7 @@ Both methods share Steps 1–7 (prepare, folder split for caching, build SAM-Med
 Start here: **[docs/README.md](docs/README.md)** - Complete documentation index
 
 ### Quick Links
-- **[Lesion Filtering](docs/FILTERING.md)** - Filter data by lesion size
+- **[Lesion Filtering](docs/FILTERING.md)** ⭐ - Filter data by lesion size (works out of the box)
 - **[Cluster Quick Start](docs/cluster/QUICK_START.md)** - Get started on HPC
 - **[Experiment 1 (Benchmarks)](docs/cluster/experiment1/README.md)** - TabPFN, LoCalPFN, baselines
 - **[Experiment 3 (Classification Head)](docs/cluster/experiment3/README.md)** - SAM-Med3D classification head

@@ -13,9 +13,15 @@ Use these instead:
 
 ## Quick Start
 
-### Prerequisites (run once)
+### Prerequisites
+
+**Good news**: The repository includes a tracked `data/lesion_size_analysis.csv` file, so filtering works out of the box!
+
+**If you add new datasets**, regenerate the file:
 ```bash
-python scripts/analyze_lesion_sizes.py
+python scripts/analyze_lesion_sizes.py --config configs/datasets.yaml
+# Copy to tracked location:
+cp results/lesion_preprocessing/lesion_size_analysis.csv data/lesion_size_analysis.csv
 ```
 
 ### Python API
@@ -230,6 +236,7 @@ python cluster_scripts/run_experiment3_classification_head.py \
 - **Backward compatible** (existing code works unchanged)
 - Works with **all methods** (TabPFN, LoCalPFN, classification head, 3D baselines)
 - **All experiments** support filtering (Experiment 1 benchmarks, Experiment 3 classification head)
+- **Consistent filtering**: When enabled, ALL methods in an experiment use the SAME filtered dataset for fair comparison
 
 ---
 

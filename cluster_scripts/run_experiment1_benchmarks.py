@@ -299,6 +299,7 @@ def run_experiment(
                     dataset_root=ds_root,
                     epochs=epochs_3d,
                     device=None,
+                    lesion_filter=lesion_filter,
                 )
                 er = d121['eval']
                 rows.append({
@@ -338,6 +339,7 @@ def run_experiment(
                     dataset_root=ds_root,
                     epochs=epochs_3d,
                     device=None,
+                    lesion_filter=lesion_filter,
                 )
                 er = vit['eval']
                 rows.append({

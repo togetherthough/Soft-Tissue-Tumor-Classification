@@ -483,9 +483,72 @@ def _build_dataloaders_from_paths(
     batch_size: int,
     num_workers: int,
     augment_train: bool,
+    lesion_filter=None,  # Optional[LesionSizeFilter]
 ) -> Tuple[DataLoader, DataLoader]:
-    ds_tr = VolumeDataset(paths.images_tr, lab_map=lab_map, img_size=img_size, augment=augment_train)
-    ds_va = VolumeDataset(paths.images_val, lab_map=lab_map, img_size=img_size, augment=False)
+    """Build dataloaders with optional lesion size filtering.
+    
+    Args:
+        lesion_filter: If provided and enabled, only cases that pass
+                      the filter criteria will be included.
+    """
+    from ...tabular.lesion_filter import LesionSizeFilter
+    
+    # Get valid cases if filtering is enabled
+    valid_cases = None
+    if lesion_filter is not None and isinstance(lesion_filter, LesionSizeFilter) and lesion_filter.is_enabled():
+        lesion_filter.print_filter_summary()
+        valid_cases = lesion_filter.get_valid_cases()
+        print(f"[FILTER] Applying lesion filter to 3D baseline dataloaders")
+        print(f"[FILTER] Valid cases: {len(valid_cases)}")
+    
+    # Helper to extract case ID from filename
+    def get_case_id(img_path) -> str:
+        name = img_path.name
+        if name.endswith('.nii.gz'):
+            return name[:-7]
+        elif name.endswith('.nii'):
+            return name[:-4]
+        else:
+            return img_path.stem
+    
+    # Filter training images if needed
+    if valid_cases is not None:
+        train_imgs = sorted(paths.images_tr.glob("*.nii.gz"))
+        filtered_train = []
+        filtered_train_lab_map = {}
+        for img_path in train_imgs:
+            case_id = get_case_id(img_path)
+            if case_id in lab_map and case_id in valid_cases:
+                filtered_train.append(img_path)
+                filtered_train_lab_map[case_id] = lab_map[case_id]
+        print(f"[FILTER] Training: {len(filtered_train)}/{len(train_imgs)} cases passed filter")
+        
+        # Create custom filtered dataset for training
+        ds_tr = VolumeDataset(paths.images_tr, lab_map=filtered_train_lab_map, img_size=img_size, augment=augment_train)
+        # Override the image list
+        ds_tr.image_paths = filtered_train
+    else:
+        ds_tr = VolumeDataset(paths.images_tr, lab_map=lab_map, img_size=img_size, augment=augment_train)
+    
+    # Filter validation images if needed
+    if valid_cases is not None:
+        val_imgs = sorted(paths.images_val.glob("*.nii.gz"))
+        filtered_val = []
+        filtered_val_lab_map = {}
+        for img_path in val_imgs:
+            case_id = get_case_id(img_path)
+            if case_id in lab_map and case_id in valid_cases:
+                filtered_val.append(img_path)
+                filtered_val_lab_map[case_id] = lab_map[case_id]
+        print(f"[FILTER] Validation: {len(filtered_val)}/{len(val_imgs)} cases passed filter")
+        
+        # Create custom filtered dataset for validation
+        ds_va = VolumeDataset(paths.images_val, lab_map=filtered_val_lab_map, img_size=img_size, augment=False)
+        # Override the image list
+        ds_va.image_paths = filtered_val
+    else:
+        ds_va = VolumeDataset(paths.images_val, lab_map=lab_map, img_size=img_size, augment=False)
+    
     dl_tr = DataLoader(ds_tr, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     dl_va = DataLoader(ds_va, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
     return dl_tr, dl_va
@@ -511,6 +574,8 @@ def train_eval_densenet121_3d(
     num_workers: Optional[int] = None,
     augment: Optional[bool] = None,
     device: Optional[str] = None,
+    # Lesion filtering
+    lesion_filter=None,  # Optional[LesionSizeFilter]
 ) -> Dict[str, Any]:
     cfg = cfg or Train3DConfig()
     if epochs is not None: cfg.epochs = epochs
@@ -534,7 +599,7 @@ def train_eval_densenet121_3d(
         label_col=label_col,
         case_suffix=case_suffix,
     )
-    dl_tr, dl_va = _build_dataloaders_from_paths(paths, lab_map, cfg.img_size, cfg.batch_size, cfg.num_workers, cfg.augment)
+    dl_tr, dl_va = _build_dataloaders_from_paths(paths, lab_map, cfg.img_size, cfg.batch_size, cfg.num_workers, cfg.augment, lesion_filter=lesion_filter)
 
     model = build_densenet121_3d(num_classes=num_classes, in_channels=1)
     model, fit_info = _fit_model(model, dl_tr, dl_va, dev, cfg.epochs, cfg.lr, cfg.weight_decay)
@@ -598,6 +663,8 @@ def train_eval_vit_3d(
     num_workers: Optional[int] = None,
     augment: Optional[bool] = None,
     device: Optional[str] = None,
+    # Lesion filtering
+    lesion_filter=None,  # Optional[LesionSizeFilter]
 ) -> Dict[str, Any]:
     cfg = cfg or Train3DConfig()
     if epochs is not None: cfg.epochs = epochs
@@ -620,7 +687,7 @@ def train_eval_vit_3d(
         label_col=label_col,
         case_suffix=case_suffix,
     )
-    dl_tr, dl_va = _build_dataloaders_from_paths(paths, lab_map, cfg.img_size, cfg.batch_size, cfg.num_workers, cfg.augment)
+    dl_tr, dl_va = _build_dataloaders_from_paths(paths, lab_map, cfg.img_size, cfg.batch_size, cfg.num_workers, cfg.augment, lesion_filter=lesion_filter)
 
     model = build_vit_3d(
         num_classes=num_classes,

@@ -33,8 +33,17 @@ class LesionSizeFilter:
     def __post_init__(self):
         """Auto-detect lesion CSV if not provided."""
         if self.lesion_csv_path is None:
-            # Try to find it in standard location
+            # Try to find repo root (go up from this module)
+            module_dir = Path(__file__).parent.parent.parent.resolve()  # med3pipe/tabular/lesion_filter.py -> repo root
+            
+            # Try to find it in standard locations (tracked location first)
             candidates = [
+                # Relative to repo root (works on cluster)
+                module_dir / "data" / "lesion_size_analysis.csv",
+                module_dir / "results" / "lesion_preprocessing" / "lesion_size_analysis.csv",
+                module_dir / "results" / "lesion_size_analysis.csv",
+                # Relative to cwd (fallback)
+                Path.cwd() / "data" / "lesion_size_analysis.csv",
                 Path.cwd() / "results" / "lesion_preprocessing" / "lesion_size_analysis.csv",
                 Path.cwd() / "results" / "lesion_size_analysis.csv",
             ]

@@ -107,6 +107,7 @@ results/experiment1/
 - TabPFN and LoCalPFN are faster, run on CPU or GPU
 - Results are timestamped and organized by method/dataset
 - Summary CSV combines all methods for easy comparison
+- **Filtering consistency**: When filtering is enabled, ALL methods (TabPFN, LoCalPFN, DenseNet, ViT) use the SAME filtered dataset for fair comparison
 
 ## See Also
 
