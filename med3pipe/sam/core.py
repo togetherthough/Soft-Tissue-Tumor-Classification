@@ -129,16 +129,24 @@ def make_pre_transform(img_size: int = 128) -> tio.Compose:
     """Create preprocessing transform pipeline for SAM-Med3D.
     
     Uses resize-then-pad approach to minimize data loss:
-    1. Resize so largest dimension becomes img_size (preserves aspect ratio)
-    2. Pad to img_size^3 (adds minimal padding since largest dim is already correct)
-    3. Z-normalize
+    1. ToCanonical: Ensure consistent orientation (RAS+).
+    2. CT Windowing: Clamp intensities to soft-tissue window [-150, 250] HU.
+       This focuses the model on relevant tissue contrast and ignores extreme values (air/bone).
+    3. ResizeLargestTo: Resize so largest dimension becomes img_size (preserves aspect ratio).
+    4. CropOrPad: Pad to img_size^3 (adds minimal padding since largest dim is already correct).
+    5. ZNormalization: Standardize mean=0, std=1 (computed over entire volume).
     """
     return tio.Compose(
         [
             tio.ToCanonical(),
+            # CT Soft Tissue Windowing: [-150, 250]
+            # Typical soft tissue is Level 40, Width 400 => -160 to 240.
+            # We use a slightly wider range to capture all soft tissue.
+            tio.Clamp(out_min=-150, out_max=250),
             ResizeLargestTo(target_size=img_size),
             tio.CropOrPad(target_shape=(img_size, img_size, img_size)),
-            tio.ZNormalization(masking_method=_znorm_masking_method),
+            # ZNormalization without masking (use all pixels, including fat/air in the windowed range)
+            tio.ZNormalization(masking_method=None),
         ]
     )
 
