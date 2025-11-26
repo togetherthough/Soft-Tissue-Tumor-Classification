@@ -289,6 +289,153 @@ def merge_segmentations(seg_paths: Sequence[Path]) -> sitk.Image:
 
 
 # ------------------------------
+# ROI-centric cropping utilities
+# ------------------------------
+
+def get_bounding_box(mask_img: sitk.Image) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
+    """Get the bounding box of non-zero voxels in a binary mask.
+    
+    Returns:
+        ((x_min, x_max), (y_min, y_max), (z_min, z_max)) in physical indices
+    """
+    mask_arr = sitk.GetArrayFromImage(mask_img)  # (Z, Y, X)
+    
+    # Find non-zero coordinates
+    coords = np.argwhere(mask_arr > 0)
+    if len(coords) == 0:
+        raise ValueError("Mask is empty (no non-zero voxels found)")
+    
+    # Get min/max for each dimension (Z, Y, X)
+    z_min, y_min, x_min = coords.min(axis=0)
+    z_max, y_max, x_max = coords.max(axis=0)
+    
+    # Return in (X, Y, Z) order to match SimpleITK convention
+    return ((int(x_min), int(x_max)), (int(y_min), int(y_max)), (int(z_min), int(z_max)))
+
+
+def add_margin_to_bbox(
+    bbox: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]],
+    margin: int,
+    image_size: Tuple[int, int, int],
+) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
+    """Add margin to bounding box, clamped to image bounds.
+    
+    Args:
+        bbox: ((x_min, x_max), (y_min, y_max), (z_min, z_max))
+        margin: Number of voxels to add on each side
+        image_size: (size_x, size_y, size_z) of the image
+    
+    Returns:
+        Expanded bounding box with same format
+    """
+    (x_min, x_max), (y_min, y_max), (z_min, z_max) = bbox
+    size_x, size_y, size_z = image_size
+    
+    return (
+        (max(0, x_min - margin), min(size_x - 1, x_max + margin)),
+        (max(0, y_min - margin), min(size_y - 1, y_max + margin)),
+        (max(0, z_min - margin), min(size_z - 1, z_max + margin)),
+    )
+
+
+def crop_to_roi(
+    img: sitk.Image,
+    lbl: sitk.Image,
+    target_size: int = 128,
+    margin: int = 10,
+) -> Tuple[sitk.Image, sitk.Image]:
+    """Crop image and label to ROI centered on the lesion, then resize/pad to target size.
+    
+    Strategy:
+    1. Find bounding box of the lesion from the label
+    2. Add margin to capture context
+    3. Crop both image and label to this region
+    4. If ROI > target_size: resize down (preserving aspect ratio)
+    5. If ROI < target_size: keep at original resolution
+    6. Pad to target_size^3 (centered)
+    
+    This ensures:
+    - Small lesions maintain resolution (padded with background)
+    - Large lesions fit within target size (downscaled)
+    - Lesion is always centered in the output volume
+    
+    Args:
+        img: Input CT image
+        lbl: Binary lesion mask
+        target_size: Target output size (cubic volume)
+        margin: Margin in voxels to add around bounding box
+    
+    Returns:
+        (cropped_img, cropped_lbl) both at target_size^3
+    """
+    # Get bounding box from label
+    bbox = get_bounding_box(lbl)
+    
+    # Add margin
+    bbox_expanded = add_margin_to_bbox(bbox, margin, lbl.GetSize())
+    (x_min, x_max), (y_min, y_max), (z_min, z_max) = bbox_expanded
+    
+    # Extract ROI using SimpleITK RegionOfInterest filter
+    roi_size = (x_max - x_min + 1, y_max - y_min + 1, z_max - z_min + 1)
+    roi_index = (x_min, y_min, z_min)
+    
+    roi_filter_img = sitk.RegionOfInterestImageFilter()
+    roi_filter_img.SetSize([int(s) for s in roi_size])
+    roi_filter_img.SetIndex([int(i) for i in roi_index])
+    img_crop = roi_filter_img.Execute(img)
+    
+    roi_filter_lbl = sitk.RegionOfInterestImageFilter()
+    roi_filter_lbl.SetSize([int(s) for s in roi_size])
+    roi_filter_lbl.SetIndex([int(i) for i in roi_index])
+    lbl_crop = roi_filter_lbl.Execute(lbl)
+    
+    # Check if we need to resize
+    max_dim = max(roi_size)
+    
+    if max_dim > target_size:
+        # Resize down to fit
+        scale = target_size / max_dim
+        new_size = [int(s * scale) for s in roi_size]
+        
+        img_crop = sitk.Resample(
+            img_crop,
+            new_size,
+            sitk.Transform(),
+            sitk.sitkLinear,
+            img_crop.GetOrigin(),
+            [s * (1/scale) for s in img_crop.GetSpacing()],
+            img_crop.GetDirection(),
+            0.0,
+            img_crop.GetPixelID(),
+        )
+        
+        lbl_crop = sitk.Resample(
+            lbl_crop,
+            new_size,
+            sitk.Transform(),
+            sitk.sitkNearestNeighbor,
+            lbl_crop.GetOrigin(),
+            [s * (1/scale) for s in lbl_crop.GetSpacing()],
+            lbl_crop.GetDirection(),
+            0.0,
+            lbl_crop.GetPixelID(),
+        )
+    
+    # Pad to target size (centered)
+    current_size = img_crop.GetSize()
+    pad_needed = [(target_size - s) for s in current_size]
+    
+    # Split padding evenly (lower, upper)
+    lower_pad = [p // 2 for p in pad_needed]
+    upper_pad = [p - lower_pad[i] for i, p in enumerate(pad_needed)]
+    
+    img_final = sitk.ConstantPad(img_crop, lower_pad, upper_pad, 0.0)
+    lbl_final = sitk.ConstantPad(lbl_crop, lower_pad, upper_pad, 0)
+    
+    return img_final, lbl_final
+
+
+# ------------------------------
 # Main operations
 # ------------------------------
 
@@ -377,6 +524,130 @@ def prepare_for_sam3d(
             print(f"Prepared {prepared} cases ...")
 
     print(f"Done. Prepared {prepared} cases to {paths.train_root}")
+    return prepared, paths
+
+
+def prepare_for_sam3d_roi_cropped(
+    dataset_root: Path,
+    sam3d_root: Path,
+    category: str = "gist",
+    ct_name: str = "ct_GIST_roi",
+    case_glob: Optional[str] = None,
+    max_cases: Optional[int] = None,
+    image_pattern: Optional[str] = None,
+    seg_pattern: Optional[str] = None,
+    target_size: int = 128,
+    margin: int = 10,
+) -> Tuple[int, Sam3DPaths]:
+    """Prepare dataset with ROI-centric cropping (tumor-centered volumes).
+    
+    This is an alternative to `prepare_for_sam3d` that crops each volume around
+    the lesion before saving. This approach:
+    - Preserves lesion resolution for small tumors
+    - Centers the tumor in every volume
+    - Reduces background noise in features
+    - Uses the lesion location (not dense segmentation) at inference time
+    
+    Workflow:
+    1. Discovers cases under `dataset_root`
+    2. For each case, merges multiple images/segmentations when present
+    3. Aligns image geometry to label geometry
+    4. **Crops to lesion ROI with margin**
+    5. **Resizes/pads to target_size^3 (centered)**
+    6. Converts labels to binary
+    7. Writes outputs into `data/train/<category>/<ct_name>/{imagesTr,labelsTr}`
+    
+    Args:
+        dataset_root: Root directory containing raw dataset
+        sam3d_root: SAM-Med3D installation root
+        category: Dataset category name
+        ct_name: CT dataset name (suggest adding '_roi' suffix to distinguish)
+        case_glob: Optional glob pattern for finding case directories
+        max_cases: Optional limit on number of cases to process
+        image_pattern: Optional pattern for finding image files
+        seg_pattern: Optional pattern for finding segmentation files
+        target_size: Target cubic volume size (default 128)
+        margin: Margin in voxels around lesion bounding box (default 10)
+    
+    Returns:
+        (n_prepared, paths)
+    """
+    dataset_root = Path(dataset_root)
+    sam3d_root = Path(sam3d_root)
+
+    paths = Sam3DPaths(sam3d_root=sam3d_root, category=category, ct_name=ct_name)
+    paths.ensure()
+
+    nifti_dirs = find_case_dirs(dataset_root, case_glob=case_glob)
+    if max_cases is not None:
+        nifti_dirs = nifti_dirs[:max_cases]
+
+    prepared = 0
+    skipped_empty_mask = 0
+    
+    for case_dir in nifti_dirs:
+        # Try to derive a case_id from directory layout
+        try:
+            case_id = case_dir.parent.parent.name
+        except Exception:
+            case_id = case_dir.name  # fallback
+
+        try:
+            image_files = find_image_files(case_dir, pattern=image_pattern)
+            seg_files = find_segmentation_files(case_dir, pattern=seg_pattern)
+
+            if not image_files:
+                print(f"[SKIP] {case_id}: No image files found in {case_dir}")
+                continue
+            if not seg_files:
+                print(f"[SKIP] {case_id}: No segmentation files found in {case_dir}")
+                continue
+
+            img = merge_images(image_files)
+            lbl = merge_segmentations(seg_files)
+        except Exception as e:
+            print(f"[SKIP] {case_id}: {e}")
+            continue
+
+        # Align image geometry to label geometry
+        if (
+            img.GetSize() != lbl.GetSize()
+            or img.GetSpacing() != lbl.GetSpacing()
+            or img.GetDirection() != lbl.GetDirection()
+            or img.GetOrigin() != lbl.GetOrigin()
+        ):
+            img = resample_like(img, reference=lbl, is_label=False)
+
+        # Convert to binary mask
+        lbl_bin = to_binary_mask(lbl)
+        
+        # ROI-centric crop and resize
+        try:
+            img_roi, lbl_roi = crop_to_roi(
+                img, lbl_bin, target_size=target_size, margin=margin
+            )
+        except ValueError as e:
+            # Handle empty masks
+            if "empty" in str(e).lower():
+                print(f"[SKIP] {case_id}: Empty mask (no lesion found)")
+                skipped_empty_mask += 1
+                continue
+            else:
+                raise
+        
+        # Save cropped volumes
+        out_image = paths.images_tr / f"{case_id}.nii.gz"
+        out_label = paths.labels_tr / f"{case_id}.nii.gz"
+        sitk.WriteImage(img_roi, str(out_image))
+        sitk.WriteImage(lbl_roi, str(out_label))
+
+        prepared += 1
+        if prepared % 25 == 0:
+            print(f"Prepared {prepared} ROI-cropped cases ...")
+
+    print(f"Done. Prepared {prepared} ROI-cropped cases to {paths.train_root}")
+    if skipped_empty_mask > 0:
+        print(f"  Skipped {skipped_empty_mask} cases due to empty masks")
     return prepared, paths
 
 

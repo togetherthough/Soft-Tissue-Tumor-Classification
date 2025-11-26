@@ -28,6 +28,7 @@ from ..data.prepare import (
     Sam3DPaths,
     find_default_sam3d_root,
     prepare_for_sam3d,
+    prepare_for_sam3d_roi_cropped,
     split_validation,
 )
 from ..sam.core import (
@@ -88,6 +89,10 @@ def run_single_dataset(
     max_cases: Optional[int] = None,
     image_pattern: Optional[str] = None,
     seg_pattern: Optional[str] = None,
+    # ROI cropping (new)
+    use_roi_crop: bool = False,
+    roi_margin: int = 10,
+    roi_target_size: int = 128,
     # Split
     split_ratio: float = 0.8,
     seed: int = 2025,
@@ -124,6 +129,12 @@ def run_single_dataset(
 
     Runs Steps 1–6 (prepare, split, extract, pool, labels) once, then branches to
     TabPFN or LoCalPFN for Steps 7–8 depending on `method`.
+    
+    Args:
+        use_roi_crop: If True, uses ROI-centric cropping (tumor-centered volumes).
+                     If False, uses full-volume resizing (default).
+        roi_margin: Margin in voxels around lesion bounding box (only if use_roi_crop=True).
+        roi_target_size: Target size for ROI-cropped volumes (only if use_roi_crop=True).
     """
     dataset_root = Path(dataset_root)
     sam3d_root = sam3d_root or find_default_sam3d_root()
@@ -135,16 +146,32 @@ def run_single_dataset(
             dataset_root = anchored
 
     # 1–2) Prepare into imagesTr/labelsTr
-    prepared, paths = prepare_for_sam3d(
-        dataset_root=dataset_root,
-        sam3d_root=sam3d_root,
-        category=category,
-        ct_name=ct_name,
-        case_glob=case_glob,
-        max_cases=max_cases,
-        image_pattern=image_pattern,
-        seg_pattern=seg_pattern,
-    )
+    if use_roi_crop:
+        # ROI-centric cropping: tumor-centered volumes
+        prepared, paths = prepare_for_sam3d_roi_cropped(
+            dataset_root=dataset_root,
+            sam3d_root=sam3d_root,
+            category=category,
+            ct_name=ct_name,
+            case_glob=case_glob,
+            max_cases=max_cases,
+            image_pattern=image_pattern,
+            seg_pattern=seg_pattern,
+            target_size=roi_target_size,
+            margin=roi_margin,
+        )
+    else:
+        # Full-volume resizing (default)
+        prepared, paths = prepare_for_sam3d(
+            dataset_root=dataset_root,
+            sam3d_root=sam3d_root,
+            category=category,
+            ct_name=ct_name,
+            case_glob=case_glob,
+            max_cases=max_cases,
+            image_pattern=image_pattern,
+            seg_pattern=seg_pattern,
+        )
 
     # 3) Split into imagesVal/labelsVal (copy by default)
     split_validation(paths, split_ratio=split_ratio, seed=seed, copy=True)

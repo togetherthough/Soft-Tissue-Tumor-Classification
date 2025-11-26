@@ -27,6 +27,7 @@ from ..data.prepare import find_default_sam3d_root
 from ..tabular.localpfn import LocalPFNConfig
 from ..tabular.tabpfn import default_tabpfn_out_dir
 from ..tabular.localpfn import default_localpfn_out_dir
+from ..tabular.lesion_filter import LesionSizeFilter
 
 
 @dataclass
@@ -100,6 +101,16 @@ def _run_multi_core(
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
     skip_existing_embeddings: bool = False,
+    # ROI cropping parameters
+    use_roi_crop: bool = False,
+    roi_margin: int = 10,
+    roi_target_size: int = 128,
+    # Lesion filtering parameters
+    lesion_filter: Optional[LesionSizeFilter] = None,
+    min_voxels: Optional[int] = None,
+    min_dimension: Optional[int] = None,
+    min_density: Optional[float] = None,
+    # Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
     tabpfn_src: Optional[Path] = None,
@@ -256,6 +267,13 @@ def _run_multi_core(
                 max_cases=max_cases,
                 image_pattern=image_pattern,
                 seg_pattern=seg_pattern,
+                use_roi_crop=use_roi_crop,
+                roi_margin=roi_margin,
+                roi_target_size=roi_target_size,
+                lesion_filter=lesion_filter,
+                min_voxels=min_voxels,
+                min_dimension=min_dimension,
+                min_density=min_density,
                 split_ratio=split_ratio,
                 seed=seed,
                 sam3d_root=sam3d_root,
@@ -392,6 +410,15 @@ def run_multi_tabpfn(
     device: Optional[str] = None,
     # Extraction control
     skip_existing_embeddings: bool = False,
+    # ROI cropping
+    use_roi_crop: bool = False,
+    roi_margin: int = 10,
+    roi_target_size: int = 128,
+    # Lesion filtering
+    lesion_filter: Optional[LesionSizeFilter] = None,
+    min_voxels: Optional[int] = None,
+    min_dimension: Optional[int] = None,
+    min_density: Optional[float] = None,
     # Shared Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
@@ -408,6 +435,10 @@ def run_multi_tabpfn(
         skip_existing_embeddings: If True, skip/ignore existing embeddings and re-extract.
                                   If False (default), reuse existing embeddings when available.
                                   Missing embeddings are always extracted regardless of this setting.
+        use_roi_crop: If True, uses ROI-centric cropping (tumor-centered volumes).
+                     If False (default), uses full-volume resizing.
+        roi_margin: Margin in voxels around lesion bounding box (only if use_roi_crop=True).
+        roi_target_size: Target size for ROI-cropped volumes (only if use_roi_crop=True).
     
     Embedding behavior:
         - skip_existing_embeddings=False (recommended): Reuse embeddings if they exist, extract if missing
@@ -428,6 +459,13 @@ def run_multi_tabpfn(
         checkpoint=checkpoint,
         device=device,
         skip_existing_embeddings=skip_existing_embeddings,
+        use_roi_crop=use_roi_crop,
+        roi_margin=roi_margin,
+        roi_target_size=roi_target_size,
+        lesion_filter=lesion_filter,
+        min_voxels=min_voxels,
+        min_dimension=min_dimension,
+        min_density=min_density,
         n_components_max=n_components_max,
         random_state=random_state,
         tabpfn_src=tabpfn_src,
@@ -448,6 +486,15 @@ def run_multi_localpfn(
     device: Optional[str] = None,
     # Extraction control
     skip_existing_embeddings: bool = False,
+    # ROI cropping
+    use_roi_crop: bool = False,
+    roi_margin: int = 10,
+    roi_target_size: int = 128,
+    # Lesion filtering  
+    lesion_filter: Optional[LesionSizeFilter] = None,
+    min_voxels: Optional[int] = None,
+    min_dimension: Optional[int] = None,
+    min_density: Optional[float] = None,
     # Shared Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
@@ -470,6 +517,10 @@ def run_multi_localpfn(
         skip_existing_embeddings: If True, skip/ignore existing embeddings and re-extract.
                                   If False (default), reuse existing embeddings when available.
                                   Missing embeddings are always extracted regardless of this setting.
+        use_roi_crop: If True, uses ROI-centric cropping (tumor-centered volumes).
+                     If False (default), uses full-volume resizing.
+        roi_margin: Margin in voxels around lesion bounding box (only if use_roi_crop=True).
+        roi_target_size: Target size for ROI-cropped volumes (only if use_roi_crop=True).
     
     Embedding behavior:
         - skip_existing_embeddings=False (recommended): Reuse embeddings if they exist, extract if missing
@@ -490,6 +541,13 @@ def run_multi_localpfn(
         checkpoint=checkpoint,
         device=device,
         skip_existing_embeddings=skip_existing_embeddings,
+        use_roi_crop=use_roi_crop,
+        roi_margin=roi_margin,
+        roi_target_size=roi_target_size,
+        lesion_filter=lesion_filter,
+        min_voxels=min_voxels,
+        min_dimension=min_dimension,
+        min_density=min_density,
         n_components_max=n_components_max,
         random_state=random_state,
         local_cfg=local_cfg,
