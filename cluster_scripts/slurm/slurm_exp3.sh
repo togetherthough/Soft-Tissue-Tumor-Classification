@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=exp3_clf_filtered
+#SBATCH --job-name=exp3_clf_head
 #SBATCH --partition=long
-#SBATCH --output=logs/exp3_filtered_%j.log
-#SBATCH --error=logs/exp3_filtered_error_%j.log
+#SBATCH --output=logs/exp3_%j.log
+#SBATCH --error=logs/exp3_error_%j.log
 #SBATCH --nodes=1
 # Tip: export SBATCH_NODELIST=gpuXYZ before submission if you must target a specific node.
 #SBATCH --time=1-00:00:00    # ADJUST TIME: for all 6 datasets, may need more
@@ -14,16 +14,13 @@
 #SBATCH --mail-user=YOUR_EMAIL@example.com
 
 # =============================================================================
-# Experiment 3: Classification Head with Lesion Size Filtering
+# Experiment 3: Classification Head on SAM-Med3D Features
 # =============================================================================
-# Tests classification head performance using only high-quality lesions
-# (voxels >= 500, dimension >= 5, density >= 0.3)
-#
-# Results will be saved in a separate folder from unfiltered experiments:
-#   results/classification_head/DATASET_filtered_v500_d5_ρ0.30/
+# Tests if SAM-Med3D features are discriminative for tumor classification
+# by training a simple classification head on top of the frozen encoder.
 #
 # Usage:
-#   sbatch cluster_scripts/slurm_experiment3_filtered.sh
+#   sbatch cluster_scripts/slurm/slurm_exp3.sh
 # =============================================================================
 
 echo "=========================================="
@@ -42,10 +39,6 @@ echo ""
 echo "Code directory: $CODE_DIR"
 echo "Results directory: $RESULTS_DIR"
 echo "Config file: $CONFIG_FILE"
-echo ""
-echo "⚠️  FILTERED MODE: Using recommended lesion size filtering"
-echo "   min_voxels=500, min_dimension=5, min_density=0.3"
-echo "   Results will be saved in separate '_filtered_*' folders"
 
 # Create directories
 mkdir -p ${CODE_DIR}/logs
@@ -67,12 +60,14 @@ module load CUDA/12.3.0
 source /trinity/home/r112276/Med3Tab-PFN/thesis_peron/bin/activate
 
 # Set threading environment variables for optimal GPU performance
+# Using 1 thread prevents CPU contention when GPU does the heavy lifting
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
-# Let SLURM manage GPU assignment
+# Let SLURM manage GPU assignment (it sets CUDA_VISIBLE_DEVICES automatically)
+# Don't override unless you have a specific reason
 echo "SLURM assigned GPU(s): $CUDA_VISIBLE_DEVICES"
 
 # Verify environment
@@ -92,25 +87,25 @@ if torch.cuda.is_available():
     print(f'GPU name: {torch.cuda.get_device_name(0)}')
 "
 
-# Run experiment with filtering
+# Run experiment
 echo ""
 echo "=========================================="
-echo "Starting Experiment 3 with Filtering"
+echo "Starting Experiment 3"
 echo "=========================================="
 
-python cluster_scripts/run_experiment3_classification_head.py \
+# Lesion filtering options (uncomment to enable):
+# --min-voxels 500           # Filter cases with >= 500 voxels
+# --min-dimension 5          # Filter cases with min dimension >= 5
+# --min-density 0.3          # Filter cases with density >= 0.3
+# --filter-preset recommended # Use preset: recommended, conservative, or lenient
+
+python cluster_scripts/experiments/exp3_classifier.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
     --epochs 20 \
     --batch-size 4 \
-    --freeze-encoder \
-    --filter-preset recommended
-
-# Alternative: Use custom filtering parameters instead of preset
-# Uncomment and modify these lines to use custom thresholds:
-#    --min-voxels 500 \
-#    --min-dimension 5 \
-#    --min-density 0.3
+    --freeze-encoder
+    # Add filtering parameters here (see above)
 
 EXIT_CODE=$?
 
@@ -123,10 +118,7 @@ echo "=========================================="
 # Results summary
 if [ $EXIT_CODE -eq 0 ]; then
     echo ""
-    echo "✅ SUCCESS: Filtered results saved to ${RESULTS_DIR}/"
-    echo ""
-    echo "Note: Results are in dataset-specific filtered folders:"
-    echo "  e.g., gist_filtered_v500_d5_ρ0.30/"
+    echo "✅ SUCCESS: Results saved to ${RESULTS_DIR}/"
     echo ""
     
     SUMMARY_CSV="${RESULTS_DIR}/summary.csv"
@@ -140,7 +132,7 @@ if [ $EXIT_CODE -eq 0 ]; then
 else
     echo ""
     echo "❌ FAILED: Check error log at:"
-    echo "  ${CODE_DIR}/logs/exp3_filtered_error_${SLURM_JOB_ID}.log"
+    echo "  ${CODE_DIR}/logs/exp3_error_${SLURM_JOB_ID}.log"
     echo ""
 fi
 

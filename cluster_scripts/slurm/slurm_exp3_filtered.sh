@@ -1,9 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=exp3_quick
-#SBATCH --output=logs/exp3_quick_%j.log
-#SBATCH --error=logs/exp3_quick_error_%j.log
-#SBATCH --partition=short         # Use short partition for quick tests
-#SBATCH --time=0-02:00:00         # 2 hours should be enough for 5 epochs
+#SBATCH --job-name=exp3_clf_filtered
+#SBATCH --partition=long
+#SBATCH --output=logs/exp3_filtered_%j.log
+#SBATCH --error=logs/exp3_filtered_error_%j.log
+#SBATCH --nodes=1
+# Tip: export SBATCH_NODELIST=gpuXYZ before submission if you must target a specific node.
+#SBATCH --time=1-00:00:00    # ADJUST TIME: for all 6 datasets, may need more
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
@@ -12,16 +14,16 @@
 #SBATCH --mail-user=YOUR_EMAIL@example.com
 
 # =============================================================================
-# Experiment 3: Quick Test with Fewer Epochs
+# Experiment 3: Classification Head with Lesion Size Filtering
 # =============================================================================
-# Fast version for testing/debugging with only 5 epochs per dataset
-# Perfect for initial validation before full run
+# Tests classification head performance using only high-quality lesions
+# (voxels >= 500, dimension >= 5, density >= 0.3)
+#
+# Results will be saved in a separate folder from unfiltered experiments:
+#   results/classification_head/DATASET_filtered_v500_d5_ρ0.30/
 #
 # Usage:
-#   sbatch cluster_scripts/slurm_experiment3_quick.sh
-#
-# To test single dataset:
-#   sbatch cluster_scripts/slurm_experiment3_quick.sh gist
+#   sbatch cluster_scripts/slurm/slurm_exp3_filtered.sh
 # =============================================================================
 
 echo "=========================================="
@@ -33,13 +35,17 @@ echo "=========================================="
 
 # Path configuration
 CODE_DIR="${SLURM_SUBMIT_DIR}"
-RESULTS_DIR="${CODE_DIR}/results/classification_head_quick"
+RESULTS_DIR="${CODE_DIR}/results/classification_head"
 CONFIG_FILE="${CODE_DIR}/configs/datasets_cluster.yaml"
 
 echo ""
 echo "Code directory: $CODE_DIR"
 echo "Results directory: $RESULTS_DIR"
 echo "Config file: $CONFIG_FILE"
+echo ""
+echo "⚠️  FILTERED MODE: Using recommended lesion size filtering"
+echo "   min_voxels=500, min_dimension=5, min_density=0.3"
+echo "   Results will be saved in separate '_filtered_*' folders"
 
 # Create directories
 mkdir -p ${CODE_DIR}/logs
@@ -60,12 +66,13 @@ module load CUDA/12.3.0
 # Activate virtual environment (thesis_peron)
 source /trinity/home/r112276/Med3Tab-PFN/thesis_peron/bin/activate
 
-# Set threading environment variables
+# Set threading environment variables for optimal GPU performance
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
+# Let SLURM manage GPU assignment
 echo "SLURM assigned GPU(s): $CUDA_VISIBLE_DEVICES"
 
 # Verify environment
@@ -85,42 +92,25 @@ if torch.cuda.is_available():
     print(f'GPU name: {torch.cuda.get_device_name(0)}')
 "
 
-# Verify checkpoint exists
-echo ""
-echo "Checking SAM-Med3D checkpoint..."
-CHECKPOINT_PATH="${CODE_DIR}/SAM-Med3D-main/SAM-Med3D-main/ckpt/sam_med3d_turbo.pth"
-if [ -f "$CHECKPOINT_PATH" ]; then
-    echo "✅ Checkpoint found: $CHECKPOINT_PATH"
-    ls -lh "$CHECKPOINT_PATH"
-else
-    echo "⚠️  WARNING: Checkpoint not found at: $CHECKPOINT_PATH"
-    echo "   Download from: https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth"
-fi
-
-# Determine datasets to run
-if [ $# -eq 0 ]; then
-    # Run all datasets
-    DATASETS_ARG=""
-    echo "Running ALL datasets with 5 epochs each"
-else
-    # Run specific datasets passed as arguments
-    DATASETS_ARG="--datasets $@"
-    echo "Running ONLY datasets: $@"
-fi
-
-# Run experiment
+# Run experiment with filtering
 echo ""
 echo "=========================================="
-echo "Starting Experiment 3 (Quick - 5 epochs)"
+echo "Starting Experiment 3 with Filtering"
 echo "=========================================="
 
-python cluster_scripts/run_experiment3_classification_head.py \
+python cluster_scripts/experiments/exp3_classifier.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
-    --epochs 5 \
+    --epochs 20 \
     --batch-size 4 \
     --freeze-encoder \
-    ${DATASETS_ARG}
+    --filter-preset recommended
+
+# Alternative: Use custom filtering parameters instead of preset
+# Uncomment and modify these lines to use custom thresholds:
+#    --min-voxels 500 \
+#    --min-dimension 5 \
+#    --min-density 0.3
 
 EXIT_CODE=$?
 
@@ -133,7 +123,10 @@ echo "=========================================="
 # Results summary
 if [ $EXIT_CODE -eq 0 ]; then
     echo ""
-    echo "✅ SUCCESS: Results saved to ${RESULTS_DIR}/"
+    echo "✅ SUCCESS: Filtered results saved to ${RESULTS_DIR}/"
+    echo ""
+    echo "Note: Results are in dataset-specific filtered folders:"
+    echo "  e.g., gist_filtered_v500_d5_ρ0.30/"
     echo ""
     
     SUMMARY_CSV="${RESULTS_DIR}/summary.csv"
@@ -143,15 +136,11 @@ if [ $EXIT_CODE -eq 0 ]; then
         echo "=========================================="
         cat $SUMMARY_CSV
         echo ""
-        echo "Interpretation:"
-        echo "  AUC > 0.70: ✅ Good features, proceed to full pipeline"
-        echo "  AUC 0.60-0.70: 🟡 Moderate, consider fine-tuning"
-        echo "  AUC < 0.60: ❌ Poor features, investigate data/model"
     fi
 else
     echo ""
     echo "❌ FAILED: Check error log at:"
-    echo "  ${CODE_DIR}/logs/exp3_quick_error_${SLURM_JOB_ID}.log"
+    echo "  ${CODE_DIR}/logs/exp3_filtered_error_${SLURM_JOB_ID}.log"
     echo ""
 fi
 

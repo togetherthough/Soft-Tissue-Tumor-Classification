@@ -88,7 +88,7 @@ echo "=========================================="
 # Force unbuffered output for Python
 export PYTHONUNBUFFERED=1
 
-python -u cluster_scripts/run_experiment1_benchmarks.py \
+python -u cluster_scripts/experiments/exp1_benchmarks.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
     --epochs-3d 3
@@ -128,7 +128,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     
     echo ""
     echo "✅ Validation successful! Ready for full run with 20 epochs."
-    echo "To run full experiment: sbatch cluster_scripts/slurm_train_and_test.sh"
+    echo "To run full experiment: sbatch cluster_scripts/slurm/slurm_exp1.sh"
     echo ""
 else
     echo ""

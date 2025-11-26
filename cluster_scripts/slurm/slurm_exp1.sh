@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=med3_exp1_filtered
+#SBATCH --job-name=med3_exp1
 #SBATCH --partition=long
-#SBATCH --output=logs/exp1_filtered_%j.log
-#SBATCH --error=logs/exp1_filtered_error_%j.log
+#SBATCH --output=logs/exp1_%j.log
+#SBATCH --error=logs/exp1_error_%j.log
 #SBATCH --nodes=1
 # Tip: if you must target specific nodes, export SBATCH_NODELIST=gpuXYZ before calling sbatch.
 #SBATCH --time=2-00:00:00
@@ -14,23 +14,18 @@
 #SBATCH --mail-user=YOUR_EMAIL@example.com
 
 # =============================================================================
-# SLURM Script: Experiment 1 with Lesion Size Filtering
+# SLURM Script: Experiment 1 - Train & Test Med3-TabPFN Methods vs Baselines
 # =============================================================================
-# This script runs Experiment 1 with recommended lesion size filtering:
-#   - min_voxels = 500 (cases with >= 500 voxels)
-#   - min_dimension = 5 (minimum bounding box dimension >= 5)
-#   - min_density = 0.3 (lesion density >= 30%)
-#
-# Methods trained:
+# This script trains and evaluates:
 #   - Med3-TabPFN (PFN-based classification head)
 #   - Med3-LoCalPFN (Local context-aware PFN)
 #   - DenseNet121-3D (3D baseline)
 #   - ViT-3D (3D Vision Transformer baseline)
 #
-# Results are saved in separate folders from unfiltered experiments.
-#
 # Usage:
-#   sbatch cluster_scripts/slurm_train_and_test_filtered.sh
+#   sbatch cluster_scripts/slurm/slurm_exp1.sh
+#
+# Configure the paths below for your cluster environment.
 # =============================================================================
 
 echo "=========================================="
@@ -47,12 +42,14 @@ echo "=========================================="
 CODE_DIR="${SLURM_SUBMIT_DIR}"
 
 # Path to your data directory (if different from code directory)
+# If your data is in the same repo, you can use: DATA_DIR="${CODE_DIR}"
 DATA_DIR="${CODE_DIR}"
 
 # Where to save results
 RESULTS_DIR="${CODE_DIR}/results/experiment1"
 
 # Which config file to use
+# Use cluster-specific config with absolute paths to /data/scratch/
 CONFIG_FILE="${CODE_DIR}/configs/datasets_cluster.yaml"
 
 echo ""
@@ -60,10 +57,6 @@ echo "Code directory: $CODE_DIR"
 echo "Data directory: $DATA_DIR"
 echo "Results directory: $RESULTS_DIR"
 echo "Config file: $CONFIG_FILE"
-echo ""
-echo "⚠️  FILTERED MODE: Using recommended lesion size filtering"
-echo "   min_voxels=500, min_dimension=5, min_density=0.3"
-echo "   Results will be saved in separate '_filtered_*' folders per method/dataset"
 
 # Create necessary directories
 mkdir -p ${CODE_DIR}/logs
@@ -88,12 +81,14 @@ module load CUDA/12.3.0
 source /trinity/home/r112276/Med3Tab-PFN/thesis_peron/bin/activate
 
 # Set threading environment variables for optimal GPU performance
+# Using 1 thread prevents CPU contention when GPU does the heavy lifting
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
-# Let SLURM manage GPU assignment
+# Let SLURM manage GPU assignment (it sets CUDA_VISIBLE_DEVICES automatically)
+# Don't override unless you have a specific reason
 echo "SLURM assigned GPU(s): $CUDA_VISIBLE_DEVICES"
 
 # Verify environment
@@ -114,11 +109,11 @@ if torch.cuda.is_available():
 "
 
 # -----------------------------------------------------------------------------
-# 3. Run Experiment with Filtering
+# 3. Run Experiment
 # -----------------------------------------------------------------------------
 echo ""
 echo "=========================================="
-echo "Starting Experiment 1 with Filtering"
+echo "Starting Experiment 1: Train & Test"
 echo "=========================================="
 echo ""
 echo "Methods to run:"
@@ -127,24 +122,22 @@ echo "  2. Med3-LoCalPFN"
 echo "  3. DenseNet121-3D"
 echo "  4. ViT-3D"
 echo ""
-echo "Filtering: ENABLED (recommended preset)"
-echo ""
+
+# Run the experiment
+# Available options:
+#   --datasets gist lipo        : run only specific datasets
+#   --skip-tabpfn               : skip TabPFN method
+#   --skip-localpfn             : skip LoCalPFN method
+#   --skip-baselines            : skip 3D baselines (DenseNet & ViT)
+#   --epochs-3d N               : number of training epochs for 3D models
 
 # Force unbuffered output for Python
 export PYTHONUNBUFFERED=1
 
-# Run with filtering enabled
-python -u cluster_scripts/run_experiment1_benchmarks.py \
+python -u cluster_scripts/experiments/exp1_benchmarks.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
-    --epochs-3d ${EPOCHS:-20} \
-    --filter-preset recommended
-
-# Alternative: Use custom filtering parameters instead of preset
-# Uncomment and modify these lines to use custom thresholds:
-#    --min-voxels 500 \
-#    --min-dimension 5 \
-#    --min-density 0.3
+    --epochs-3d ${EPOCHS:-20}  # Can override with EPOCHS env var
 
 # Capture exit status
 EXIT_CODE=$?
@@ -160,11 +153,7 @@ echo "=========================================="
 # -----------------------------------------------------------------------------
 if [ $EXIT_CODE -eq 0 ]; then
     echo ""
-    echo "✅ SUCCESS: Filtered results saved to ${RESULTS_DIR}/"
-    echo ""
-    echo "Note: Results are in dataset-specific filtered folders:"
-    echo "  e.g., tabpfn_runs/gist_filtered_v500_d5_ρ0.30/"
-    echo "        localpfn_runs/gist_filtered_v500_d5_ρ0.30/"
+    echo "✅ SUCCESS: Results saved to ${RESULTS_DIR}/"
     echo ""
     
     # List output files
@@ -190,7 +179,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     if [ -f "$AVG_CSV" ]; then
         echo ""
         echo "=========================================="
-        echo "⭐ AVERAGE SCORES PER METHOD (FILTERED):"
+        echo "⭐ AVERAGE SCORES PER METHOD:"
         echo "=========================================="
         cat $AVG_CSV
         echo ""
@@ -207,7 +196,7 @@ if [ $EXIT_CODE -eq 0 ]; then
 else
     echo ""
     echo "❌ FAILED: Check error log at:"
-    echo "  ${CODE_DIR}/logs/exp1_filtered_error_${SLURM_JOB_ID}.log"
+    echo "  ${CODE_DIR}/logs/exp1_error_${SLURM_JOB_ID}.log"
     echo ""
 fi
 

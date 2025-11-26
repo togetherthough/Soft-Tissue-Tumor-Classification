@@ -1,11 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=exp3_clf_head
-#SBATCH --partition=long
-#SBATCH --output=logs/exp3_%j.log
-#SBATCH --error=logs/exp3_error_%j.log
-#SBATCH --nodes=1
-# Tip: export SBATCH_NODELIST=gpuXYZ before submission if you must target a specific node.
-#SBATCH --time=1-00:00:00    # ADJUST TIME: for all 6 datasets, may need more
+#SBATCH --job-name=exp3_quick
+#SBATCH --output=logs/exp3_quick_%j.log
+#SBATCH --error=logs/exp3_quick_error_%j.log
+#SBATCH --partition=short         # Use short partition for quick tests
+#SBATCH --time=0-02:00:00         # 2 hours should be enough for 5 epochs
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
@@ -14,13 +12,16 @@
 #SBATCH --mail-user=YOUR_EMAIL@example.com
 
 # =============================================================================
-# Experiment 3: Classification Head on SAM-Med3D Features
+# Experiment 3: Quick Test with Fewer Epochs
 # =============================================================================
-# Tests if SAM-Med3D features are discriminative for tumor classification
-# by training a simple classification head on top of the frozen encoder.
+# Fast version for testing/debugging with only 5 epochs per dataset
+# Perfect for initial validation before full run
 #
 # Usage:
-#   sbatch cluster_scripts/slurm_experiment3.sh
+#   sbatch cluster_scripts/slurm/slurm_exp3_quick.sh
+#
+# To test single dataset:
+#   sbatch cluster_scripts/slurm/slurm_exp3_quick.sh gist
 # =============================================================================
 
 echo "=========================================="
@@ -32,7 +33,7 @@ echo "=========================================="
 
 # Path configuration
 CODE_DIR="${SLURM_SUBMIT_DIR}"
-RESULTS_DIR="${CODE_DIR}/results/classification_head"
+RESULTS_DIR="${CODE_DIR}/results/classification_head_quick"
 CONFIG_FILE="${CODE_DIR}/configs/datasets_cluster.yaml"
 
 echo ""
@@ -59,15 +60,12 @@ module load CUDA/12.3.0
 # Activate virtual environment (thesis_peron)
 source /trinity/home/r112276/Med3Tab-PFN/thesis_peron/bin/activate
 
-# Set threading environment variables for optimal GPU performance
-# Using 1 thread prevents CPU contention when GPU does the heavy lifting
+# Set threading environment variables
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
-# Let SLURM manage GPU assignment (it sets CUDA_VISIBLE_DEVICES automatically)
-# Don't override unless you have a specific reason
 echo "SLURM assigned GPU(s): $CUDA_VISIBLE_DEVICES"
 
 # Verify environment
@@ -87,25 +85,42 @@ if torch.cuda.is_available():
     print(f'GPU name: {torch.cuda.get_device_name(0)}')
 "
 
+# Verify checkpoint exists
+echo ""
+echo "Checking SAM-Med3D checkpoint..."
+CHECKPOINT_PATH="${CODE_DIR}/SAM-Med3D-main/SAM-Med3D-main/ckpt/sam_med3d_turbo.pth"
+if [ -f "$CHECKPOINT_PATH" ]; then
+    echo "✅ Checkpoint found: $CHECKPOINT_PATH"
+    ls -lh "$CHECKPOINT_PATH"
+else
+    echo "⚠️  WARNING: Checkpoint not found at: $CHECKPOINT_PATH"
+    echo "   Download from: https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth"
+fi
+
+# Determine datasets to run
+if [ $# -eq 0 ]; then
+    # Run all datasets
+    DATASETS_ARG=""
+    echo "Running ALL datasets with 5 epochs each"
+else
+    # Run specific datasets passed as arguments
+    DATASETS_ARG="--datasets $@"
+    echo "Running ONLY datasets: $@"
+fi
+
 # Run experiment
 echo ""
 echo "=========================================="
-echo "Starting Experiment 3"
+echo "Starting Experiment 3 (Quick - 5 epochs)"
 echo "=========================================="
 
-# Lesion filtering options (uncomment to enable):
-# --min-voxels 500           # Filter cases with >= 500 voxels
-# --min-dimension 5          # Filter cases with min dimension >= 5
-# --min-density 0.3          # Filter cases with density >= 0.3
-# --filter-preset recommended # Use preset: recommended, conservative, or lenient
-
-python cluster_scripts/run_experiment3_classification_head.py \
+python cluster_scripts/experiments/exp3_classifier.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
-    --epochs 20 \
+    --epochs 5 \
     --batch-size 4 \
-    --freeze-encoder
-    # Add filtering parameters here (see above)
+    --freeze-encoder \
+    ${DATASETS_ARG}
 
 EXIT_CODE=$?
 
@@ -128,11 +143,15 @@ if [ $EXIT_CODE -eq 0 ]; then
         echo "=========================================="
         cat $SUMMARY_CSV
         echo ""
+        echo "Interpretation:"
+        echo "  AUC > 0.70: ✅ Good features, proceed to full pipeline"
+        echo "  AUC 0.60-0.70: 🟡 Moderate, consider fine-tuning"
+        echo "  AUC < 0.60: ❌ Poor features, investigate data/model"
     fi
 else
     echo ""
     echo "❌ FAILED: Check error log at:"
-    echo "  ${CODE_DIR}/logs/exp3_error_${SLURM_JOB_ID}.log"
+    echo "  ${CODE_DIR}/logs/exp3_quick_error_${SLURM_JOB_ID}.log"
     echo ""
 fi
 
