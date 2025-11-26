@@ -243,7 +243,7 @@ def run_experiment(
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
                 n_splits=n_splits,
-                local_k=8,
+                local_k=128,
                 local_fit_adapter=True,
                 local_adapter_epochs=8,
                 local_adapter_num_queries=150,
