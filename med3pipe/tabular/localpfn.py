@@ -389,7 +389,7 @@ def _has_cuda() -> bool:
 # High-level pipeline (Step 7 + LoCalPFN on top)
 # ------------------------------
 
-def localpfn_pipeline(
+def localpfn_pipeline_single_fold(
     X_train: np.ndarray,
     y_train: np.ndarray,
     X_val: np.ndarray,
@@ -402,7 +402,7 @@ def localpfn_pipeline(
     random_state: int = 42,
     cfg: Optional[LocalPFNConfig] = None,
 ) -> Dict[str, Any]:
-    """Run Step 7 (Standardize+PCA) then LoCalPFN inference (+ optional adapter fine-tune).
+    """Run Step 7 (Standardize+PCA) then LoCalPFN inference for a single fold.
 
     Artifacts are saved under out_dir (created if missing). Returns a dict with paths and metrics.
     """
@@ -438,3 +438,100 @@ def localpfn_pipeline(
         "X_val_p_path": preproc_dir / "X_val_p.npy",
     })
     return res
+
+
+def localpfn_pipeline(
+    folds: list,
+    category: str = "gist",
+    ct_name: str = "ct_GIST",
+    out_dir: Optional[Path] = None,
+    n_components_max: int = 500,
+    random_state: int = 42,
+    cfg: Optional[LocalPFNConfig] = None,
+) -> Dict[str, Any]:
+    """Run k-fold LoCalPFN pipeline and aggregate results.
+
+    Args:
+        folds: List of ((X_train, y_train, ids_train), (X_val, y_val, ids_val)) tuples from k-fold split
+        category, ct_name: Dataset identifiers
+        out_dir: Base output directory (fold-specific subdirs will be created)
+        ... other LoCalPFN parameters
+
+    Returns:
+        Dict with aggregated metrics and paths to all fold results
+    """
+    if not folds:
+        raise ValueError("No folds provided to localpfn_pipeline")
+    
+    base_out_dir = Path(out_dir) if out_dir is not None else default_localpfn_out_dir(category, ct_name)
+    base_out_dir.mkdir(parents=True, exist_ok=True)
+    
+    fold_results = []
+    all_accuracies = []
+    all_f1_scores = []
+    all_roc_aucs = []
+    
+    print(f"\n{'='*60}")
+    print(f"Running {len(folds)}-fold cross-validation for LoCalPFN")
+    print(f"{'='*60}\n")
+    
+    for fold_idx, ((X_train, y_train, ids_train), (X_val, y_val, ids_val)) in enumerate(folds, 1):
+        print(f"\n--- Fold {fold_idx}/{len(folds)} ---")
+        
+        fold_out_dir = base_out_dir / f"fold_{fold_idx}"
+        fold_res = localpfn_pipeline_single_fold(
+            X_train=X_train,
+            y_train=y_train,
+            X_val=X_val,
+            y_val=y_val,
+            ids_val=ids_val,
+            category=category,
+            ct_name=ct_name,
+            out_dir=fold_out_dir,
+            n_components_max=n_components_max,
+            random_state=random_state,
+            cfg=cfg,
+        )
+        
+        fold_results.append(fold_res)
+        all_accuracies.append(fold_res['metrics']['accuracy'])
+        all_f1_scores.append(fold_res['metrics']['macro_f1'])
+        if fold_res['metrics'].get('roc_auc') is not None:
+            all_roc_aucs.append(fold_res['metrics']['roc_auc'])
+        
+        print(f"Fold {fold_idx} - Accuracy: {fold_res['metrics']['accuracy']:.4f}, "
+              f"F1: {fold_res['metrics']['macro_f1']:.4f}")
+    
+    # Aggregate metrics
+    aggregated_metrics = {
+        'accuracy': float(np.mean(all_accuracies)),
+        'accuracy_std': float(np.std(all_accuracies)),
+        'macro_f1': float(np.mean(all_f1_scores)),
+        'macro_f1_std': float(np.std(all_f1_scores)),
+        'roc_auc': float(np.mean(all_roc_aucs)) if all_roc_aucs else None,
+        'roc_auc_std': float(np.std(all_roc_aucs)) if all_roc_aucs else None,
+        'n_folds': len(folds),
+        'fold_accuracies': all_accuracies,
+        'fold_f1_scores': all_f1_scores,
+        'fold_roc_aucs': all_roc_aucs if all_roc_aucs else None,
+    }
+    
+    # Save aggregated metrics
+    with open(base_out_dir / "kfold_summary.json", "w") as f:
+        json.dump(aggregated_metrics, f, indent=2)
+    
+    print(f"\n{'='*60}")
+    print(f"K-Fold Cross-Validation Summary")
+    print(f"{'='*60}")
+    print(f"Accuracy:  {aggregated_metrics['accuracy']:.4f} ± {aggregated_metrics['accuracy_std']:.4f}")
+    print(f"F1 Score:  {aggregated_metrics['macro_f1']:.4f} ± {aggregated_metrics['macro_f1_std']:.4f}")
+    if aggregated_metrics['roc_auc'] is not None:
+        print(f"ROC AUC:   {aggregated_metrics['roc_auc']:.4f} ± {aggregated_metrics['roc_auc_std']:.4f}")
+    print(f"{'='*60}\n")
+    
+    return {
+        'metrics': aggregated_metrics,
+        'fold_results': fold_results,
+        'out_dir': base_out_dir,
+        'summary_path': base_out_dir / "kfold_summary.json",
+    }

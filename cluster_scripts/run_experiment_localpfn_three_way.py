@@ -50,6 +50,7 @@ def main():
     local_k = 128
     local_fit_adapter = True
     local_adapter_epochs = 10
+    n_splits = 5  # K-fold cross-validation splits
     
     # Experiment 1: Baseline (Full-Volume, No Filtering)
     print("\n" + "="*60)
@@ -73,6 +74,7 @@ def main():
             # LoCalPFN parameters
             n_components_max=500,
             random_state=42,
+            n_splits=n_splits,
             local_k=local_k,
             local_metric="euclidean",
             local_fit_adapter=local_fit_adapter,
@@ -123,6 +125,7 @@ def main():
             # LoCalPFN parameters
             n_components_max=500,
             random_state=42,
+            n_splits=n_splits,
             local_k=local_k,
             local_metric="euclidean",
             local_fit_adapter=local_fit_adapter,
@@ -169,6 +172,7 @@ def main():
             # LoCalPFN parameters
             n_components_max=500,
             random_state=42,
+            n_splits=n_splits,
             local_k=local_k,
             local_metric="euclidean",
             local_fit_adapter=local_fit_adapter,

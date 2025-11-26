@@ -113,6 +113,7 @@ def _run_multi_core(
     # Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
+    n_splits: int = 5,
     tabpfn_src: Optional[Path] = None,
     # TabPFN ablations
     tabpfn_clf_kwargs: Optional[Dict[str, Any]] = None,
@@ -276,6 +277,7 @@ def _run_multi_core(
                 min_density=min_density,
                 split_ratio=split_ratio,
                 seed=seed,
+                n_splits=n_splits,
                 sam3d_root=sam3d_root,
                 model_type=model_type,
                 checkpoint=checkpoint,
@@ -422,6 +424,7 @@ def run_multi_tabpfn(
     # Shared Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
+    n_splits: int = 5,
     # TabPFN specific
     tabpfn_src: Optional[Path] = None,
     tabpfn_clf_kwargs: Optional[Dict[str, Any]] = None,
@@ -468,6 +471,7 @@ def run_multi_tabpfn(
         min_density=min_density,
         n_components_max=n_components_max,
         random_state=random_state,
+        n_splits=n_splits,
         tabpfn_src=tabpfn_src,
         tabpfn_clf_kwargs=tabpfn_clf_kwargs,
         save_summary=save_summary,
@@ -498,6 +502,7 @@ def run_multi_localpfn(
     # Shared Tabular params
     n_components_max: int = 500,
     random_state: int = 42,
+    n_splits: int = 5,
     # LoCalPFN specific
     local_cfg: Optional[LocalPFNConfig] = None,
     local_k: Optional[int] = None,
@@ -550,6 +555,7 @@ def run_multi_localpfn(
         min_density=min_density,
         n_components_max=n_components_max,
         random_state=random_state,
+        n_splits=n_splits,
         local_cfg=local_cfg,
         local_k=local_k,
         local_metric=local_metric,

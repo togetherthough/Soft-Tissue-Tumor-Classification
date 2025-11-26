@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, Sequence, Tuple, List, Optional, Set
 
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold
 
 from med3pipe.sam.core import load_pooled_features
 from .lesion_filter import LesionSizeFilter
@@ -14,21 +14,23 @@ def _clean_id(cid: str) -> str:
     return cid[:-4] if cid.endswith('.nii') else cid
 
 
-def stratified_features_split(
+def stratified_kfold_features(
     feat_train_dir: Path,
     feat_val_dir: Path,
     labels_tr_dir: Path | None,
     labels_val_dir: Path | None,
     lab_map: Dict[str, int],
-    train_ratio: float = 0.8,
+    n_splits: int = 5,
     seed: int = 2025,
     lesion_filter: Optional[LesionSizeFilter] = None,
-) -> Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]:
+) -> List[Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]]:
     """
-    Build a stratified train/val split from the UNION of pooled features coming
+    Build k-fold stratified splits from the UNION of pooled features coming
     from the dataset's train and val feature directories.
 
-    Returns: (X_train, y_train, ids_train), (X_val, y_val, ids_val)
+    Returns: List of (train_data, val_data) tuples for each fold, where:
+    - train_data = (X_train, y_train, ids_train)
+    - val_data = (X_val, y_val, ids_val)
     - X_* shape: (n_samples, n_features)
     - y_* dtype: int
     - ids_*: case_id strings aligned to rows
@@ -48,10 +50,7 @@ def stratified_features_split(
         id_parts.append(idva)
 
     if not X_parts:
-        return (
-            (np.empty((0,)), np.empty((0,), dtype=int), []),
-            (np.empty((0,)), np.empty((0,), dtype=int), []),
-        )
+        return []
 
     X_all = X_parts[0] if len(X_parts) == 1 else np.vstack(X_parts)
     ids_all = sum(id_parts, [])
@@ -68,10 +67,7 @@ def stratified_features_split(
     # Filter to labeled subset only
     mask_lab = np.array([_clean_id(c) in lab_map for c in ids_all_arr], dtype=bool)
     if not mask_lab.any():
-        return (
-            (np.empty((0,)), np.empty((0,), dtype=int), []),
-            (np.empty((0,)), np.empty((0,), dtype=int), []),
-        )
+        return []
 
     X_l = X_all[mask_lab]
     ids_l = ids_all_arr[mask_lab]
@@ -91,78 +87,67 @@ def stratified_features_split(
         
         if not mask_lesion.any():
             print("[WARNING] No cases remaining after lesion size filtering!")
-            return (
-                (np.empty((0,)), np.empty((0,), dtype=int), []),
-                (np.empty((0,)), np.empty((0,), dtype=int), []),
-            )
+            return []
         
         X_l = X_l[mask_lesion]
         ids_l = ids_l[mask_lesion]
         y_l = y_l[mask_lesion]
 
-    # Compute split; prefer stratified if at least 2 classes and enough samples
-    rs = np.random.RandomState(int(seed))
-    unique_classes = np.unique(y_l)
-    test_size = float(max(min(1 - float(train_ratio), 0.99), 0.01))
-
     # Require at least two classes for stratified sampling
+    unique_classes = np.unique(y_l)
     if unique_classes.size < 2:
         raise ValueError(
-            "Stratified split requires at least two classes in the labeled set; found only one."
+            "Stratified k-fold requires at least two classes in the labeled set; found only one."
         )
 
-    # Try sklearn stratified split first when feasible
-    try:
-        X_tr, X_va, y_tr, y_va, ids_tr, ids_va = train_test_split(
-            X_l, y_l, ids_l, test_size=test_size, random_state=int(seed), stratify=y_l
+    # Create StratifiedKFold splitter
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=int(seed))
+    
+    folds = []
+    for train_idx, val_idx in skf.split(X_l, y_l):
+        X_tr, y_tr = X_l[train_idx], y_l[train_idx]
+        X_va, y_va = X_l[val_idx], y_l[val_idx]
+        ids_tr = ids_l[train_idx]
+        ids_va = ids_l[val_idx]
+        
+        folds.append(
+            ((X_tr, y_tr, ids_tr.tolist()), (X_va, y_va, ids_va.tolist()))
         )
-        # Ensure VAL has >= 2 classes
-        if np.unique(y_va).size >= 2:
-            return (X_tr, y_tr, ids_tr.tolist()), (X_va, y_va, ids_va.tolist())
-    except Exception:
-        pass
+    
+    return folds
 
-    # Build per-class index lists
-    cls_to_idx = {c: np.where(y_l == c)[0].tolist() for c in unique_classes}
-    for c in cls_to_idx:
-        rs.shuffle(cls_to_idx[c])
 
-    n_va_target = max(2, int(round(len(y_l) * test_size)))
-    va_sel: List[int] = []
+def stratified_features_split(
+    feat_train_dir: Path,
+    feat_val_dir: Path,
+    labels_tr_dir: Path | None,
+    labels_val_dir: Path | None,
+    lab_map: Dict[str, int],
+    train_ratio: float = 0.8,
+    seed: int = 2025,
+    lesion_filter: Optional[LesionSizeFilter] = None,
+    n_splits: int = 5,
+) -> List[Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]]:
+    """
+    Build k-fold stratified splits from the UNION of pooled features coming
+    from the dataset's train and val feature directories.
+    
+    NOTE: train_ratio parameter is deprecated and ignored. K-fold split is used instead.
 
-    # First, try to include at least one sample from as many classes as possible (up to target)
-    classes_sorted = sorted(cls_to_idx.keys(), key=lambda c: -len(cls_to_idx[c]))
-    for c in classes_sorted:
-        if not cls_to_idx[c]:
-            continue
-        if len(va_sel) >= n_va_target:
-            break
-        va_sel.append(cls_to_idx[c].pop())
-
-    # Ensure we have at least two distinct classes in VAL
-    if len({int(y_l[i]) for i in va_sel}) < 2:
-        # Add one more from a different class if available
-        for c in classes_sorted:
-            if not cls_to_idx[c]:
-                continue
-            # Pick if class differs from existing ones
-            cand = cls_to_idx[c][-1]
-            if int(y_l[cand]) not in {int(y_l[i]) for i in va_sel}:
-                va_sel.append(cls_to_idx[c].pop())
-                break
-
-    # Fill remaining VAL slots randomly from remaining pool
-    remaining = [i for c in classes_sorted for i in cls_to_idx[c]]
-    rs.shuffle(remaining)
-    while len(va_sel) < n_va_target and remaining:
-        va_sel.append(remaining.pop())
-
-    va_sel = sorted(set(va_sel))
-    tr_sel = sorted(set(range(len(y_l))) - set(va_sel))
-
-    X_tr, y_tr = X_l[tr_sel], y_l[tr_sel]
-    X_va, y_va = X_l[va_sel], y_l[va_sel]
-    ids_tr = ids_l[tr_sel]
-    ids_va = ids_l[va_sel]
-
-    return (X_tr, y_tr, ids_tr.tolist()), (X_va, y_va, ids_va.tolist())
+    Returns: List of (train_data, val_data) tuples for each fold
+    - train_data = (X_train, y_train, ids_train)
+    - val_data = (X_val, y_val, ids_val)
+    - X_* shape: (n_samples, n_features)
+    - y_* dtype: int
+    - ids_*: case_id strings aligned to rows
+    """
+    return stratified_kfold_features(
+        feat_train_dir=feat_train_dir,
+        feat_val_dir=feat_val_dir,
+        labels_tr_dir=labels_tr_dir,
+        labels_val_dir=labels_val_dir,
+        lab_map=lab_map,
+        n_splits=n_splits,
+        seed=seed,
+        lesion_filter=lesion_filter,
+    )

@@ -46,6 +46,9 @@ def main():
         min_density=0.1,     # At least 10% of bounding box should be lesion
     )
     
+    # K-fold configuration
+    n_splits = 5  # K-fold cross-validation splits
+    
     # Experiment 1: Baseline (Full-Volume, No Filtering)
     print("\n" + "="*60)
     print("EXPERIMENT 1: BASELINE (Full-Volume, No Filtering)")
@@ -68,6 +71,7 @@ def main():
             # TabPFN parameters
             n_components_max=500,
             random_state=42,
+            n_splits=n_splits,
             
             # Output
             outputs_base_dir=results_dir / "baseline",
@@ -111,6 +115,7 @@ def main():
             # TabPFN parameters
             n_components_max=500,
             random_state=42,
+            n_splits=n_splits,
             
             # Output
             outputs_base_dir=results_dir / "filtered_baseline",
@@ -150,6 +155,7 @@ def main():
             # TabPFN parameters
             n_components_max=500,
             random_state=42,
+            n_splits=n_splits,
             
             # Output
             outputs_base_dir=results_dir / "roi_cropped",

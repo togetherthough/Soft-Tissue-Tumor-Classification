@@ -96,6 +96,7 @@ def run_single_dataset(
     # Split
     split_ratio: float = 0.8,
     seed: int = 2025,
+    n_splits: int = 5,
     # SAM3D model/extraction
     sam3d_root: Optional[Path] = None,
     model_type: str = "vit_b_ori",
@@ -218,7 +219,7 @@ def run_single_dataset(
         case_suffix=case_suffix,
     )
 
-    # 6b) Stratified feature-level split from the UNION of features
+    # 6b) Stratified k-fold feature-level split from the UNION of features
     # Create lesion filter if parameters provided
     if lesion_filter is None and (min_voxels is not None or min_dimension is not None or min_density is not None):
         lesion_filter = LesionSizeFilter(
@@ -227,26 +228,23 @@ def run_single_dataset(
             min_density=min_density,
         )
     
-    (X_train, y_train, ids_train), (X_val, y_val, ids_val) = stratified_features_split(
+    folds = stratified_features_split(
         feat_train_dir=feat_dirs.train_dir,
         feat_val_dir=feat_dirs.val_dir,
         labels_tr_dir=paths.labels_tr,
         labels_val_dir=paths.labels_val,
         lab_map=lab_map,
-        train_ratio=split_ratio,
+        train_ratio=split_ratio,  # deprecated, ignored
         seed=seed,
         lesion_filter=lesion_filter,
+        n_splits=n_splits,
     )
 
     method_l = method.lower()
     if method_l == "tabpfn":
         out_dir = tabpfn_out_dir or default_tabpfn_out_dir(category, ct_name)
         tabpfn_res = tabpfn_pipeline(
-            X_train=X_train,
-            y_train=y_train,
-            X_val=X_val,
-            y_val=y_val,
-            ids_val=ids_val,
+            folds=folds,
             category=category,
             ct_name=ct_name,
             out_dir=out_dir,
@@ -255,6 +253,10 @@ def run_single_dataset(
             device=None,  # auto
             tabpfn_src=tabpfn_src,
             clf_kwargs=clf_kwargs,
+        )
+        # Extract first fold data for backward compatibility
+        (X_train, y_train, ids_train), (X_val, y_val, ids_val) = folds[0] if folds else (
+            (np.array([]), np.array([]), []), (np.array([]), np.array([]), [])
         )
         return EndToEndResult(
             paths=paths,
@@ -270,17 +272,17 @@ def run_single_dataset(
     elif method_l == "localpfn":
         out_dir = local_out_dir or default_localpfn_out_dir(category, ct_name)
         local_res = localpfn_pipeline(
-            X_train=X_train,
-            y_train=y_train,
-            X_val=X_val,
-            y_val=y_val,
-            ids_val=ids_val,
+            folds=folds,
             category=category,
             ct_name=ct_name,
             out_dir=out_dir,
             n_components_max=n_components_max,
             random_state=random_state,
             cfg=local_cfg,
+        )
+        # Extract first fold data for backward compatibility
+        (X_train, y_train, ids_train), (X_val, y_val, ids_val) = folds[0] if folds else (
+            (np.array([]), np.array([]), []), (np.array([]), np.array([]), [])
         )
         return LocalEndToEndResult(
             paths=paths,
@@ -517,6 +519,7 @@ def run_from_prepared(
     # Shared tabular params
     n_components_max: int = 500,
     random_state: int = 42,
+    n_splits: int = 5,
     # Lesion filtering
     lesion_filter: Optional[LesionSizeFilter] = None,
     min_voxels: Optional[int] = None,
@@ -574,7 +577,7 @@ def run_from_prepared(
         case_suffix=case_suffix,
     )
 
-    # Stratified feature-level split from the UNION of features
+    # Stratified k-fold feature-level split from the UNION of features
     # Use default controls here (run_from_prepared does not expose split controls)
     train_ratio = 0.8
     seed = 2025
@@ -587,26 +590,23 @@ def run_from_prepared(
             min_density=min_density,
         )
     
-    (X_train, y_train, ids_train), (X_val, y_val, ids_val) = stratified_features_split(
+    folds = stratified_features_split(
         feat_train_dir=feat_dirs.train_dir,
         feat_val_dir=feat_dirs.val_dir,
         labels_tr_dir=paths.labels_tr,
         labels_val_dir=paths.labels_val,
         lab_map=lab_map,
-        train_ratio=train_ratio,
+        train_ratio=train_ratio,  # deprecated, ignored
         seed=seed,
         lesion_filter=lesion_filter,
+        n_splits=n_splits,
     )
 
     method_l = method.lower()
     if method_l == "tabpfn":
         out_dir = tabpfn_out_dir or default_tabpfn_out_dir(paths.category, paths.ct_name)
         tabpfn_res = tabpfn_pipeline(
-            X_train=X_train,
-            y_train=y_train,
-            X_val=X_val,
-            y_val=y_val,
-            ids_val=ids_val,
+            folds=folds,
             category=paths.category,
             ct_name=paths.ct_name,
             out_dir=out_dir,
@@ -615,6 +615,10 @@ def run_from_prepared(
             device=None,
             tabpfn_src=tabpfn_src,
             clf_kwargs=clf_kwargs,
+        )
+        # Extract first fold data for backward compatibility
+        (X_train, y_train, ids_train), (X_val, y_val, ids_val) = folds[0] if folds else (
+            (np.array([]), np.array([]), []), (np.array([]), np.array([]), [])
         )
         return EndToEndResult(
             paths=paths,
@@ -630,17 +634,17 @@ def run_from_prepared(
     elif method_l == "localpfn":
         out_dir = local_out_dir or default_localpfn_out_dir(paths.category, paths.ct_name)
         local_res = localpfn_pipeline(
-            X_train=X_train,
-            y_train=y_train,
-            X_val=X_val,
-            y_val=y_val,
-            ids_val=ids_val,
+            folds=folds,
             category=paths.category,
             ct_name=paths.ct_name,
             out_dir=out_dir,
             n_components_max=n_components_max,
             random_state=random_state,
             cfg=local_cfg,
+        )
+        # Extract first fold data for backward compatibility
+        (X_train, y_train, ids_train), (X_val, y_val, ids_val) = folds[0] if folds else (
+            (np.array([]), np.array([]), []), (np.array([]), np.array([]), [])
         )
         return LocalEndToEndResult(
             paths=paths,

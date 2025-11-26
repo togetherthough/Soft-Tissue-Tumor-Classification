@@ -81,6 +81,7 @@ def run_experiment(
     skip_baselines: bool = False,
     epochs_3d: int = 4,
     dry_run: bool = False,
+    n_splits: int = 5,
     # Lesion filtering parameters
     min_voxels: Optional[int] = None,
     min_dimension: Optional[int] = None,
@@ -98,6 +99,7 @@ def run_experiment(
         skip_baselines: Skip 3D baseline methods
         epochs_3d: Number of epochs for 3D models training
         dry_run: Print what will run without executing
+        n_splits: Number of k-fold cross-validation splits (default: 5)
         min_voxels: Minimum voxel count for filtering
         min_dimension: Minimum dimension for filtering
         min_density: Minimum density for filtering
@@ -218,6 +220,7 @@ def run_experiment(
                 dataset_names=datasets_to_run,
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
+                n_splits=n_splits,
                 lesion_filter=lesion_filter,
             )
             results['tabpfn'] = res_tab
@@ -239,6 +242,7 @@ def run_experiment(
                 dataset_names=datasets_to_run,
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
+                n_splits=n_splits,
                 local_k=8,
                 local_fit_adapter=True,
                 local_adapter_epochs=8,
@@ -532,6 +536,12 @@ def main():
         default=None,
         help='Use preset filtering configuration (overrides individual filters)'
     )
+    parser.add_argument(
+        '--n-splits',
+        type=int,
+        default=5,
+        help='Number of k-fold cross-validation splits (default: 5)'
+    )
     
     args = parser.parse_args()
     print("[DEBUG] Arguments parsed successfully", flush=True)
@@ -580,6 +590,7 @@ def main():
             skip_baselines=args.skip_baselines,
             epochs_3d=args.epochs_3d,
             dry_run=args.dry_run,
+            n_splits=args.n_splits,
             min_voxels=min_voxels,
             min_dimension=min_dimension,
             min_density=min_density,
