@@ -20,6 +20,7 @@ Main experiment scripts using k-fold cross-validation:
 - **`exp3_classifier.py`** - Experiment 3: Classification head training
 - **`compare_tabpfn.py`** - Three-way comparison using TabPFN (baseline, filtered, ROI)
 - **`compare_localpfn.py`** - Three-way comparison using LoCalPFN
+- **`compare_classifier_preprocessing.py`** - Three-way preprocessing comparison for classification head
 - **`ablate_roi.py`** - ROI margin ablation study
 - **`run_all_comparisons.sh`** - Run all three-way comparison experiments
 
@@ -27,6 +28,7 @@ Main experiment scripts using k-fold cross-validation:
 SLURM job submission scripts:
 - **`slurm_exp1.sh`**, `slurm_exp1_filtered.sh`, `slurm_exp1_quick.sh` - Experiment 1 variants
 - **`slurm_exp3.sh`**, `slurm_exp3_filtered.sh`, `slurm_exp3_quick.sh` - Experiment 3 variants
+- **`slurm_compare_classifier.sh`** - Three-way preprocessing comparison for classification head
 
 ### 📁 utils/
 Utility and diagnostic scripts:
