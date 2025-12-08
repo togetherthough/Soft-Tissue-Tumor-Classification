@@ -214,10 +214,14 @@ def get_roi_from_subject(subject_canonical, meta_info, crop_transform, norm_tran
     meta_info["roi_subject_affine"] = subject_cropped.image.affine.copy()
     
     img3D_roi = subject_cropped.image.data.clone().detach()
-    img3D_roi = norm_transform(img3D_roi.squeeze(dim=1)) # (N, C, W, H, D)
-    img3D_roi = img3D_roi.unsqueeze(dim=1)
+    img3D_roi = norm_transform(img3D_roi) # (C, W, H, D)
 
     gt3D_roi = subject_cropped.label.data.clone().detach()
+
+    # Permute to (C, D, H, W) i.e. (C, Z, Y, X) for SAM-Med3D
+    # TorchIO uses (C, X, Y, Z), so we swap X and Z
+    img3D_roi = img3D_roi.permute(0, 3, 2, 1)
+    gt3D_roi = gt3D_roi.permute(0, 3, 2, 1)
 
     # make the roi image/label 5D tensor for torch inference
     def correct_roi_dim(roi_tensor): 
@@ -296,9 +300,10 @@ def data_postprocess(roi_pred_numpy, meta_info):
                     and dtype uint8.
     """
     # Convert the NumPy ROI prediction to a PyTorch tensor.
-    # Add a channel dimension to make it (1, D, H, W).
-    # Ensure the dtype is suitable for tio.LabelMap; float32 is safe.
-    roi_pred_tensor = torch.from_numpy(roi_pred_numpy.astype(np.float32)).unsqueeze(0)
+    # roi_pred_numpy is (D, H, W) i.e. (Z, Y, X)
+    # We need to convert it to (X, Y, Z) for TorchIO
+    roi_pred_tensor = torch.from_numpy(roi_pred_numpy.astype(np.float32))
+    roi_pred_tensor = roi_pred_tensor.permute(2, 1, 0).unsqueeze(0) # (1, X, Y, Z)
 
     # Create a tio.LabelMap object for the ROI prediction.
     # The affine matrix for this map is meta_info["roi_subject_affine"],
