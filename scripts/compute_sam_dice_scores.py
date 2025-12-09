@@ -21,12 +21,18 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import yaml
 import argparse
+import medim
+import nibabel as nib
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from med3pipe.sam.core import build_sam3d_model, find_default_sam3d_root
+# Add SAM-Med3D repository to path for shared utilities
+sam_med3d_repo = project_root / "SAM-Med3D-main" / "SAM-Med3D-main"
+sys.path.insert(0, str(sam_med3d_repo))
+
+from med3pipe.sam.core import find_default_sam3d_root
 from med3pipe.sam.transforms import ResizeLargestTo
 from med3pipe.data.prepare import (
     find_case_dirs,
@@ -35,6 +41,7 @@ from med3pipe.data.prepare import (
     merge_images,
     merge_segmentations,
 )
+from utils.metric_utils import compute_metrics
 
 
 def _znorm_masking_method(x):
@@ -414,6 +421,8 @@ def compute_all_dice_scores(
         DataFrame with dice scores
     """
     results = []
+    intermediates_dir = project_root / "results" / "sam_dice_intermediates"
+    intermediates_dir.mkdir(parents=True, exist_ok=True)
     
     print(f"\n{'='*80}")
     print(f"Computing Dice Scores for All Images")
@@ -505,9 +514,23 @@ def compute_all_dice_scores(
                     )
                     debug_info = None
                 
-                # Compute dice score
-                dice = compute_dice_score(pred_mask, gt_mask)
-                
+                # Persist masks for metric computation identical to notebook pipeline
+                case_intermediate_dir = intermediates_dir / dataset_name / case_name
+                case_intermediate_dir.mkdir(parents=True, exist_ok=True)
+                gt_tmp_path = case_intermediate_dir / "gt_preproc.nii.gz"
+                pred_tmp_path = case_intermediate_dir / "pred_preproc.nii.gz"
+                nib.save(nib.Nifti1Image(gt_mask.astype(np.uint8), np.eye(4)), str(gt_tmp_path))
+                nib.save(nib.Nifti1Image(pred_mask.astype(np.uint8), np.eye(4)), str(pred_tmp_path))
+
+                metrics = compute_metrics(
+                    gt_path=str(gt_tmp_path),
+                    pred_path=str(pred_tmp_path),
+                    metrics=['dice'],
+                    classes=None,
+                )
+                dice_scores = [m.get('dsc') for m in metrics.values() if isinstance(m, dict) and m.get('dsc') is not None]
+                dice = float(np.mean(dice_scores)) if dice_scores else 0.0
+
                 results.append({
                     'dataset': category,
                     'split': dataset_name,
@@ -674,15 +697,14 @@ def main():
     print(f"Device: {device}")
     print(f"{'='*80}\n")
     
-    # Load SAM-Med3D model
-    print("Loading SAM-Med3D model...")
-    model = build_sam3d_model(
-        sam3d_root=sam3d_root,
-        model_type="vit_b_ori",
-        checkpoint=checkpoint_path,
-        device=device,
-        eval_mode=True
-    )
+    # Load SAM-Med3D model via medim
+    print("Loading SAM-Med3D model via medim...")
+    model = medim.create_model(
+        "SAM-Med3D",
+        pretrained=True,
+        checkpoint_path=str(checkpoint_path)
+    ).to(device)
+    model.eval()
     print("✅ Model loaded successfully!\n")
     
     # Discover raw dataset cases from config
