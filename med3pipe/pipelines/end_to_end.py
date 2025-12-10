@@ -99,6 +99,7 @@ def run_single_dataset(
     n_splits: int = 5,
     # SAM3D model/extraction
     sam3d_root: Optional[Path] = None,
+    model: Optional[torch.nn.Module] = None,  # Pre-loaded model (e.g., via medim)
     model_type: str = "vit_b_ori",
     checkpoint: Optional[Path] = None,
     img_size: int = 128,
@@ -181,13 +182,19 @@ def run_single_dataset(
     torch_device = None
     if device is not None:
         torch_device = torch.device(device)
-    model = build_sam3d_model(
-        sam3d_root=sam3d_root,
-        model_type=model_type,
-        checkpoint=checkpoint,
-        device=torch_device,
-        eval_mode=True,
-    )
+    
+    # Use pre-loaded model if provided, otherwise build one
+    if model is None:
+        model = build_sam3d_model(
+            sam3d_root=sam3d_root,
+            model_type=model_type,
+            checkpoint=checkpoint,
+            device=torch_device,
+            eval_mode=True,
+        )
+    else:
+        print("✅ Using pre-loaded model (e.g., via medim)")
+    
     feat_dirs = default_feature_dirs(sam3d_root, category=category, ct_name=ct_name)
     extract_embeddings_train_val(
         paths,

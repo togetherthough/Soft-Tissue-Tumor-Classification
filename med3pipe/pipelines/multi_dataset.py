@@ -97,6 +97,7 @@ def _run_multi_core(
     dataset_names: Optional[Sequence[str]] = None,
     outputs_base_dir: Optional[Path] = None,
     sam3d_root: Optional[Path] = None,
+    model: Optional["torch.nn.Module"] = None,  # Pre-loaded model (e.g., via medim)
     model_type: str = "vit_b_ori",
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
@@ -279,6 +280,7 @@ def _run_multi_core(
                 seed=seed,
                 n_splits=n_splits,
                 sam3d_root=sam3d_root,
+                model=model,  # Pass pre-loaded model if provided
                 model_type=model_type,
                 checkpoint=checkpoint,
                 img_size=img_size,
@@ -407,6 +409,7 @@ def run_multi_tabpfn(
     outputs_base_dir: Optional[Path] = None,
     # Shared SAM3D params
     sam3d_root: Optional[Path] = None,
+    model: Optional["torch.nn.Module"] = None,  # Pre-loaded model (e.g., via medim)
     model_type: str = "vit_b_ori",
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
@@ -435,6 +438,8 @@ def run_multi_tabpfn(
     """Run TabPFN only across datasets defined in a YAML config.
     
     Args:
+        model: Pre-loaded SAM-Med3D model (e.g., via medim.create_model). If provided,
+               this model will be used instead of building one internally.
         skip_existing_embeddings: If True, skip/ignore existing embeddings and re-extract.
                                   If False (default), reuse existing embeddings when available.
                                   Missing embeddings are always extracted regardless of this setting.
@@ -458,6 +463,7 @@ def run_multi_tabpfn(
         dataset_names=dataset_names,
         outputs_base_dir=outputs_base_dir,
         sam3d_root=sam3d_root,
+        model=model,
         model_type=model_type,
         checkpoint=checkpoint,
         device=device,

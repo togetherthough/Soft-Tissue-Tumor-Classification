@@ -53,6 +53,7 @@ def build_sam3d_model(
     checkpoint: Optional[Path] = None,
     device: Optional[torch.device] = None,
     eval_mode: bool = True,
+    use_medim: bool = True,
 ):
     """Construct a SAM-Med3D model and optionally load a checkpoint.
 
@@ -61,14 +62,37 @@ def build_sam3d_model(
     - checkpoint: path to .pth checkpoint (optional)
     - device: torch.device (defaults to cuda if available else cpu)
     - eval_mode: whether to set model.eval()
+    - use_medim: if True (default), use medim.create_model for loading; otherwise use legacy method
     """
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    # Use medim for loading if requested and checkpoint is provided
+    if use_medim and checkpoint is not None and Path(checkpoint).exists():
+        try:
+            import medim
+            print(f"Loading SAM-Med3D model via medim from: {checkpoint}")
+            model = medim.create_model(
+                "SAM-Med3D",
+                pretrained=True,
+                checkpoint_path=str(checkpoint)
+            ).to(device)
+            if eval_mode:
+                model.eval()
+            else:
+                model.train()
+            print("✅ SAM-Med3D model loaded successfully via medim!")
+            return model
+        except ImportError:
+            print("⚠️  medim not available, falling back to legacy loading method")
+        except Exception as e:
+            print(f"⚠️  medim loading failed ({e}), falling back to legacy loading method")
+    
+    # Legacy loading method
     sam3d_root = sam3d_root or find_default_sam3d_root()
     _ensure_repo_on_path(sam3d_root)
 
     from segment_anything.build_sam3D import sam_model_registry3D  # type: ignore
-
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = sam_model_registry3D[model_type](checkpoint=None).to(device)
     if checkpoint is not None and Path(checkpoint).exists():
