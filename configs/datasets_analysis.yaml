@@ -18,6 +18,12 @@ datasets:
     modality: CT
     description: Colorectal Liver Metastases
     expected_samples: 77
+    labels:
+      sheet_csv: C:\Users\cahel\Desktop\Med3Tab-PFN\data\sheet.csv
+      dataset_name: CRLM
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
     
   desmoid:
     dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\desmoid
@@ -26,6 +32,12 @@ datasets:
     modality: CT
     description: Desmoid Tumors
     expected_samples: 203
+    labels:
+      sheet_csv: C:\Users\cahel\Desktop\Med3Tab-PFN\data\sheet.csv
+      dataset_name: Desmoid
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
     
   gist:
     dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\gist
@@ -34,6 +46,12 @@ datasets:
     modality: CT
     description: Gastrointestinal Stromal Tumors
     expected_samples: 246
+    labels:
+      sheet_csv: C:\Users\cahel\Desktop\Med3Tab-PFN\data\sheet.csv
+      dataset_name: GIST
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
     
   lipo:
     dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\lipo
@@ -42,6 +60,12 @@ datasets:
     modality: MR
     description: Liposarcoma (MRI)
     expected_samples: 115
+    labels:
+      sheet_csv: C:\Users\cahel\Desktop\Med3Tab-PFN\data\sheet.csv
+      dataset_name: Lipo
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _MR
     
   liver:
     dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\liver
@@ -50,6 +74,12 @@ datasets:
     modality: CT
     description: Liver Tumors
     expected_samples: 186
+    labels:
+      sheet_csv: C:\Users\cahel\Desktop\Med3Tab-PFN\data\sheet.csv
+      dataset_name: Liver
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
     
   melanoma:
     dataset_root: C:\Users\cahel\Desktop\Med3Tab-PFN\data\melanoma
@@ -58,6 +88,12 @@ datasets:
     modality: CT
     description: Melanoma
     expected_samples: 103
+    labels:
+      sheet_csv: C:\Users\cahel\Desktop\Med3Tab-PFN\data\sheet.csv
+      dataset_name: Melanoma
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
 
 # Analysis settings (optional)
 analysis:
