@@ -1,0 +1,152 @@
+# GPU Cluster configuration
+# Use absolute paths to /data/scratch/ where datasets are stored on the cluster
+# Data location: /data/scratch/r112276/{dataset_name}/
+# Code location: /trinity/home/r112276/Med3Tab-PFN/
+# For local machine use, see datasets.yaml with relative paths
+#
+# SHARED sheet.csv: All datasets use the same sheet.csv file
+# Located at: /data/scratch/r112276/sheet.csv
+# Just copy your sheet.csv once to this location!
+#
+# NOTE: Dataset names are CASE-SENSITIVE!
+# All 6 datasets configured with correct names from sheet.csv:
+# - CRLM (77 samples), Desmoid (203), GIST (246), Lipo (115), Liver (186), Melanoma (103)
+
+datasets:
+  crlm:
+    dataset_root: /data/scratch/r112276/crlm
+    category: crlm
+    ct_name: ct_CRLM
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: CRLM  # Check sheet.csv for exact name
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+      image_pattern: image_lesion0_RAD.nii.gz  # CRLM-specific file naming
+      seg_pattern: segmentation_lesion0_RAD.nii.gz  # CRLM-specific file naming
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  desmoid:
+    dataset_root: /data/scratch/r112276/desmoid
+    category: desmoid
+    ct_name: ct_DESMOID
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: Desmoid  # Fixed: Title case (203 samples)
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _MR
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  gist:
+    dataset_root: /data/scratch/r112276/gist
+    category: gist
+    ct_name: ct_GIST
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: GIST  # Check sheet.csv for exact name
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  lipo:
+    dataset_root: /data/scratch/r112276/lipo
+    category: lipo
+    ct_name: mr_LIPO
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: Lipo  # Fixed: Title case (115 samples)
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _MR
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  liver:
+    dataset_root: /data/scratch/r112276/liver
+    category: liver
+    ct_name: ct_LIVER
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: Liver  # Fixed: Title case (186 samples)
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _MR
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  melanoma:
+    dataset_root: /data/scratch/r112276/melanoma
+    category: melanoma
+    ct_name: ct_MELANOMA
+    labels:
+      sheet_csv: /data/scratch/r112276/sheet.csv
+      dataset_name: Melanoma  # Fixed: Title case (103 samples)
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  # ADD MORE DATASETS HERE - Template:
+  # dataset_name:
+  #   dataset_root: /data/scratch/r112276/dataset_name
+  #   category: dataset_name
+  #   ct_name: ct_DATASET_NAME
+  #   labels:
+  #     sheet_csv: /data/scratch/r112276/sheet.csv
+  #     dataset_name: DATASET_NAME  # Name in sheet.csv Dataset column
+  #     subject_col: Subject
+  #     label_col: Diagnosis_binary
+  #     case_suffix: _CT  # or _MR for MRI datasets
+  #   prepare:
+  #     case_glob: null
+  #     max_cases: null
+  #     image_pattern: null  # Optional: specific filename (e.g., "image_lesion0_RAD.nii.gz" for CRLM)
+  #     seg_pattern: null    # Optional: specific filename (e.g., "segmentation_lesion0_RAD.nii.gz" for CRLM)
+  #   split:
+  #     ratio: 0.8
+  #     seed: 2025
+  #   extraction:
+  #     img_size: 128

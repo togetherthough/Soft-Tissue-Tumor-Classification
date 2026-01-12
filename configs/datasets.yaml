@@ -1,0 +1,42 @@
+# Local machine configuration
+# Use relative paths when running on local machine where data is in the repo
+# For cluster use, see datasets_cluster.yaml with absolute paths to /data/scratch/
+
+datasets:
+  gist:
+    dataset_root: data/gist
+    category: gist
+    ct_name: ct_GIST
+    labels:
+      sheet_csv: ../sheet.csv
+      dataset_name: GIST
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _CT
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
+
+  lipo:
+    dataset_root: data/lipo
+    category: lipo
+    ct_name: ct_LIPO
+    labels:
+      sheet_csv: ../sheet.csv
+      dataset_name: Lipo
+      subject_col: Subject
+      label_col: Diagnosis_binary
+      case_suffix: _MR
+    prepare:
+      case_glob: null
+      max_cases: null
+    split:
+      ratio: 0.8
+      seed: 2025
+    extraction:
+      img_size: 128
