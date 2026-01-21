@@ -22,7 +22,8 @@ The preprocessing pipeline has been upgraded from **CropOrPad** to **Resize-Then
 - **Updated**: `make_pre_transform()` to use resize-then-pad pipeline
 - **Pipeline**: ToCanonical → ResizeLargestTo(128) → CropOrPad(128³) → ZNormalization
 
-### 2. `SAM-Med3D-main/SAM-Med3D-main/utils/data_loader.py`
+### 2. `sam-med3d/utils/data_loader.py` (deprecated)
+- **Note**: SAM-Med3D resources moved to `sam-med3d/` directory
 - **Added**: `ResizeLargestTo` transform class
 - **Updated**: Example usage in `__main__` section
 

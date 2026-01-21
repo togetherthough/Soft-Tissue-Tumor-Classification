@@ -55,7 +55,7 @@ Labels are read from your dataset sheet via `load_labels_from_sheet`, ensuring c
 from pathlib import Path
 from med3pipe import Sam3DPaths, Train3DConfig, train_eval_densenet121_3d
 
-SAM3D_ROOT = Path("SAM-Med3D-main/SAM-Med3D-main")
+SAM3D_ROOT = Path("sam-med3d")
 paths = Sam3DPaths(sam3d_root=SAM3D_ROOT, category="gist", ct_name="ct_GIST")
 
 res = train_eval_densenet121_3d(
@@ -73,7 +73,7 @@ print("Saved to:", res["out_dir"])  # baselines/densenet121_3d_<timestamp>
 from med3pipe import train_eval_swin_transformer_3d, Train3DConfig, Sam3DPaths
 from pathlib import Path
 
-SAM3D_ROOT = Path("SAM-Med3D-main/SAM-Med3D-main")
+SAM3D_ROOT = Path("sam-med3d")
 paths = Sam3DPaths(sam3d_root=SAM3D_ROOT, category="gist", ct_name="ct_GIST")
 
 res = train_eval_swin_transformer_3d(
@@ -92,7 +92,7 @@ Note: The CLI defers importing heavy dependencies so `python -m med3pipe --help`
 
 ## Folder assumptions
 
-- SAM-Med3D repo is present at `./SAM-Med3D-main/SAM-Med3D-main` from your working directory.
+- SAM-Med3D resources are present at `./sam-med3d` from your working directory.
   If your path differs, pass `--sam3d-root`.
 - For GIST, each case is under `gist/GIST-XXX_CT/1/NIFTI/` with `image.nii.gz` and one or more
   `segmentation*.nii.gz` files.
@@ -145,7 +145,7 @@ python -m med3pipe split \
   --split-ratio 0.75
 ```
 
-By default, the CLI auto-detects the SAM-Med3D repo root as `./SAM-Med3D-main/SAM-Med3D-main`.
+By default, the CLI auto-detects the SAM-Med3D repo root as `./sam-med3d`.
 You can override with `--sam3d-root <path>`.
 
 ## Python API
@@ -162,7 +162,7 @@ from med3pipe import (
 # Prepare
 n, paths = prepare_for_sam3d(
     dataset_root=Path("gist"),
-    sam3d_root=Path("SAM-Med3D-main/SAM-Med3D-main"),
+    sam3d_root=Path("sam-med3d"),
     category="gist",
     ct_name="ct_GIST",
 )
@@ -252,24 +252,24 @@ res = train_eval_tabpfn(
 ## Output layout
 
 ```
-SAM-Med3D-main/SAM-Med3D-main/
-└── data/
-    ├── train/
-    │   └── <category>/<ct_name>/
-    │       ├── imagesTr/
-    │       │   ├── <CASE_ID>.nii.gz
-    │       │   └── ...
-    │       └── labelsTr/
-    │           ├── <CASE_ID>.nii.gz   # binary mask
-    │           └── ...
-    └── validation/
-        └── <category>/<ct_name>/
-            ├── imagesVal/
-            │   ├── <CASE_ID>.nii.gz
-            │   └── ...
-            └── labelsVal/
-                ├── <CASE_ID>.nii.gz
-                └── ...
+data/
+└── train/
+    └── <category>/<ct_name>/
+        ├── imagesTr/
+        │   ├── <CASE_ID>.nii.gz
+        │   └── ...
+        └── labelsTr/
+            ├── <CASE_ID>.nii.gz   # binary mask
+            └── ...
+validation/
+    └── <category>/<ct_name>/
+        ├── imagesVal/
+        │   ├── <CASE_ID>.nii.gz
+        │   └── ...
+        └── labelsVal/
+            ├── <CASE_ID>.nii.gz
+            └── ...
+```
 ```
 
 ## Design notes

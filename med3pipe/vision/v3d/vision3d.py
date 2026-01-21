@@ -4,11 +4,11 @@ from __future__ import annotations
 med3pipe.vision.v3d.vision3d
 
 Modular 3D volumetric classification for DenseNet121 (3D) and Swin Transformer (3D)
-using NIfTI volumes prepared under SAM-Med3D folders:
+using NIfTI volumes prepared under data folders:
 
-SAM-Med3D-main/SAM-Med3D-main/
-  data/train/<category>/<ct_name>/imagesTr/*.nii.gz
-  data/validation/<category>/<ct_name>/imagesVal/*.nii.gz
+data/
+  train/<category>/<ct_name>/imagesTr/*.nii.gz
+  validation/<category>/<ct_name>/imagesVal/*.nii.gz
 
 Labels come from the dataset CSV (e.g., gist/sheet.csv) via med3pipe.sam.core.load_labels_from_sheet.
 

@@ -107,7 +107,7 @@ See `docs/TROUBLESHOOTING.md` for concrete fixes.
 
 ```
 ├── med3pipe/              # Med3Pipe (transfer learning APIs/CLI)
-├── SAM-Med3D-main/        # Upstream SAM-Med3D repo (training/extraction)
+├── sam-med3d/             # SAM-Med3D checkpoints and features
 ├── configs/               # Datasets config (YAML)
 ├── docs/                  # This folder (index + guides)
 ├── notebooks/             # Experiments & analyses

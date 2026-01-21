@@ -5,7 +5,7 @@ echo "=========================================="
 echo "SAM-Med3D Weight Verification"
 echo "=========================================="
 
-CKPT_PATH="/trinity/home/r112276/Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/ckpt/sam_med3d_turbo.pth"
+CKPT_PATH="/trinity/home/r112276/Med3Tab-PFN/sam-med3d/ckpt/sam_med3d_turbo.pth"
 
 echo ""
 echo "1. Checking checkpoint file existence..."

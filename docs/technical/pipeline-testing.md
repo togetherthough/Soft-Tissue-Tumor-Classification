@@ -81,7 +81,7 @@ The test specifically verifies:
 **Solution**: Make sure you have the `gist` folder in your project directory, or specify the correct path with `--dataset-root`
 
 ### Issue: "No checkpoints found"
-**Solution**: The script will work with random weights for testing. For better results, ensure `SAM-Med3D-main/SAM-Med3D-main/ckpt/sam_med3d_turbo.pth` exists.
+**Solution**: The script will work with random weights for testing. For better results, ensure `sam-med3d/ckpt/sam_med3d_turbo.pth` exists.
 
 ### Issue: "sheet.csv not found"
 **Solution**: Ensure `sheet.csv` is in the dataset root or project root directory.

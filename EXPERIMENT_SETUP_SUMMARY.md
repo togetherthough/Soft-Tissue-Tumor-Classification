@@ -172,7 +172,7 @@ datasets_to_run = ['gist', 'lipo']  # Instead of all datasets
 bash cluster_scripts/utils/quick_weight_check.sh
 
 # Expected location:
-# SAM-Med3D-main/SAM-Med3D-main/ckpt/sam_med3d_turbo.pth
+# sam-med3d/ckpt/sam_med3d_turbo.pth
 ```
 
 **4. Wrong Config File**

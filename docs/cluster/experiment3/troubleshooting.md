@@ -9,7 +9,7 @@
 **Solution**:
 ```bash
 # On cluster
-cd /trinity/home/r112276/Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/ckpt/
+cd /trinity/home/r112276/Med3Tab-PFN/sam-med3d/ckpt/
 
 # Check file exists and size (should be ~400-500MB)
 ls -lh sam_med3d_turbo.pth
@@ -148,7 +148,7 @@ nvidia-smi
 ### Check Files and Paths
 ```bash
 # Verify checkpoint
-ls -lh SAM-Med3D-main/SAM-Med3D-main/ckpt/sam_med3d_turbo.pth
+ls -lh sam-med3d/ckpt/sam_med3d_turbo.pth
 
 # Verify dataset directories
 ls -la /data/scratch/r112276/
@@ -219,10 +219,10 @@ python -c "import yaml; yaml.safe_load(open('configs/datasets_cluster.yaml'))"
 ### 3. Data Files
 ```bash
 # Check embeddings if previously generated
-find SAM-Med3D-main/SAM-Med3D-main/data/ -name "*_embedding.pt" -type f
+find sam-med3d/features/ -name "*_embedding.pt" -type f
 
 # If corrupted, delete and regenerate
-find SAM-Med3D-main/SAM-Med3D-main/features/ -name "*_embedding.pt" -delete
+find sam-med3d/features/ -name "*_embedding.pt" -delete
 ```
 
 ### 4. Results Directory

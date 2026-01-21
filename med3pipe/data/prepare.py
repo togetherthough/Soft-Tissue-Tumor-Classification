@@ -73,12 +73,12 @@ class Sam3DPaths:
 def find_default_sam3d_root(start: Optional[Path] = None) -> Path:
     """Try to auto-detect the SAM-Med3D code root from current working directory upwards.
 
-    Returns the inner repo path like: <PROJECT_ROOT>/SAM-Med3D-main/SAM-Med3D-main
+    Returns the simplified path: <PROJECT_ROOT>/sam-med3d
     If not found, fallback to current working directory.
     """
     start = (start or Path.cwd()).resolve()
     for cand in [start, *start.parents]:
-        inner = cand / "SAM-Med3D-main" / "SAM-Med3D-main"
+        inner = cand / "sam-med3d"
         if inner.is_dir():
             return inner
     return start
