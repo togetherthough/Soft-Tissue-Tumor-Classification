@@ -96,7 +96,7 @@ transform = tio.Compose([
    - Added `ResizeLargestTo` transform class
    - Updated `make_pre_transform()` to use resize-then-pad approach
 
-2. **`SAM-Med3D-main/SAM-Med3D-main/utils/data_loader.py`**
+2. **`sam-med3d/utils/data_loader.py`**
    - Added `ResizeLargestTo` transform class
    - Updated example usage in `__main__` section
 

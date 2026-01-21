@@ -55,7 +55,7 @@ else
     ((ERRORS++))
 fi
 
-if [ -d "$CODE_DIR/SAM-Med3D-main" ]; then
+if [ -d "$CODE_DIR/sam-med3d" ]; then
     echo -e "   ${GREEN}✓${NC} SAM-Med3D directory found"
     ((SUCCESS++))
 else
@@ -196,8 +196,8 @@ echo ""
 echo "6. Checking SAM-Med3D checkpoint..."
 
 CHECKPOINT_FOUND=0
-if [ -d "$CODE_DIR/SAM-Med3D-main/SAM-Med3D-main/ckpt" ]; then
-    CKPT_DIR="$CODE_DIR/SAM-Med3D-main/SAM-Med3D-main/ckpt"
+if [ -d "$CODE_DIR/sam-med3d/ckpt" ]; then
+    CKPT_DIR="$CODE_DIR/sam-med3d/ckpt"
     echo -e "   ${GREEN}✓${NC} Checkpoint directory found"
     ((SUCCESS++))
     
@@ -219,7 +219,7 @@ if [ -d "$CODE_DIR/SAM-Med3D-main/SAM-Med3D-main/ckpt" ]; then
     fi
 else
     echo -e "   ${RED}✗${NC} SAM-Med3D checkpoint directory NOT found"
-    echo -e "   ${YELLOW}⚠${NC} Create: mkdir -p $CODE_DIR/SAM-Med3D-main/SAM-Med3D-main/ckpt"
+    echo -e "   ${YELLOW}⚠${NC} Create: mkdir -p $CODE_DIR/sam-med3d/ckpt"
     ((ERRORS++))
 fi
 

@@ -117,7 +117,7 @@ from med3pipe.sam.core import load_labels_from_sheet
 from med3pipe.training import run_classification_head_experiment
 
 # Prepare dataset
-sam3d_root = Path("SAM-Med3D-main/SAM-Med3D-main")
+sam3d_root = Path("sam-med3d")
 prepared, paths = prepare_for_sam3d(
     dataset_root=Path("data/gist"),
     sam3d_root=sam3d_root,
