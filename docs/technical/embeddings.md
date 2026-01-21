@@ -1,153 +1,192 @@
-# SAM-Med3D Embedding Extraction and Reuse
+# SAM-Med3D Embedding Extraction
 
-## Understanding Embedding Extraction
+> Guide to extracting, caching, and reusing SAM-Med3D embeddings
 
-Embeddings are the intermediate representations extracted from SAM-Med3D's image encoder. These are:
-- **Deterministic**: Same image always produces identical embeddings
+## Overview
+
+Embeddings are intermediate representations extracted from SAM-Med3D's image encoder. They are:
+
+- **Deterministic**: Same input always produces identical output
 - **Reusable**: Can be cached and reused across experiments
 - **Time-saving**: Extraction takes ~20 minutes per dataset; reusing saves hours
 
-## The `skip_existing_embeddings` Parameter
+---
 
-### Naming Clarification
+## Key Parameter: `skip_existing_embeddings`
 
-The parameter follows natural language logic:
+This parameter controls whether to use cached embeddings or re-extract them.
 
-```python
-skip_existing_embeddings=True
-# Translation: "Skip/ignore the existing embeddings"
-# Effect: Re-extract embeddings, ignoring what exists
-
-skip_existing_embeddings=False  # DEFAULT (RECOMMENDED)
-# Translation: "Don't skip existing embeddings" = "Use existing embeddings"
-# Effect: Reuse existing embeddings (fast!)
-```
+| Value | Behavior | Use Case |
+|-------|----------|----------|
+| `False` (default) | Reuse existing embeddings | Typical experiments |
+| `True` | Skip existing, force re-extraction | Changed checkpoint or preprocessing |
 
 ### When to Use Each Setting
 
-#### ✅ Use `skip_existing_embeddings=False` (Default - Recommended)
+#### `skip_existing_embeddings=False` (Recommended)
 
-**When:**
+Use when:
 - Running experiments with the same SAM-Med3D checkpoint
 - Comparing different TabPFN/LoCalPFN hyperparameters
-- Running the same notebook multiple times
-- Saving time (20+ minutes per run!)
+- Running experiments multiple times
+- Saving time (20+ minutes per dataset)
 
-**Why it's safe:**
-- Embeddings are deterministic (same image → same embedding)
-- The random split happens AFTER extraction (controlled by `seed`)
-- No bias introduced
-
-**Example:**
 ```python
-# Experiment with different k values for LoCalPFN
-for k in [5, 10, 20, 50]:
-    res = run_multi_localpfn(
-        config_path="configs/datasets.yaml",
-        skip_existing_embeddings=False,  # ← REUSE embeddings (default)
-        local_k=k,
-    )
-```
-
-#### 🔄 Use `skip_existing_embeddings=True` (Force Re-extraction)
-
-**When:**
-- You changed the SAM-Med3D checkpoint
-- You modified preprocessing (e.g., `img_size`)
-- You want fresh embeddings to verify reproducibility
-- Something went wrong and you suspect corrupted embeddings
-
-**Example:**
-```python
-# After loading a new checkpoint
-checkpoint_path = Path("new_checkpoint.pth")
-
 res = run_multi_tabpfn(
     config_path="configs/datasets.yaml",
-    checkpoint=checkpoint_path,
-    skip_existing_embeddings=True,  # ← Skip existing, force re-extraction
+    skip_existing_embeddings=False,  # Reuse embeddings
 )
 ```
 
-## Automatic Per-Dataset Extraction
+#### `skip_existing_embeddings=True`
 
-### The Smart Fix
-
-The pipeline now automatically checks **per-dataset** whether embeddings exist:
+Use when:
+- Changed the SAM-Med3D checkpoint
+- Modified preprocessing (e.g., `img_size`)
+- Need to verify reproducibility
+- Suspect corrupted embeddings
 
 ```python
-# With skip_existing_embeddings=False (default):
-run_multi_tabpfn(
+res = run_multi_tabpfn(
     config_path="configs/datasets.yaml",
-    skip_existing_embeddings=False,
+    skip_existing_embeddings=True,  # Force re-extraction
+)
+```
+
+---
+
+## Automatic Per-Dataset Handling
+
+The pipeline automatically checks each dataset:
+
+```
+run_multi_tabpfn(config, skip_existing_embeddings=False)
+
+Output:
+✅ gist: Reusing existing embeddings...
+⚠️  lipo: Embeddings missing. Extracting...
+```
+
+- Datasets with cached embeddings → reused
+- Datasets without embeddings → extracted automatically
+
+---
+
+## Embedding Location
+
+Embeddings are stored in the SAM-Med3D feature directory:
+
+```
+sam-med3d/
+└── features/
+    └── <category>/
+        ├── <ct_name>_train/
+        │   ├── CASE-001_embedding.pt
+        │   ├── CASE-002_embedding.pt
+        │   └── ...
+        └── <ct_name>/  # validation
+            ├── CASE-003_embedding.pt
+            └── ...
+```
+
+---
+
+## Manual Extraction
+
+### Using the Pipeline
+
+```python
+from med3pipe import (
+    build_sam3d_model,
+    extract_embeddings_train_val,
+    Sam3DPaths,
 )
 
-# Output:
-# ✅ gist: Reusing existing embeddings...
-# ⚠️  lipo: Embeddings missing. Extracting...
-```
-
-**Translation:**
-- GIST has embeddings → reused ✅
-- LIPO missing embeddings → extracted automatically ⚠️
-
-This means `skip_existing_embeddings=False` is the "smart default" that:
-- Reuses embeddings when available (fast)
-- Extracts when missing (correct)
-- Works regardless of dataset order (robust)
-
-### How It Works
-
-#### Before the Fix ❌
-```
-User runs: run_multi_tabpfn(config, skip_existing_embeddings=True)
-
-GIST:  Has embeddings → Skip ✅
-LIPO:  No embeddings → Skip anyway (global setting) ❌ BUG!
-```
-
-#### After the Fix ✅
-```
-User runs: run_multi_tabpfn(config, skip_existing_embeddings=True)
-
-GIST:  Has embeddings → Skip ✅
-LIPO:  No embeddings → FORCE EXTRACTION ⚠️ (automatic fix!)
-```
-
-### Technical Implementation
-
-**Modified:** `med3pipe/pipelines/multi_dataset.py`
-
-Per-dataset embedding check (lines 208-227):
-```python
-# Check if embeddings exist for this specific dataset
-feat_train_dir = sam3d_root / "features" / category / f"{ct_name}_train"
-feat_val_dir = sam3d_root / "features" / category / ct_name
-
-embeddings_exist = (
-    feat_train_dir.exists() 
-    and feat_val_dir.exists()
-    and list(feat_train_dir.glob("*_embedding.pt"))
-    and list(feat_val_dir.glob("*_embedding.pt"))
+# Build model
+model = build_sam3d_model(
+    sam3d_root="sam-med3d",
+    checkpoint="sam-med3d/ckpt/sam_med3d_turbo.pth",
 )
 
-# Force extraction if embeddings don't exist for this dataset
-force_extraction = not embeddings_exist
-skip_for_this_dataset = skip_existing_embeddings and not force_extraction
-
-if force_extraction:
-    print(f"\n⚠️  {ds_key}: Embeddings missing. Forcing extraction...")
-elif skip_existing_embeddings:
-    print(f"\n✅ {ds_key}: Embeddings exist. Skipping extraction...")
+# Extract embeddings
+paths = Sam3DPaths(
+    sam3d_root="sam-med3d",
+    category="gist",
+    ct_name="ct_GIST",
+)
+extract_embeddings_train_val(paths, model, sam3d_root="sam-med3d")
 ```
 
-## Benefits
+### Loading Embeddings
 
-### 1. Order-Independent
-Run datasets in any order, each gets processed correctly:
 ```python
-# Run GIST first
-run_multi_tabpfn(config, dataset_names=["gist"])
+from med3pipe import load_pooled_features
+
+X_train, ids_train = load_pooled_features(
+    "sam-med3d/features/gist/ct_GIST_train",
+    paths.labels_tr,
+)
+print(f"Shape: {X_train.shape}")  # (n_samples, 384)
+```
+
+---
+
+## Pooling Strategies
+
+Embeddings are 3D feature maps (C×D×H×W). Pooling converts them to fixed-length vectors.
+
+| Strategy | Description | Output Dim |
+|----------|-------------|------------|
+| **Global Average** | Mean across spatial dims | C |
+| **Multiscale** | Multiple pool sizes | C × scales |
+| **Percentile** | Percentile-based pooling | C × percentiles |
+
+Default: Global Average Pooling (384-dim vectors)
+
+---
+
+## Caching Behavior
+
+### What's Cached
+
+- Embedding tensors (`.pt` files)
+- One file per case
+
+### What's NOT Cached
+
+- Pooled feature vectors (recomputed each run)
+- PCA transformations
+- Classification results
+
+### Cache Invalidation
+
+Delete cached embeddings when:
+1. Checkpoint changed
+2. Preprocessing changed
+3. Corrupted files detected
+
+```bash
+# Remove all embeddings for a dataset
+rm -rf sam-med3d/features/gist/
+```
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "Embeddings missing" | Run with `skip_existing_embeddings=False` (auto-extracts) |
+| "Dimension mismatch" | Re-extract with `skip_existing_embeddings=True` |
+| "Corrupted embeddings" | Delete cache and re-extract |
+
+---
+
+## Related Documentation
+
+- [Preprocessing](preprocessing.md) — Data preprocessing pipeline
+- [Multi-Dataset](multi-dataset.md) — Processing multiple datasets
+- [Quick Reference](../QUICK_REFERENCE.md) — Command cheat sheet
 
 # Run LIPO later - embeddings automatically extracted!
 run_multi_tabpfn(config, dataset_names=["lipo"])

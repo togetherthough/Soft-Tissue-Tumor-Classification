@@ -1,154 +1,174 @@
-# Experiment 3: Classification Head on SAM-Med3D
+# HPC Cluster Experiments
 
-Quick guide for running Experiment 3 to test if SAM-Med3D features are discriminative for your classification task.
+> Guide for running Med3Tab-PFN experiments on HPC clusters with SLURM
 
-## 🎯 Purpose
+## Overview
 
-Before running the full TabPFN/LoCalPFN pipeline, this experiment:
-- ✅ Tests if SAM-Med3D features capture useful tumor information
-- ✅ Trains a simple linear classifier on frozen encoder features
-- ✅ Provides baseline performance metrics (accuracy, AUC)
-- ✅ Helps decide if features are good enough to proceed
+This directory contains documentation for running experiments on high-performance computing clusters. The experiments evaluate SAM-Med3D features and compare classification methods.
 
-## 📊 Expected Results Interpretation
+## Available Experiments
 
-| AUC Score | Interpretation | Next Steps |
-|-----------|---------------|------------|
-| **> 0.70** | 🟢 **Good features** | Proceed with TabPFN/LoCalPFN pipeline |
-| **0.60 - 0.70** | 🟡 **Moderate features** | Try fine-tuning or proceed with caution |
-| **< 0.60** | 🔴 **Poor features** | Consider different pretrained weights or architecture |
+| Experiment | Description | Script | Estimated Time |
+|------------|-------------|--------|----------------|
+| **Experiment 1** | Method comparison (TabPFN, LoCalPFN, baselines) | `exp1_benchmarks.py` | 4-8 hours |
+| **Experiment 3** | SAM-Med3D classification head evaluation | `exp3_classifier.py` | 1-6 hours |
+| **Preprocessing** | Three-way comparison (baseline, filtered, ROI) | `compare_classifier_preprocessing.py` | 12-18 hours |
 
-## 🚀 Quick Submit (Cluster)
+---
 
-### Step 1: Edit SLURM Script
+## Quick Start
+
 ```bash
-nano cluster_scripts/slurm_experiment3.sh
+# 1. Configure environment in SLURM script
+nano cluster_scripts/slurm/slurm_exp1.sh
 
-# Update line 12 with your email
-# Update lines 54-55 to activate your conda environment
-```
+# 2. Submit job
+sbatch cluster_scripts/slurm/slurm_exp1.sh
 
-### Step 2: Submit Job
-```bash
-sbatch cluster_scripts/slurm_experiment3.sh
-```
-
-### Step 3: Monitor
-```bash
-# Check status
+# 3. Monitor
 squeue -u $USER
-
-# Watch log
-tail -f logs/exp3_*.log
+tail -f logs/exp1_*.log
 ```
 
-## ⚙️ Configuration Options
+See [QUICK_START.md](QUICK_START.md) for detailed setup instructions.
 
-### Basic Usage (Frozen Encoder - Fast)
+---
+
+## Experiment Details
+
+### Experiment 1: Method Comparison
+
+Compare classification performance across methods:
+- **Med3-TabPFN**: SAM-Med3D embeddings + TabPFN
+- **Med3-LoCalPFN**: SAM-Med3D embeddings + LoCalPFN
+- **DenseNet121-3D**: End-to-end 3D CNN
+- **ViT-3D (Swin)**: 3D Vision Transformer
+
+**Documentation**: [experiment1/README.md](experiment1/README.md)
+
 ```bash
-python cluster_scripts/run_experiment3_classification_head.py \
+python cluster_scripts/experiments/exp1_benchmarks.py \
+    --config configs/datasets_cluster.yaml \
+    --n-splits 5
+```
+
+### Experiment 3: Classification Head
+
+Evaluate SAM-Med3D feature quality before running the full pipeline:
+- Trains linear classifier on frozen SAM-Med3D features
+- AUC > 0.70 indicates good feature quality
+- AUC < 0.60 suggests features need improvement
+
+**Documentation**: [experiment3/README.md](experiment3/README.md)
+
+```bash
+python cluster_scripts/experiments/exp3_classifier.py \
     --config configs/datasets_cluster.yaml \
     --freeze-encoder \
-    --epochs 10
-```
-
-**Runtime**: ~30 minutes per dataset with frozen encoder
-
-### Fine-Tuning (Full Training - Slow)
-```bash
-python cluster_scripts/run_experiment3_classification_head.py \
-    --config configs/datasets_cluster.yaml \
-    --fine-tune \
-    --epochs 50 \
-    --lr 1e-4
-```
-
-**Runtime**: ~3-6 hours per dataset with fine-tuning
-
-### Run on Specific Datasets
-```bash
-python cluster_scripts/run_experiment3_classification_head.py \
-    --datasets gist \
     --epochs 20
 ```
 
-### Custom Hyperparameters
+### Preprocessing Comparison
+
+Compare preprocessing strategies:
+- **Baseline**: Full CT volume, no filtering
+- **Filtered**: With lesion quality filtering
+- **ROI-Cropped**: Tumor-centered extraction
+
+**Documentation**: [CLASSIFIER_PREPROCESSING_COMPARISON.md](CLASSIFIER_PREPROCESSING_COMPARISON.md)
+
 ```bash
-python cluster_scripts/run_experiment3_classification_head.py \
-    --epochs 30 \
-    --batch-size 8 \
-    --lr 5e-4 \
-    --weight-decay 1e-5 \
-    --dropout 0.5
+python cluster_scripts/experiments/compare_classifier_preprocessing.py \
+    --config configs/datasets_cluster.yaml
 ```
 
-## 📁 Output Structure
+---
 
-After completion, results are saved to `results/classification_head/`:
+## SLURM Configuration
 
-```
-results/classification_head/
-├── summary.csv                    # Summary of all datasets
-├── gist/
-│   ├── best_model.pt             # Best model checkpoint
-│   ├── training_history.json     # Loss/accuracy curves
-│   ├── final_metrics.json        # Detailed metrics
-│   └── predictions.npy           # Model predictions
-└── lipo/
-    ├── best_model.pt
-    ├── training_history.json
-    ├── final_metrics.json
-    └── predictions.npy
-```
+### Standard Job Template
 
-### Summary CSV Format
-```csv
-dataset,category,best_epoch,best_auc,final_accuracy,final_auc,output_dir
-gist,gist,5,0.7234,0.6800,0.7234,results/classification_head/gist
-lipo,lipo,8,0.6543,0.6521,0.6543,results/classification_head/lipo
-```
-
-## 🔧 All Command-Line Arguments
-
-```
---config PATH              Config file (default: configs/datasets.yaml)
---output-dir PATH          Output directory (default: results/classification_head)
---datasets [DS ...]        Specific datasets to run (default: all)
---freeze-encoder           Freeze SAM-Med3D encoder (default: True)
---fine-tune                Fine-tune encoder (overrides --freeze-encoder)
---epochs N                 Number of epochs (default: 10)
---batch-size N             Batch size (default: 4)
---lr FLOAT                 Learning rate (default: 0.001)
---weight-decay FLOAT       Weight decay (default: 0.0001)
---dropout FLOAT            Dropout rate (default: 0.3)
---img-size N               Image size (default: 128)
---num-workers N            Data loader workers (default: 2)
-```
-
-## 📝 Recommended Workflow
-
-### 1. Test with Frozen Encoder (Quick Check)
 ```bash
-# Fast test on one dataset (~15-30 min)
-python cluster_scripts/run_experiment3_classification_head.py \
-    --datasets gist \
-    --freeze-encoder \
-    --epochs 10
+#!/bin/bash
+#SBATCH --job-name=med3tabpfn
+#SBATCH --output=logs/%x_%j.log
+#SBATCH --error=logs/%x_error_%j.log
+#SBATCH --time=8:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:1
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=your@email.edu
 ```
 
-**Check results**:
-- If AUC > 0.70: ✅ Features are good, proceed to Experiment 1
-- If AUC < 0.60: ❌ Try fine-tuning or check data quality
+### Available Scripts
 
-### 2. Fine-Tune If Needed (If AUC 0.60-0.70)
-```bash
-# Fine-tune to potentially improve
-python cluster_scripts/run_experiment3_classification_head.py \
-    --datasets gist \
-    --fine-tune \
-    --epochs 50 \
-    --lr 1e-4
+| Script | Purpose |
+|--------|---------|
+| `slurm_exp1.sh` | Experiment 1 (all methods) |
+| `slurm_exp1_filtered.sh` | Experiment 1 with filtering |
+| `slurm_exp1_roi.sh` | Experiment 1 with ROI cropping |
+| `slurm_exp3.sh` | Experiment 3 (classification head) |
+| `slurm_compare_classifier.sh` | Preprocessing comparison |
+
+---
+
+## Results Interpretation
+
+### Experiment 3 (Feature Quality)
+
+| AUC Score | Interpretation | Action |
+|-----------|----------------|--------|
+| > 0.70 | Good features | Proceed to Experiment 1 |
+| 0.60 - 0.70 | Moderate features | Consider fine-tuning |
+| < 0.60 | Poor features | Check data quality |
+
+### Experiment 1 (Benchmarks)
+
+Expected metrics in `results/experiment1/combined_benchmarks_summary.csv`:
+- **Accuracy**: Overall classification accuracy
+- **F1 Score**: Harmonic mean of precision and recall
+- **ROC-AUC**: Area under ROC curve
+
+---
+
+## Output Structure
+
 ```
+results/
+├── experiment1/
+│   └── combined_benchmarks_summary.csv
+├── classification_head/
+│   ├── gist/
+│   │   ├── best_model.pth
+│   │   ├── training_log.csv
+│   │   └── metrics.txt
+│   └── lipo/
+└── three_way_comparison/
+    └── preprocessing_comparison.csv
+```
+
+---
+
+## Documentation Index
+
+| Document | Description |
+|----------|-------------|
+| [QUICK_START.md](QUICK_START.md) | Getting started guide |
+| [SUBMIT_CHECKLIST.md](SUBMIT_CHECKLIST.md) | Pre-submission verification |
+| [SCRIPTS_REFERENCE.md](SCRIPTS_REFERENCE.md) | Complete script documentation |
+| [ROI_EXPERIMENTS.md](ROI_EXPERIMENTS.md) | ROI cropping experiments |
+| [experiment1/README.md](experiment1/README.md) | Benchmark experiment details |
+| [experiment3/README.md](experiment3/README.md) | Classification head details |
+| [experiment3/troubleshooting.md](experiment3/troubleshooting.md) | Experiment 3 troubleshooting |
+
+---
+
+## Related Documentation
+
+- [Main README](../../README.md) — Project overview
+- [Cluster Scripts](../../cluster_scripts/README.md) — Script reference
+- [Troubleshooting](../TROUBLESHOOTING.md) — General troubleshooting
 
 ### 3. Run on All Datasets
 ```bash

@@ -1,103 +1,135 @@
-# med3pipe: Prepare datasets for SAM-Med3D (steps 1–3)
+# med3pipe
 
-Utilities and a CLI to convert raw 3D medical datasets (e.g., the GIST dataset) into the folder
-layout expected by SAM-Med3D, and to create a train/validation split.
+> Core Python package for Med3Tab-PFN: SAM-Med3D feature extraction and tabular classification
 
-This library implements the first three steps from `notebooks/gist_tabpfn_end_to_end_corrected.ipynb`,
-and provides methods for steps 4–6 as reusable functions:
+## Overview
 
-1. Discover raw cases in a dataset directory (e.g., `gist/`).
-2. Prepare nnU-Net-style folders under the SAM-Med3D repository:
-   - `data/train/<category>/<ct_name>/{imagesTr, labelsTr}`
-   - Labels are binary (foreground > 0).
-   - Multiple lesion files per case are merged (images by max, masks by union).
-   - Image geometry is aligned to mask geometry when mismatched.
-3. Create a validation split by copying (or moving) a subset into
-   `data/validation/<category>/<ct_name>/{imagesVal, labelsVal}`.
-4. Build a SAM-Med3D model and extract image-encoder embeddings.
-5. Pool embeddings using Global Average Pooling to get per-case feature vectors.
-6. Load labels from CSV (e.g., `gist/sheet.csv`) and align to case IDs.
+`med3pipe` provides utilities for converting 3D medical imaging datasets into the format required by SAM-Med3D, extracting embeddings, and performing classification with TabPFN/LoCalPFN.
 
-The implementation mirrors the notebook behavior and incorporates the following fixes:
+### Key Features
 
-- Multiple lesions per case are detected and merged: supports `image_lesion_*.nii.gz` and
-  `segmentation_lesion_*.nii.gz` (and falls back to `segmentation_*.nii.gz`).
-- Output filenames are `<case_id>.nii.gz` to ensure 1:1 correspondence between images and labels.
+- **Dataset Preparation**: Convert NIfTI volumes to SAM-Med3D format
+- **Validation Splitting**: Create stratified train/validation splits
+- **Feature Extraction**: Extract SAM-Med3D image encoder embeddings
+- **ROI Pooling**: Convert 3D feature maps to fixed-length vectors
+- **Tabular Classification**: TabPFN and LoCalPFN wrappers
+- **3D Baselines**: DenseNet121-3D and Swin Transformer-3D
 
-## Install
-
-- Python 3.9+
-- Dependencies (runtime):
-  - `numpy`
-  - `SimpleITK`
-  - `torch`
-  - `torchio`
-  - `pandas` (for loading labels)
-
-You can install them with pip:
+## Installation
 
 ```bash
 pip install -r med3pipe/requirements.txt
 ```
 
-## 3D Classification: DenseNet121 (3D) and Vision Transformer (3D)
+### Requirements
+- Python 3.9+
+- PyTorch 2.0+
+- SimpleITK
+- TorchIO
+- NumPy, Pandas
+- scikit-learn
 
-For native 3D volumetric classification, use the MONAI-based APIs in `med3pipe.vision.v3d`. These operate directly on NIfTI volumes prepared by steps 1–3 (SAM-Med3D layout), loading from:
+## Quick Start
 
-- `data/train/<category>/<ct_name>/imagesTr/*.nii.gz`
-- `data/validation/<category>/<ct_name>/imagesVal/*.nii.gz`
+### Command Line Interface
 
-Labels are read from your dataset sheet via `load_labels_from_sheet`, ensuring case IDs match the prepared filenames (consistent with multiple-lesion merging and `.nii`-suffix handling).
+```bash
+# Show available commands
+python -m med3pipe --help
 
-### Train DenseNet121 (3D)
+# Prepare dataset for SAM-Med3D
+python -m med3pipe prepare \
+    --dataset-root data/gist \
+    --category gist \
+    --ct-name ct_GIST
+
+# Create train/validation split
+python -m med3pipe split \
+    --category gist \
+    --ct-name ct_GIST \
+    --split-ratio 0.8
+
+# Run TabPFN on multiple datasets
+python -m med3pipe multi-tabpfn --config configs/datasets.yaml
+```
+
+### Python API
 
 ```python
 from pathlib import Path
-from med3pipe import Sam3DPaths, Train3DConfig, train_eval_densenet121_3d
-
-SAM3D_ROOT = Path("sam-med3d")
-paths = Sam3DPaths(sam3d_root=SAM3D_ROOT, category="gist", ct_name="ct_GIST")
-
-res = train_eval_densenet121_3d(
-    paths=paths,
-    sheet_csv=Path("gist") / "sheet.csv",
-    num_classes=2,
-    cfg=Train3DConfig(epochs=30, img_size=96, batch_size=2, device="cuda"),  # set device to "cuda" for GPU
+from med3pipe import (
+    prepare_for_sam3d,
+    split_validation,
+    build_sam3d_model,
+    extract_embeddings_train_val,
+    load_pooled_features,
+    load_labels_from_sheet,
+    tabpfn_pipeline,
 )
-print("Saved to:", res["out_dir"])  # baselines/densenet121_3d_<timestamp>
+
+# Step 1-2: Prepare dataset
+n_cases, paths = prepare_for_sam3d(
+    dataset_root=Path("data/gist"),
+    sam3d_root=Path("sam-med3d"),
+    category="gist",
+    ct_name="ct_GIST",
+)
+
+# Step 3: Create validation split
+train_n, val_n = split_validation(paths, split_ratio=0.8, seed=2025)
+
+# Step 4: Load SAM-Med3D model
+model = build_sam3d_model(
+    sam3d_root=Path("sam-med3d"),
+    checkpoint=Path("sam-med3d/ckpt/sam_med3d_turbo.pth"),
+)
+
+# Step 5: Extract embeddings
+extract_embeddings_train_val(paths, model, sam3d_root=Path("sam-med3d"))
+
+# Step 6: Pool features
+X_train, ids_train = load_pooled_features(feat_train_dir, paths.labels_tr)
+X_val, ids_val = load_pooled_features(feat_val_dir, paths.labels_val)
+
+# Step 7: Load and align labels
+df, label_map = load_labels_from_sheet(Path("data/gist/sheet.csv"))
+y_train, _ = build_y(ids_train, label_map)
+y_val, _ = build_y(ids_val, label_map)
+
+# Step 8: Train and evaluate TabPFN
+result = tabpfn_pipeline(
+    X_train=X_train, y_train=y_train,
+    X_val=X_val, y_val=y_val,
+    ids_val=ids_val,
+    category="gist", ct_name="ct_GIST",
+)
+print(f"Accuracy: {result['metrics']['accuracy']:.3f}")
 ```
 
-### Train Swin Transformer (3D)
+## Module Structure
 
-```python
-from med3pipe import train_eval_swin_transformer_3d, Train3DConfig, Sam3DPaths
-from pathlib import Path
-
-SAM3D_ROOT = Path("sam-med3d")
-paths = Sam3DPaths(sam3d_root=SAM3D_ROOT, category="gist", ct_name="ct_GIST")
-
-res = train_eval_swin_transformer_3d(
-    paths=paths,
-    sheet_csv=Path("gist") / "sheet.csv",
-    num_classes=2,
-    cfg=Train3DConfig(epochs=30, img_size=96, batch_size=2, device="cuda"),
-)
-print("Saved to:", res["out_dir"])  # baselines/swin3d_<timestamp>
 ```
-
-Both training and validation inference use the selected device (`cfg.device`), so GPU is used end-to-end when you set `device="cuda"`.
-
-Note: The CLI defers importing heavy dependencies so `python -m med3pipe --help` works even if
-`SimpleITK` is not installed yet.
-
-## Folder assumptions
-
-- SAM-Med3D resources are present at `./sam-med3d` from your working directory.
-  If your path differs, pass `--sam3d-root`.
-- For GIST, each case is under `gist/GIST-XXX_CT/1/NIFTI/` with `image.nii.gz` and one or more
-  `segmentation*.nii.gz` files.
-- For other datasets with a different root name (e.g., `name/` instead of `gist/`), point the CLI
-  to that directory with `--dataset-root` and, if needed, a custom discovery pattern via `--case-glob`.
+med3pipe/
+├── __init__.py           # Package exports
+├── __main__.py           # CLI entry point
+├── cli.py                # Command-line interface
+├── data/                 # Data loading utilities
+├── pipelines/            # End-to-end pipelines
+│   ├── end_to_end.py     # Single dataset pipelines
+│   └── multi_dataset.py  # Multi-dataset workflows
+├── sam/                  # SAM-Med3D integration
+│   ├── core.py           # Model building and extraction
+│   └── transforms.py     # Preprocessing transforms
+├── tabular/              # Tabular classification
+│   ├── pfn.py            # TabPFN wrapper
+│   ├── local_pfn.py      # LoCalPFN wrapper
+│   ├── lesion_filter.py  # Quality filtering
+│   └── stratify.py       # Stratified splitting
+├── training/             # Training utilities
+│   └── classification_head.py
+└── vision/               # 3D baseline models
+    └── v3d.py            # DenseNet, Swin Transformer
+```
 
 ## CLI usage
 

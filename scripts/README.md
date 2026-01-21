@@ -1,101 +1,148 @@
 # Utility Scripts
 
-Collection of utility and analysis scripts for the Med3Tab-PFN project.
+> Analysis, evaluation, validation, and visualization utilities for Med3Tab-PFN
 
----
+## Overview
+
+This directory contains standalone scripts for data analysis, model evaluation, pipeline validation, and figure generation.
 
 ## Directory Structure
 
 ```
 scripts/
-├── analysis/          # Data analysis and statistics
-├── evaluation/        # Model evaluation and testing
-├── validation/        # Verification and validation utilities
-├── visualization/     # Visualization and figure generation
-└── README.md         # This file
+├── analysis/           # Data analysis and statistics
+├── evaluation/         # Model evaluation and testing
+├── validation/         # Verification utilities
+├── visualization/      # Figure generation
+└── README.md           # This file
 ```
 
 ---
 
-## Analysis Scripts (`analysis/`)
+## Analysis Scripts
 
 Scripts for analyzing datasets, lesion characteristics, and experimental results.
 
-### `analyze_labels.py`
-Analyze dataset structure and label distribution from `sheet.csv`.
+| Script | Description |
+|--------|-------------|
+| `analyze_labels.py` | Dataset structure and label distribution analysis |
+| `analyze_lesion_sizes.py` | Lesion size distribution statistics |
+| `summarize_lesion_shapes.py` | Lesion morphology summary |
+| `create_dice_summary.py` | Dice score result summaries |
+| `create_per_dataset_summary.py` | Per-dataset performance reports |
+| `create_simple_summary.py` | Simplified experiment summaries |
+| `trace_index_mapping.py` | Debug sample index tracking |
 
-**Usage**:
+### Examples
+
 ```bash
+# Analyze label distribution
 python scripts/analysis/analyze_labels.py
-```
 
-**Output**: Prints dataset statistics and label distributions.
-
----
-
-### `analyze_lesion_sizes.py`
-Analyze lesion size distributions across datasets.
-
-**Usage**:
-```bash
+# Generate lesion size statistics
 python scripts/analysis/analyze_lesion_sizes.py
-```
 
-**Output**: Statistical analysis of lesion dimensions and volumes.
-
----
-
-### `summarize_lesion_shapes.py`
-Generate summary statistics for lesion morphology.
-
-**Usage**:
-```bash
-python scripts/analysis/summarize_lesion_shapes.py
-```
-
----
-
-### `create_dice_summary.py`
-Create summary of Dice score results from experiments.
-
-**Usage**:
-```bash
+# Create Dice score summary
 python scripts/analysis/create_dice_summary.py
 ```
 
 ---
 
-### `create_per_dataset_summary.py`
-Generate per-dataset performance summaries.
+## Evaluation Scripts
 
-**Usage**:
+Scripts for evaluating model performance and running tests.
+
+| Script | Description |
+|--------|-------------|
+| `test_sam_features.py` | Evaluate SAM-Med3D feature quality |
+| `test_full_pipeline.py` | End-to-end pipeline validation |
+| `compute_sam_dice_scores.py` | Compute segmentation Dice scores |
+| `compute_dice_scores_roi.py` | ROI-specific Dice computation |
+
+### Examples
+
 ```bash
-python scripts/analysis/create_per_dataset_summary.py
+# Test SAM feature quality
+python scripts/evaluation/test_sam_features.py --dataset gist --epochs 10 --freeze
+
+# Run full pipeline test
+python scripts/evaluation/test_full_pipeline.py
+
+# Compute Dice scores
+python scripts/evaluation/compute_sam_dice_scores.py
 ```
 
 ---
 
-### `create_simple_summary.py`
-Create simplified summary reports of experimental results.
+## Validation Scripts
 
-**Usage**:
+Verification utilities to ensure implementation correctness.
+
+| Script | Description |
+|--------|-------------|
+| `verify_embeddings_fix.py` | Validate embedding extraction |
+| `verify_pooling_logic.py` | Verify pooling strategy correctness |
+
+### Examples
+
 ```bash
-python scripts/analysis/create_simple_summary.py
+# Verify embedding extraction
+python scripts/validation/verify_embeddings_fix.py
+
+# Check pooling implementations
+python scripts/validation/verify_pooling_logic.py
 ```
 
 ---
 
-### `trace_index_mapping.py`
-Debug utility for tracing sample index mappings through preprocessing pipeline.
+## Visualization Scripts
 
-**Usage**:
+Scripts for generating figures and visualizations.
+
+| Script | Description |
+|--------|-------------|
+| `generate_feature_extraction_pipeline_figure.py` | Pipeline diagram for publications |
+| `visualize_sam_segmentations.py` | Segmentation overlay visualizations |
+
+### Examples
+
 ```bash
-python scripts/analysis/trace_index_mapping.py
+# Generate pipeline figure
+python scripts/visualization/generate_feature_extraction_pipeline_figure.py
+
+# Visualize segmentations
+python scripts/visualization/visualize_sam_segmentations.py
 ```
+
+Output: Figures saved to `figures/` directory.
 
 ---
 
-## Evaluation Scripts (`evaluation/`)
+## Usage Guidelines
+
+### Running Scripts
+
+All scripts should be run from the project root:
+
+```bash
+cd Med3Tab-PFN/
+python scripts/<category>/<script_name>.py
+```
+
+### Common Options
+
+Many scripts accept these options:
+- `--config`: Path to dataset configuration
+- `--dataset`: Specific dataset to process
+- `--output`: Output directory
+
+---
+
+## Related Documentation
+
+- [Main README](../README.md)
+- [Documentation Index](../docs/README.md)
+- [Cluster Scripts](../cluster_scripts/README.md)
 
 Scripts for evaluating model performance and running tests.
 
