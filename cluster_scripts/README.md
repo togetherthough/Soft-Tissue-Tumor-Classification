@@ -26,8 +26,8 @@ Main experiment scripts using k-fold cross-validation:
 
 ### 📁 slurm/
 SLURM job submission scripts:
-- **`slurm_exp1.sh`**, `slurm_exp1_filtered.sh`, `slurm_exp1_quick.sh` - Experiment 1 variants
-- **`slurm_exp3.sh`**, `slurm_exp3_filtered.sh`, `slurm_exp3_quick.sh` - Experiment 3 variants
+- **`slurm_exp1.sh`**, `slurm_exp1_filtered.sh`, `slurm_exp1_roi.sh`, `slurm_exp1_quick.sh` - Experiment 1 variants
+- **`slurm_exp3.sh`**, `slurm_exp3_filtered.sh`, `slurm_exp3_roi.sh`, `slurm_exp3_quick.sh` - Experiment 3 variants
 - **`slurm_compare_classifier.sh`** - Three-way preprocessing comparison for classification head
 
 ### 📁 utils/
@@ -49,18 +49,49 @@ For detailed documentation, see:
 - **[Quick Start](../docs/cluster/QUICK_START.md)** - Getting started on cluster
 - **[Submit Checklist](../docs/cluster/SUBMIT_CHECKLIST.md)** - Pre-submission checklist
 
+## New Features
+
+### ROI Cropping
+Tumor-centered volumes with adaptive crop/pad:
+```bash
+python cluster_scripts/experiments/exp1_benchmarks.py \
+    --use-roi-crop \
+    --roi-margin 10 \
+    --roi-target-size 128
+```
+
+### MedIM Integration
+Use MedIM for model loading (recommended):
+```bash
+python cluster_scripts/experiments/exp1_benchmarks.py --use-medim
+python cluster_scripts/experiments/exp1_benchmarks.py --no-medim  # Disable
+```
+
+### Lesion Filtering
+Filter small/noisy lesions:
+```bash
+python cluster_scripts/experiments/exp1_benchmarks.py --filter-preset recommended
+python cluster_scripts/experiments/exp1_benchmarks.py \
+    --min-voxels 500 \
+    --min-dimension 5 \
+    --min-density 0.3
+```
+
 ## Usage
 
 All scripts use k-fold stratified cross-validation (default: 5 folds).
 
-### Example: Run benchmarks
+### Example: Run benchmarks with ROI cropping
 ```bash
-python cluster_scripts/experiments/exp1_benchmarks.py --config configs/datasets.yaml
+python cluster_scripts/experiments/exp1_benchmarks.py \
+    --config configs/datasets.yaml \
+    --use-roi-crop \
+    --use-medim
 ```
 
-### Example: Submit to SLURM
+### Example: Submit to SLURM (with ROI)
 ```bash
-sbatch cluster_scripts/slurm/slurm_exp1.sh
+sbatch cluster_scripts/slurm/slurm_exp1_roi.sh
 ```
 
 ### Example: Change number of folds

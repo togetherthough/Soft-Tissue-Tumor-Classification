@@ -292,6 +292,7 @@ def run_single_experiment(
         dropout=dropout,
         num_workers=num_workers,
         output_dir=output_dir,
+        use_medim=True,  # Use MedIM for model loading (recommended)
         lesion_filter=lesion_filter,
     )
     

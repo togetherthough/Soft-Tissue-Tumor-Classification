@@ -111,6 +111,11 @@ python cluster_scripts/experiments/exp3_classifier.py \
 #    --min-voxels 500 \
 #    --min-dimension 5 \
 #    --min-density 0.3
+#
+# Enable ROI cropping (optional):
+#    --use-roi-crop \
+#    --roi-margin 10 \
+#    --roi-target-size 128
 
 EXIT_CODE=$?
 

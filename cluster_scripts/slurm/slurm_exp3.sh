@@ -93,11 +93,21 @@ echo "=========================================="
 echo "Starting Experiment 3"
 echo "=========================================="
 
-# Lesion filtering options (uncomment to enable):
-# --min-voxels 500           # Filter cases with >= 500 voxels
-# --min-dimension 5          # Filter cases with min dimension >= 5
-# --min-density 0.3          # Filter cases with density >= 0.3
-# --filter-preset recommended # Use preset: recommended, conservative, or lenient
+# Available options:
+# Lesion filtering options:
+#   --min-voxels 500           # Filter cases with >= 500 voxels
+#   --min-dimension 5          # Filter cases with min dimension >= 5
+#   --min-density 0.3          # Filter cases with density >= 0.3
+#   --filter-preset recommended # Use preset: recommended, conservative, or lenient
+#
+# ROI cropping options:
+#   --use-roi-crop              # Enable ROI cropping (tumor-centered volumes)
+#   --roi-margin 10             # Margin around tumor for ROI cropping (default: 10)
+#   --roi-target-size 128       # Target size after ROI cropping (default: 128)
+#
+# Model loading options:
+#   --use-medim                 # Use MedIM for model loading (default: enabled)
+#   --no-medim                  # Disable MedIM, use legacy model loading
 
 python cluster_scripts/experiments/exp3_classifier.py \
     --config ${CONFIG_FILE} \
@@ -105,7 +115,8 @@ python cluster_scripts/experiments/exp3_classifier.py \
     --epochs 20 \
     --batch-size 4 \
     --freeze-encoder
-    # Add filtering parameters here (see above)
+    # Add ROI cropping: --use-roi-crop --roi-margin 10 --roi-target-size 128
+    # Add filtering: --filter-preset recommended
 
 EXIT_CODE=$?
 

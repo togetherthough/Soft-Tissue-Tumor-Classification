@@ -145,6 +145,11 @@ python -u cluster_scripts/experiments/exp1_benchmarks.py \
 #    --min-voxels 500 \
 #    --min-dimension 5 \
 #    --min-density 0.3
+#
+# Enable ROI cropping (optional):
+#    --use-roi-crop \
+#    --roi-margin 10 \
+#    --roi-target-size 128
 
 # Capture exit status
 EXIT_CODE=$?

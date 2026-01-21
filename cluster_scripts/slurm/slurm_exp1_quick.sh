@@ -93,6 +93,12 @@ python -u cluster_scripts/experiments/exp1_benchmarks.py \
     --output-dir ${RESULTS_DIR} \
     --epochs-3d 3
 
+# Alternative test configurations:
+# With ROI cropping:
+#   --use-roi-crop --roi-margin 10 --roi-target-size 128
+# With lesion filtering:
+#   --filter-preset recommended
+
 EXIT_CODE=$?
 
 echo ""

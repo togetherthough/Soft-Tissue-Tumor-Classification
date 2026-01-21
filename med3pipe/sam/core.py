@@ -211,7 +211,9 @@ def extract_embeddings(
     cnt = 0
     with torch.no_grad():
         for ipath in paths:
-            out_pt = out_dir / (ipath.stem + "_embedding.pt")
+            # Handle .nii.gz extension properly: remove both .gz and .nii
+            base_name = ipath.name.replace('.nii.gz', '')
+            out_pt = out_dir / f"{base_name}_embedding.pt"
             if skip_existing and out_pt.exists():
                 continue
             vol = load_volume_tensor(ipath, pre_transform=pre_transform).to(device)

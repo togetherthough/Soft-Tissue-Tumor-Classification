@@ -469,6 +469,7 @@ def run_classification_head_experiment(
     dropout: float = 0.3,
     num_workers: int = 2,
     output_dir: Optional[Path] = None,
+    use_medim: bool = True,
 ) -> Dict[str, Any]:
     """
     Run complete classification head experiment on prepared SAM-Med3D data.
@@ -496,6 +497,7 @@ def run_classification_head_experiment(
         dropout: Dropout rate in classification head
         num_workers: Number of dataloader workers
         output_dir: Directory to save outputs
+        use_medim: If True (default), use medim to load model; otherwise use legacy method
     
     Returns:
         Dictionary with training history and metrics
@@ -528,6 +530,7 @@ def run_classification_head_experiment(
         checkpoint=checkpoint,
         device=torch_device,
         eval_mode=False,  # Training mode
+        use_medim=use_medim,
     )
     
     # Add classification head
