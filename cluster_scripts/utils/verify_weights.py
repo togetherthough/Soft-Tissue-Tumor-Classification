@@ -42,7 +42,7 @@ print("SAM-Med3D Weight Verification")
 print("="*80)
 
 # Check checkpoint file
-ckpt_path = repo_root / "SAM-Med3D-main" / "SAM-Med3D-main" / "ckpt" / "sam_med3d_turbo.pth"
+ckpt_path = repo_root / "sam-med3d" / "ckpt" / "sam_med3d_turbo.pth"
 print("\n1. Checking checkpoint file...")
 print("   Path: {}".format(ckpt_path))
 
@@ -114,7 +114,7 @@ else:
 # Try loading into actual model
 print("\n6. Testing model loading...")
 try:
-    sys.path.insert(0, str(repo_root / "SAM-Med3D-main" / "SAM-Med3D-main"))
+    sys.path.insert(0, str(repo_root / "sam-med3d"))
     from segment_anything.build_sam3D import sam_model_registry3D
     
     sam3d = sam_model_registry3D['vit_b_ori'](checkpoint=None)

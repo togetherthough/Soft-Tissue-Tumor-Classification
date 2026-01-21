@@ -55,7 +55,7 @@ rsync -avz --progress \
 # Make sure to include:
 # - Code (med3pipe/)
 # - Data (or have it accessible)
-# - SAM-Med3D checkpoint (SAM-Med3D-main/SAM-Med3D-main/ckpt/)
+# - SAM-Med3D checkpoint (sam-med3d/ckpt/)
 # - Configs (configs/datasets.yaml)
 ```
 
@@ -251,7 +251,7 @@ Download SAM-Med3D checkpoint:
 
 ```bash
 # On the cluster
-cd Med3Tab-PFN/SAM-Med3D-main/SAM-Med3D-main/ckpt/
+cd Med3Tab-PFN/sam-med3d/ckpt/
 wget https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth
 ```
 

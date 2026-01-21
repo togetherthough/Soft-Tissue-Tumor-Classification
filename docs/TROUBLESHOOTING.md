@@ -44,10 +44,10 @@ Use this guide when fine-tuning SAM-Med3D or running PFN experiments.
   - Native SAM-Med3D writes under `<work_dir>/<task_name>/`.
 
 - **Path assumptions**
-  - SAM-Med3D lives at `./SAM-Med3D-main/SAM-Med3D-main/` relative to project root.
+  - SAM-Med3D lives at `./sam-med3d/` relative to project root.
   - Prepared data lives under that repo: `data/train/<category>/<ct_name>/{imagesTr,labelsTr}`.
 
-If issues persist, open `SAM-Med3D-main/SAM-Med3D-main/train.py` and verify:
+If issues persist, open `sam-med3d/train.py` (if it exists) and verify:
 - `device_config()` respects CPU when CUDA is unavailable.
 - `init_checkpoint()` loads with `map_location='cpu'` as fallback.
 - Training loop casts `gt3D.float()` for Dice losses with `sigmoid=True`.

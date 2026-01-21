@@ -196,7 +196,7 @@ sbatch cluster_scripts/slurm_experiment3.sh
 ### "No checkpoint found"
 Download SAM-Med3D checkpoint:
 ```bash
-cd SAM-Med3D-main/SAM-Med3D-main/ckpt/
+cd sam-med3d/ckpt/
 wget https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth
 ```
 

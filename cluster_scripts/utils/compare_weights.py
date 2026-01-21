@@ -10,7 +10,7 @@ import torch
 
 repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
-sys.path.insert(0, str(repo_root / "SAM-Med3D-main" / "SAM-Med3D-main"))
+sys.path.insert(0, str(repo_root / "sam-med3d"))
 
 from segment_anything.build_sam3D import sam_model_registry3D
 
@@ -18,7 +18,7 @@ print("="*80)
 print("Weight Comparison Test")
 print("="*80)
 
-ckpt_path = repo_root / "SAM-Med3D-main" / "SAM-Med3D-main" / "ckpt" / "sam_med3d_turbo.pth"
+ckpt_path = repo_root / "sam-med3d" / "ckpt" / "sam_med3d_turbo.pth"
 
 print("\n1. Creating model with random initialization...")
 model_random = sam_model_registry3D['vit_b_ori'](checkpoint=None)

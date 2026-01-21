@@ -67,8 +67,8 @@ echo ""
 # Check 3: SAM-Med3D checkpoint
 echo "[3/7] Checking SAM-Med3D checkpoint..."
 CHECKPOINT_PATHS=(
-    "SAM-Med3D-main/SAM-Med3D-main/ckpt/sam_med3d_turbo.pth"
-    "SAM-Med3D-main/SAM-Med3D-main/ckpt/SAM-Med3D-turbo.pth"
+    "sam-med3d/ckpt/sam_med3d_turbo.pth"
+    "sam-med3d/ckpt/SAM-Med3D-turbo.pth"
 )
 
 CHECKPOINT_FOUND=0
@@ -101,7 +101,7 @@ if [ $CHECKPOINT_FOUND -eq 0 ]; then
     done
     echo ""
     echo "   Download with:"
-    echo "   cd SAM-Med3D-main/SAM-Med3D-main/ckpt/"
+    echo "   cd sam-med3d/ckpt/"
     echo "   wget https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth"
 fi
 echo ""

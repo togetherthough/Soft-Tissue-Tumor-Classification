@@ -248,7 +248,7 @@ datasets:
 ```python
 from pathlib import Path
 
-sam3d_root = Path("SAM-Med3D-main/SAM-Med3D-main")
+sam3d_root = Path("sam-med3d")
 gist_train = sam3d_root / "features/gist/ct_GIST_train"
 gist_val = sam3d_root / "features/gist/ct_GIST"
 

@@ -11,7 +11,7 @@ Use this checklist before submitting your SLURM job to train and test your metho
 - [ ] Dependencies are installed (see `med3pipe/requirements.txt`)
 
 ### 2. SAM-Med3D Checkpoint
-- [ ] Checkpoint directory exists: `SAM-Med3D-main/SAM-Med3D-main/ckpt/`
+- [ ] Checkpoint directory exists: `sam-med3d/ckpt/`
 - [ ] Checkpoint file downloaded: `sam_med3d_turbo.pth` (~750MB)
   - Download from: https://huggingface.co/blueyo0/SAM-Med3D/resolve/main/sam_med3d_turbo.pth
 

@@ -60,7 +60,7 @@ from med3pipe.data import prepare_for_sam3d_roi_cropped
 
 prepared, paths = prepare_for_sam3d_roi_cropped(
     dataset_root="path/to/GIST",
-    sam3d_root="path/to/SAM-Med3D-main/SAM-Med3D-main",
+    sam3d_root="path/to/sam-med3d",
     category="gist",
     ct_name="ct_GIST_roi",  # Note: different name to avoid overwriting
     target_size=128,
@@ -142,7 +142,7 @@ This is **fair** because:
 ### Output Structure
 Same as standard preparation:
 ```
-SAM-Med3D-main/SAM-Med3D-main/data/train/gist/ct_GIST_roi/
+sam-med3d/data/train/gist/ct_GIST_roi/
 ├── imagesTr/
 │   ├── GIST-001_CT.nii.gz  (128×128×128, tumor-centered)
 │   └── ...
