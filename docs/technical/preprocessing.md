@@ -1,153 +1,199 @@
-# Preprocessing Upgrade: Resize-Then-Pad for SAM-Med3D
+# Preprocessing Pipeline
+
+> Resize-then-pad approach for SAM-Med3D compatible 3D volumes
 
 ## Overview
 
-The preprocessing pipeline has been upgraded to use a **resize-then-pad** approach instead of the previous **crop-or-pad** approach. This minimizes data loss while still achieving the required 128³ format for SAM-Med3D.
+The preprocessing pipeline converts 3D medical volumes (CT/MRI) into the 128³ format required by SAM-Med3D while preserving as much information as possible.
 
-## Why the Change?
+## The Problem
 
-### Previous Approach (CropOrPad)
-- **Problem**: Directly crops or pads to 128³
-- **Data Loss**: If the original volume is larger than 128 in any dimension, that data is **cropped away**
-- **Example**: A volume of size (200, 150, 100) would lose 72 slices in the first dimension
+SAM-Med3D requires fixed 128×128×128 input volumes. Medical images vary widely in size (e.g., 200×150×300 voxels).
 
-### New Approach (Resize-Then-Pad)
-- **Step 1**: Resize so the **largest dimension becomes 128** (preserves aspect ratio)
-- **Step 2**: Pad the remaining smaller dimensions to reach 128³
-- **Benefit**: Minimal data loss - all original data is preserved, just scaled down
-- **Example**: A volume of size (200, 150, 100) becomes (128, 96, 64) after resize, then (128, 128, 128) after padding
+### Old Approach: CropOrPad
+```
+Input: (200, 150, 300)
+   ↓ CropOrPad(128³)
+   → (128, 128, 128)    # Crops away 172 slices!
+```
+**Problem**: Data loss when dimensions exceed 128.
+
+### New Approach: Resize-Then-Pad
+```
+Input: (200, 150, 300)
+   ↓ ResizeLargestTo(128)
+   → (85, 64, 128)      # Proportional downscaling
+   ↓ CropOrPad(128³)
+   → (128, 128, 128)    # Pad smaller dimensions
+```
+**Benefit**: All information preserved via downsampling.
+
+---
 
 ## Implementation
 
 ### Core Transform: `ResizeLargestTo`
 
-A new TorchIO transform that resizes volumes to make the largest dimension equal to a target size:
-
 ```python
 from med3pipe.sam.transforms import ResizeLargestTo
-
-# Resize so largest dimension = 128
-transform = ResizeLargestTo(target_size=128)
-```
-
-### Complete Pipeline
-
-```python
 import torchio as tio
-from med3pipe.sam.transforms import ResizeLargestTo
 
 transform = tio.Compose([
-    tio.ToCanonical(),                                    # Reorient to RAS+
-    ResizeLargestTo(target_size=128),                    # Resize (largest dim → 128)
-    tio.CropOrPad(target_shape=(128, 128, 128)),         # Pad to 128³
-    tio.ZNormalization(masking_method=lambda x: x > 0),  # Normalize (optional)
+    tio.ToCanonical(),                           # Reorient to RAS+
+    ResizeLargestTo(target_size=128),            # Resize largest → 128
+    tio.CropOrPad(target_shape=(128, 128, 128)), # Pad to 128³
+    tio.ZNormalization(masking_method=lambda x: x > 0),  # Optional
 ])
 ```
 
-## Usage
+### How `ResizeLargestTo` Works
 
-### Option 1: Use the new utility functions
-
-```python
-from med3pipe.sam.transforms import load_volume_resize_pad, load_mask_resize_pad
-
-# Load image with resize-then-pad preprocessing
-image = load_volume_resize_pad(img_path, img_size=128, normalize=False)
-
-# Load mask with resize-then-pad preprocessing  
-mask = load_mask_resize_pad(mask_path, img_size=128)
-```
-
-### Option 2: Use the transform directly
+1. Find the largest spatial dimension
+2. Compute scale factor: `scale = target_size / largest_dim`
+3. Apply proportional scaling to all dimensions
+4. Result: Largest dimension = target_size, others < target_size
 
 ```python
-from med3pipe.sam.transforms import make_sam3d_transform
-import torchio as tio
-import SimpleITK as sitk
-
-# Create transform
-transform = make_sam3d_transform(img_size=128, normalize=False)
-
-# Load and transform
-sitk_img = sitk.ReadImage(str(img_path))
-sitk_arr, _ = tio.data.io.sitk_to_nib(sitk_img)
-subject = tio.Subject(image=tio.ScalarImage(tensor=sitk_arr))
-subject = transform(subject)
-image = subject.image.data
-```
-
-### Option 3: Use in data loader
-
-```python
-import torchio as tio
-from med3pipe.sam.transforms import ResizeLargestTo
-
-# In your dataset or data loader
-transform = tio.Compose([
-    tio.ToCanonical(),
-    ResizeLargestTo(target_size=128),
-    tio.CropOrPad(target_shape=(128, 128, 128)),
-])
-```
-
-## Files Updated
-
-1. **`med3pipe/sam/core.py`**
-   - Added `ResizeLargestTo` transform class
-   - Updated `make_pre_transform()` to use resize-then-pad approach
-
-2. **`sam-med3d/utils/data_loader.py`**
-   - Added `ResizeLargestTo` transform class
-   - Updated example usage in `__main__` section
-
-3. **`med3pipe/sam/transforms.py`** (NEW)
-   - Standalone module with all preprocessing utilities
-   - Includes `ResizeLargestTo`, `make_sam3d_transform`, `load_volume_resize_pad`, `load_mask_resize_pad`
-
-## Updating Notebooks
-
-For Jupyter notebooks using the old approach, replace:
-
-```python
-# OLD: Direct CropOrPad
-def load_volume_croponly(img_path, img_size=128):
-    sitk_img = sitk.ReadImage(str(img_path))
-    sitk_arr, _ = tio.data.io.sitk_to_nib(sitk_img)
-    subject = tio.Subject(image=tio.ScalarImage(tensor=sitk_arr))
-    crop_transform = tio.CropOrPad(target_shape=(img_size, img_size, img_size))
-    subject = crop_transform(subject)
-    image = subject.image.data.clone().detach()
-    image = image.unsqueeze(0)
-    image = image.float()
-    return image
-```
-
-With:
-
-```python
-# NEW: Resize-then-pad
-from med3pipe.sam.transforms import load_volume_resize_pad
-
-# Simple one-liner
-image = load_volume_resize_pad(img_path, img_size=128, normalize=False)
-```
-
-Or if you prefer to keep the function definition:
-
-```python
-# NEW: Resize-then-pad (manual)
 class ResizeLargestTo(tio.Transform):
     def __init__(self, target_size=128, **kwargs):
         super().__init__(**kwargs)
         self.target_size = target_size
     
     def apply_transform(self, subject):
-        first_image = subject.get_first_image()
-        spatial_shape = first_image.spatial_shape
+        spatial_shape = subject.get_first_image().spatial_shape
         max_dim = max(spatial_shape)
         scale = self.target_size / max_dim if max_dim > 0 else 1.0
         new_shape = tuple(int(dim * scale) for dim in spatial_shape)
         resize_transform = tio.Resize(target_shape=new_shape)
+        return resize_transform(subject)
+```
+
+---
+
+## Usage
+
+### Option 1: Utility Functions (Recommended)
+
+```python
+from med3pipe.sam.transforms import load_volume_resize_pad, load_mask_resize_pad
+
+# Load and preprocess image
+image = load_volume_resize_pad("path/to/image.nii.gz", img_size=128)
+# Shape: (1, 1, 128, 128, 128)
+
+# Load and preprocess mask
+mask = load_mask_resize_pad("path/to/mask.nii.gz", img_size=128)
+```
+
+### Option 2: Transform Pipeline
+
+```python
+from med3pipe.sam.transforms import make_sam3d_transform
+import SimpleITK as sitk
+import torchio as tio
+
+transform = make_sam3d_transform(img_size=128, normalize=False)
+
+sitk_img = sitk.ReadImage("path/to/image.nii.gz")
+sitk_arr, _ = tio.data.io.sitk_to_nib(sitk_img)
+subject = tio.Subject(image=tio.ScalarImage(tensor=sitk_arr))
+subject = transform(subject)
+image = subject.image.data  # Shape: (1, 128, 128, 128)
+```
+
+### Option 3: In Data Loaders
+
+```python
+import torchio as tio
+from med3pipe.sam.transforms import ResizeLargestTo
+
+class MedicalDataset(torch.utils.data.Dataset):
+    def __init__(self, paths):
+        self.paths = paths
+        self.transform = tio.Compose([
+            tio.ToCanonical(),
+            ResizeLargestTo(target_size=128),
+            tio.CropOrPad(target_shape=(128, 128, 128)),
+        ])
+    
+    def __getitem__(self, idx):
+        subject = tio.Subject(
+            image=tio.ScalarImage(self.paths[idx])
+        )
+        return self.transform(subject)
+```
+
+---
+
+## Complete Pipeline
+
+The full preprocessing pipeline in `med3pipe/sam/core.py`:
+
+```python
+def make_pre_transform(img_size=128, normalize=True):
+    transforms = [
+        tio.ToCanonical(),
+        ResizeLargestTo(target_size=img_size),
+        tio.CropOrPad(target_shape=(img_size, img_size, img_size)),
+    ]
+    if normalize:
+        transforms.append(
+            tio.ZNormalization(masking_method=lambda x: x > 0)
+        )
+    return tio.Compose(transforms)
+```
+
+---
+
+## Files
+
+| File | Description |
+|------|-------------|
+| `med3pipe/sam/transforms.py` | Standalone preprocessing utilities |
+| `med3pipe/sam/core.py` | Core SAM-Med3D integration |
+| `tests/test_transforms.py` | Test suite |
+
+---
+
+## Testing
+
+```bash
+python tests/test_transforms.py
+```
+
+Expected output:
+```
+✅ ResizeLargestTo Transform: 5/5 tests passed
+✅ Full Pipeline: 5/5 tests passed
+✅ Data Preservation: Markers preserved after resize
+✅ ALL TESTS PASSED!
+```
+
+---
+
+## Migration from Old Code
+
+Replace:
+```python
+transform = tio.CropOrPad(target_shape=(128, 128, 128))
+```
+
+With:
+```python
+from med3pipe.sam.transforms import ResizeLargestTo
+transform = tio.Compose([
+    ResizeLargestTo(target_size=128),
+    tio.CropOrPad(target_shape=(128, 128, 128)),
+])
+```
+
+---
+
+## Related Documentation
+
+- [Changelog](../CHANGES_SUMMARY.md) — Preprocessing upgrade summary
+- [Quick Reference](../QUICK_REFERENCE.md) — Command cheat sheet
+- [Embeddings](embeddings.md) — Feature extraction guide
         return resize_transform(subject)
 
 def load_volume_resize_pad(img_path, img_size=128):

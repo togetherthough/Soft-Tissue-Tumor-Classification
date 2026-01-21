@@ -1,103 +1,126 @@
-# Summary: Resize-Then-Pad Preprocessing for SAM-Med3D
+# Changelog
 
-## What Changed
+> Summary of major changes and improvements to Med3Tab-PFN
 
-The preprocessing pipeline has been upgraded from **CropOrPad** to **Resize-Then-Pad** to minimize data loss while maintaining the required 128³ format for SAM-Med3D.
+## Latest Updates
 
-## Why This Matters
+### Preprocessing Upgrade: Resize-Then-Pad
 
-### Old Approach (CropOrPad only)
-- Directly crops volumes larger than 128 → **loses data**
-- Example: (200×180×160) volume loses ~2-40% of voxels
+The preprocessing pipeline was upgraded from **CropOrPad** to **Resize-Then-Pad** to minimize data loss.
 
-### New Approach (Resize → Pad)  
-- Resizes so largest dimension = 128 (preserves aspect ratio)
-- Pads smaller dimensions to 128³
-- **Zero data loss** - everything is preserved via downsampling
+#### Problem Solved
+- **Old approach**: `tio.CropOrPad((128,128,128))` cropped volumes larger than 128³, losing data
+- **New approach**: Resize largest dimension to 128, then pad smaller dimensions
 
-## Files Modified
-
-### 1. `med3pipe/sam/core.py`
-- **Added**: `ResizeLargestTo` transform class
-- **Updated**: `make_pre_transform()` to use resize-then-pad pipeline
-- **Pipeline**: ToCanonical → ResizeLargestTo(128) → CropOrPad(128³) → ZNormalization
-
-### 2. `sam-med3d/utils/data_loader.py` (deprecated)
-- **Note**: SAM-Med3D resources moved to `sam-med3d/` directory
-- **Added**: `ResizeLargestTo` transform class
-- **Updated**: Example usage in `__main__` section
-
-### 3. `med3pipe/sam/__init__.py`
-- **Added**: Exports for `ResizeLargestTo` and diagnostic functions
-
-## New Files Created
-
-### 1. `med3pipe/sam/transforms.py` ✨ NEW
-Standalone preprocessing utilities module with:
-- `ResizeLargestTo`: Custom TorchIO transform
-- `make_sam3d_transform()`: Complete preprocessing pipeline
-- `load_volume_resize_pad()`: Utility to load volumes with new preprocessing
-- `load_mask_resize_pad()`: Utility to load masks with new preprocessing
-
-### 2. `docs/PREPROCESSING_UPGRADE.md` 📚
-Complete documentation including:
-- Detailed explanation of the change
-- Usage examples (3 different approaches)
-- Migration guide for notebooks
-- Comparison table
-
-### 3. `tests/test_transforms.py` ✅
-Comprehensive test suite verifying:
-- ResizeLargestTo works correctly
-- Full pipeline produces 128³ output
-- Data is preserved (not cropped)
-- Comparison with old approach
-
-## Test Results
-
-All tests **PASSED** ✅:
-
+#### Example Transformation
 ```
-✅ ResizeLargestTo Transform: 5/5 tests passed
-✅ Full Pipeline: 5/5 tests passed  
-✅ Data Preservation: Markers preserved after resize
-✅ Old vs New Comparison: New approach preserves all data
+Input: (200, 150, 100)
+   ↓ ResizeLargestTo(128)
+   → (128, 96, 64)       # Proportional scaling
+   ↓ CropOrPad(128³)
+   → (128, 128, 128)     # Pad to target
 ```
 
-## Usage Examples
+#### Benefits
+- ✅ Zero data loss — all information preserved via downsampling
+- ✅ Aspect ratio preserved — proportional scaling
+- ✅ SAM-Med3D compatible — still outputs 128³ volumes
+- ✅ Better for anisotropic volumes
 
-### Quick Start
+#### Usage
 ```python
-from med3pipe.sam.transforms import load_volume_resize_pad
+from med3pipe.sam.transforms import load_volume_resize_pad, ResizeLargestTo
 
-# One-liner: load with resize-then-pad preprocessing
-image = load_volume_resize_pad(img_path, img_size=128)
-```
+# One-liner
+image = load_volume_resize_pad("path/to/image.nii.gz", img_size=128)
 
-### Using the Transform Directly
-```python
+# Transform directly
 import torchio as tio
-from med3pipe.sam.transforms import ResizeLargestTo
-
 transform = tio.Compose([
     tio.ToCanonical(),
-    ResizeLargestTo(target_size=128),  # Resize (largest → 128)
-    tio.CropOrPad(target_shape=(128, 128, 128)),  # Pad to 128³
+    ResizeLargestTo(target_size=128),
+    tio.CropOrPad(target_shape=(128, 128, 128)),
 ])
 ```
 
-### In Existing Code
+---
+
+## Files Modified
+
+### Core Changes
+
+| File | Changes |
+|------|---------|
+| `med3pipe/sam/core.py` | Added `ResizeLargestTo`, updated `make_pre_transform()` |
+| `med3pipe/sam/transforms.py` | New module with preprocessing utilities |
+| `med3pipe/sam/__init__.py` | Added exports for new transforms |
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `med3pipe/sam/transforms.py` | Standalone preprocessing module |
+| `tests/test_transforms.py` | Comprehensive test suite |
+| `docs/technical/preprocessing.md` | Detailed preprocessing documentation |
+
+---
+
+## Test Verification
+
+Run tests to verify the preprocessing:
+```bash
+python tests/test_transforms.py
+```
+
+Expected output:
+```
+✅ ResizeLargestTo Transform: 5/5 tests passed
+✅ Full Pipeline: 5/5 tests passed
+✅ Data Preservation: Markers preserved after resize
+✅ ALL TESTS PASSED!
+```
+
+---
+
+## Migration Guide
+
+### Updating Existing Code
+
 Replace:
 ```python
-tio.CropOrPad(target_shape=(128, 128, 128))
+transform = tio.CropOrPad(target_shape=(128, 128, 128))
 ```
 
 With:
 ```python
-tio.Compose([
+from med3pipe.sam.transforms import ResizeLargestTo
+transform = tio.Compose([
     ResizeLargestTo(target_size=128),
     tio.CropOrPad(target_shape=(128, 128, 128)),
 ])
+```
+
+### Updating Notebooks
+
+Replace:
+```python
+def load_volume_croponly(img_path, img_size=128):
+    # ... old implementation
+```
+
+With:
+```python
+from med3pipe.sam.transforms import load_volume_resize_pad
+image = load_volume_resize_pad(img_path, img_size=128, normalize=False)
+```
+
+---
+
+## Related Documentation
+
+- [Preprocessing Pipeline](technical/preprocessing.md) — Full technical details
+- [Quick Reference](QUICK_REFERENCE.md) — Command cheat sheet
+- [Main README](../README.md) — Project overview
 ```
 
 ## Example: Data Preservation
