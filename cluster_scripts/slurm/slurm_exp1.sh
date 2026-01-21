@@ -130,6 +130,15 @@ echo ""
 #   --skip-localpfn             : skip LoCalPFN method
 #   --skip-baselines            : skip 3D baselines (DenseNet & ViT)
 #   --epochs-3d N               : number of training epochs for 3D models
+#   --use-roi-crop              : enable ROI cropping (tumor-centered volumes)
+#   --roi-margin N              : margin around tumor for ROI cropping (default: 10)
+#   --roi-target-size N         : target size after ROI cropping (default: 128)
+#   --use-medim                 : use MedIM for model loading (default: enabled)
+#   --no-medim                  : disable MedIM, use legacy model loading
+#   --min-voxels N              : minimum voxels for lesion filtering
+#   --min-dimension N           : minimum dimension for lesion filtering
+#   --min-density F             : minimum density for lesion filtering
+#   --filter-preset PRESET      : use preset filter (recommended, conservative, lenient)
 
 # Force unbuffered output for Python
 export PYTHONUNBUFFERED=1
@@ -137,7 +146,7 @@ export PYTHONUNBUFFERED=1
 python -u cluster_scripts/experiments/exp1_benchmarks.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
-    --epochs-3d ${EPOCHS:-20}  # Can override with EPOCHS env var
+    --epochs-3d ${EPOCHS:-20}
 
 # Capture exit status
 EXIT_CODE=$?

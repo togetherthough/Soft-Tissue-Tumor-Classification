@@ -82,6 +82,12 @@ def run_experiment(
     epochs_3d: int = 4,
     dry_run: bool = False,
     n_splits: int = 5,
+    # ROI cropping parameters
+    use_roi_crop: bool = False,
+    roi_margin: int = 10,
+    roi_target_size: int = 128,
+    # MedIM integration
+    use_medim: bool = True,
     # Lesion filtering parameters
     min_voxels: Optional[int] = None,
     min_dimension: Optional[int] = None,
@@ -100,6 +106,10 @@ def run_experiment(
         epochs_3d: Number of epochs for 3D models training
         dry_run: Print what will run without executing
         n_splits: Number of k-fold cross-validation splits (default: 5)
+        use_roi_crop: Whether to use ROI cropping (tumor-centered volumes)
+        roi_margin: Margin around tumor for ROI cropping (in voxels)
+        roi_target_size: Target size after ROI cropping
+        use_medim: Whether to use medim for model loading (recommended)
         min_voxels: Minimum voxel count for filtering
         min_dimension: Minimum dimension for filtering
         min_density: Minimum density for filtering
@@ -148,6 +158,17 @@ def run_experiment(
         print(f'  min_density: {min_density}')
     else:
         print(f'\nLesion filtering: DISABLED')
+    
+    # Print ROI cropping configuration
+    if use_roi_crop:
+        print(f'\nROI cropping enabled:')
+        print(f'  roi_margin: {roi_margin}')
+        print(f'  roi_target_size: {roi_target_size}')
+    else:
+        print(f'\nROI cropping: DISABLED')
+    
+    # Print MedIM configuration
+    print(f'\nModel loading: {"MedIM (recommended)" if use_medim else "Legacy method"}')
     print()
     
     # Find SAM-Med3D root and checkpoint
@@ -221,6 +242,11 @@ def run_experiment(
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
                 n_splits=n_splits,
+                # ROI cropping parameters
+                use_roi_crop=use_roi_crop,
+                roi_margin=roi_margin,
+                roi_target_size=roi_target_size,
+                # Lesion filtering
                 lesion_filter=lesion_filter,
             )
             results['tabpfn'] = res_tab
@@ -243,10 +269,16 @@ def run_experiment(
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
                 n_splits=n_splits,
+                # ROI cropping parameters
+                use_roi_crop=use_roi_crop,
+                roi_margin=roi_margin,
+                roi_target_size=roi_target_size,
+                # LoCalPFN configuration
                 local_k=128,
                 local_fit_adapter=True,
                 local_adapter_epochs=8,
                 local_adapter_num_queries=150,
+                # Lesion filtering
                 lesion_filter=lesion_filter,
             )
             results['localpfn'] = res_loc
@@ -536,6 +568,36 @@ def main():
         default=None,
         help='Use preset filtering configuration (overrides individual filters)'
     )
+    # ROI cropping arguments
+    parser.add_argument(
+        '--use-roi-crop',
+        action='store_true',
+        help='Enable ROI cropping (tumor-centered volumes)'
+    )
+    parser.add_argument(
+        '--roi-margin',
+        type=int,
+        default=10,
+        help='Margin around tumor for ROI cropping in voxels (default: 10)'
+    )
+    parser.add_argument(
+        '--roi-target-size',
+        type=int,
+        default=128,
+        help='Target size after ROI cropping (default: 128)'
+    )
+    # MedIM integration
+    parser.add_argument(
+        '--use-medim',
+        action='store_true',
+        default=True,
+        help='Use MedIM for model loading (default: True, recommended)'
+    )
+    parser.add_argument(
+        '--no-medim',
+        action='store_true',
+        help='Disable MedIM, use legacy model loading'
+    )
     parser.add_argument(
         '--n-splits',
         type=int,
@@ -578,6 +640,9 @@ def main():
             min_dimension = 3
             min_density = None
     
+    # Determine MedIM usage
+    use_medim = args.use_medim and not args.no_medim
+    
     # Run experiment
     print(f"[DEBUG] Calling run_experiment with config: {config_path}", flush=True)
     try:
@@ -591,6 +656,13 @@ def main():
             epochs_3d=args.epochs_3d,
             dry_run=args.dry_run,
             n_splits=args.n_splits,
+            # ROI cropping parameters
+            use_roi_crop=args.use_roi_crop,
+            roi_margin=args.roi_margin,
+            roi_target_size=args.roi_target_size,
+            # MedIM integration
+            use_medim=use_medim,
+            # Lesion filtering
             min_voxels=min_voxels,
             min_dimension=min_dimension,
             min_density=min_density,

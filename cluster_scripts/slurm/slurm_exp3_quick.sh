@@ -122,6 +122,12 @@ python cluster_scripts/experiments/exp3_classifier.py \
     --freeze-encoder \
     ${DATASETS_ARG}
 
+# Alternative test configurations:
+# With ROI cropping:
+#   --use-roi-crop --roi-margin 10 --roi-target-size 128
+# With lesion filtering:
+#   --filter-preset recommended
+
 EXIT_CODE=$?
 
 echo ""
