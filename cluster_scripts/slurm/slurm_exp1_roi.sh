@@ -76,8 +76,8 @@ echo "Setting up environment..."
 echo "=========================================="
 
 # Load modules
-module load Python/3.9
-module load CUDA/12.3.0
+module load Python/3.11.5-GCCcore-13.2.0
+module load CUDA/12.1.1
 
 # Activate virtual environment (thesis_peron)
 source /trinity/home/r112276/Med3Tab-PFN/thesis_peron/bin/activate
@@ -136,7 +136,7 @@ python -u cluster_scripts/experiments/exp1_benchmarks.py \
     --output-dir ${RESULTS_DIR} \
     --epochs-3d ${EPOCHS:-20} \
     --use-roi-crop \
-    --roi-margin 10 \
+    --roi-margin 30 \
     --roi-target-size 128
 
 # Alternative: Combine with lesion filtering

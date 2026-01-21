@@ -1,103 +1,151 @@
-# Dataset Configuration Files
+# Configuration Files
 
-This directory contains dataset configuration files for different execution environments.
+> Dataset configuration files for local and cluster environments
 
-## 📁 Configuration Files
+## Overview
 
-### `datasets.yaml` - Local Machine Configuration
-**Use when**: Running experiments on your local machine or laptop
+This directory contains YAML configuration files that define dataset paths, preprocessing parameters, and experiment settings. Two configurations are provided:
 
-**Data location**: Relative paths within the repository
-- `data/gist/`
-- `data/lipo/`
-- `sheet.csv` files can be at repo root
+| File | Environment | Paths |
+|------|-------------|-------|
+| `datasets.yaml` | Local machine | Relative paths |
+| `datasets_cluster.yaml` | HPC cluster | Absolute paths |
 
-**Example structure**:
-```
-Med3Tab-PFN/
-├── data/
-│   ├── gist/
-│   │   └── *.nii.gz files
-│   └── lipo/
-│       └── *.nii.gz files
-├── sheet.csv
-└── configs/
-    └── datasets.yaml  ← Uses relative paths
-```
-
-### `datasets_cluster.yaml` - GPU Cluster Configuration
-**Use when**: Running experiments on the GPU cluster via SLURM
-
-**Data location**: Absolute paths to cluster storage
-- `/data/scratch/r112276/gist/`
-- `/data/scratch/r112276/lipo/`
-- `sheet.csv` files are within each dataset directory
-
-**Example structure**:
-```
-# Cluster filesystem layout:
-/trinity/home/r112276/Med3Tab-PFN/     # Code repository
-/data/scratch/r112276/
-├── gist/
-│   ├── sheet.csv
-│   └── *.nii.gz files
-└── lipo/
-    ├── sheet.csv
-    └── *.nii.gz files
-```
-
-## 🔄 Switching Between Modes
-
-### Automatic (Recommended)
-The SLURM script automatically uses the correct config:
-- `cluster_scripts/slurm_train_and_test.sh` → uses `datasets_cluster.yaml`
-- Notebooks and local scripts → use `datasets.yaml`
-
-### Manual Override
-You can specify which config to use via command line:
-
-```bash
-# Use cluster config
-python cluster_scripts/run_experiment1_benchmarks.py \
-    --config configs/datasets_cluster.yaml
-
-# Use local config
-python cluster_scripts/run_experiment1_benchmarks.py \
-    --config configs/datasets.yaml
-```
-
-## 📝 Configuration Format
-
-Both files use the same YAML structure:
+## Configuration Format
 
 ```yaml
 datasets:
-  dataset_name:
-    dataset_root: /path/to/dataset      # Local: relative, Cluster: absolute
-    category: dataset_category           # Used for organizing outputs
-    ct_name: ct_DATASET_NAME            # SAM-Med3D folder name
+  gist:                              # Dataset identifier
+    dataset_root: data/gist          # Path to dataset directory
+    category: gist                   # Category for output organization
+    ct_name: ct_GIST                 # SAM-Med3D folder name
     labels:
-      sheet_csv: sheet.csv               # Label file (relative to dataset_root)
-      dataset_name: DATASET               # Optional: filter in sheet CSV
-      subject_col: Subject                # Column name for subject IDs
-      label_col: Diagnosis_binary         # Column name for labels
-      case_suffix: _CT                    # Suffix to match in sheet (e.g., "001_CT")
+      sheet_csv: sheet.csv           # CSV file with labels
+      dataset_name: GIST             # Filter value (optional)
+      subject_col: Subject           # Column for case IDs
+      label_col: Diagnosis_binary    # Column for labels
+      case_suffix: _CT               # Suffix in case IDs
     prepare:
-      case_glob: null                     # Optional: glob pattern for cases
-      max_cases: null                     # Optional: limit number of cases
+      case_glob: null                # Glob pattern for discovery
+      max_cases: null                # Limit cases (for testing)
     split:
-      ratio: 0.8                          # Train/val split ratio
-      seed: 2025                          # Random seed for reproducibility
+      ratio: 0.8                     # Train/validation ratio
+      seed: 2025                     # Random seed
     extraction:
-      img_size: 128                       # Image size for SAM-Med3D
+      img_size: 128                  # Volume size for SAM-Med3D
 ```
 
-## 🎯 When to Edit Each File
+## Usage
 
-### Edit `datasets.yaml` when:
-- ✅ Adding a new dataset for local development
-- ✅ Changing split ratios or seeds
-- ✅ Modifying preprocessing parameters
+### Local Development
+
+```bash
+# Use datasets.yaml (default)
+python -m med3pipe multi-tabpfn --config configs/datasets.yaml
+```
+
+### Cluster Execution
+
+```bash
+# Use cluster config with absolute paths
+python cluster_scripts/experiments/exp1_benchmarks.py \
+    --config configs/datasets_cluster.yaml
+```
+
+### Programmatic Access
+
+```python
+import yaml
+
+with open("configs/datasets.yaml") as f:
+    config = yaml.safe_load(f)
+
+for name, params in config["datasets"].items():
+    print(f"Dataset: {name}, Root: {params['dataset_root']}")
+```
+
+## Adding a New Dataset
+
+1. **Create dataset directory** with the expected structure:
+   ```
+   data/new_dataset/
+   ├── CASE-001_CT/
+   │   └── 1/NIFTI/
+   │       ├── image.nii.gz
+   │       └── segmentation.nii.gz
+   └── sheet.csv
+   ```
+
+2. **Add to `datasets.yaml`**:
+   ```yaml
+   new_dataset:
+     dataset_root: data/new_dataset
+     category: new_dataset
+     ct_name: ct_NEWDATA
+     labels:
+       sheet_csv: sheet.csv
+       subject_col: Subject
+       label_col: Diagnosis_binary
+     split:
+       ratio: 0.8
+       seed: 2025
+     extraction:
+       img_size: 128
+   ```
+
+3. **Add to `datasets_cluster.yaml`** with absolute paths:
+   ```yaml
+   new_dataset:
+     dataset_root: /data/scratch/user/new_dataset
+     # ... same parameters ...
+   ```
+
+## Configuration Parameters
+
+### Labels
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `sheet_csv` | Path to CSV file | `sheet.csv` |
+| `dataset_name` | Filter column value | `GIST` |
+| `subject_col` | Case ID column | `Subject` |
+| `label_col` | Binary label column | `Diagnosis_binary` |
+| `case_suffix` | Suffix to match | `_CT` |
+
+### Preparation
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `case_glob` | Discovery pattern | Auto-detect |
+| `max_cases` | Limit for testing | None (all) |
+
+### Split
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `ratio` | Train fraction | 0.8 |
+| `seed` | Random seed | 2025 |
+
+### Extraction
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `img_size` | Volume dimension | 128 |
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "dataset_root not found" | Check path exists and matches environment |
+| "sheet.csv not found" | Verify `sheet_csv` path is correct |
+| "No cases discovered" | Add custom `case_glob` pattern |
+| Different results local/cluster | Ensure `seed` values match |
+
+## Related Documentation
+
+- [Main README](../README.md) — Project overview
+- [Cluster Scripts](../cluster_scripts/README.md) — HPC experiment scripts
+- [Quick Reference](../docs/QUICK_REFERENCE.md) — Command cheat sheet
 - ✅ Testing locally before cluster submission
 
 ### Edit `datasets_cluster.yaml` when:

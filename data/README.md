@@ -1,50 +1,113 @@
 # Data Directory
 
+> Dataset storage and tracked analysis files
+
+## Overview
+
+This directory contains medical imaging datasets and tracked metadata files. The datasets themselves are gitignored to prevent accidentally committing large files.
+
+## Directory Structure
+
+```
+data/
+├── lesion_size_analysis.csv    # Tracked: lesion metrics for filtering
+├── sheet.csv                   # Tracked: labels and metadata
+├── README.md                   # This file
+├── gist/                       # Dataset (gitignored)
+├── lipo/                       # Dataset (gitignored)
+├── crlm/                       # Dataset (gitignored)
+├── melanoma/                   # Dataset (gitignored)
+└── ...
+```
+
 ## Tracked Files
 
 ### `lesion_size_analysis.csv`
 
-**Purpose**: This file contains preprocessing metrics for all cases in the datasets and is required for lesion size filtering.
+**Purpose**: Contains preprocessing metrics for all cases, required for lesion size filtering.
 
 **Columns**:
-- `dataset`: Dataset name (e.g., gist, lipo, crlm)
-- `case`: Case ID (e.g., GIST-001_CT)
-- `raw_voxels`: Original voxel count before preprocessing
-- `preproc_voxels`: Voxel count after preprocessing (downsampled to 128³)
-- `downsampling_ratio`: Factor by which data was downsampled
-- `bbox_x`, `bbox_y`, `bbox_z`: Bounding box dimensions
-- `bbox_volume`: Total bounding box volume
-- `min_dimension`: Smallest of the 3 bbox dimensions
-- `density`: Lesion density (preproc_voxels / bbox_volume)
+| Column | Description |
+|--------|-------------|
+| `dataset` | Dataset name (e.g., gist, lipo) |
+| `case` | Case ID (e.g., GIST-001_CT) |
+| `raw_voxels` | Original voxel count |
+| `preproc_voxels` | Voxels after preprocessing |
+| `bbox_x`, `bbox_y`, `bbox_z` | Bounding box dimensions |
+| `min_dimension` | Smallest bbox dimension |
+| `density` | Lesion density (preproc_voxels / bbox_volume) |
 
-**Why tracked?**
-- Filtering depends on this file to determine which cases meet quality thresholds
-- Without it, filtering features won't work
-- Tracked so filtering works out of the box after cloning
-
-**When to regenerate:**
-1. When adding new datasets
-2. When preprocessing parameters change (e.g., different target resolution)
-
-**How to regenerate:**
+**Regenerating** (when adding new datasets):
 ```bash
-# From repository root
-python scripts/analyze_lesion_sizes.py --config configs/datasets.yaml
-
-# Copy to tracked location
+python scripts/analysis/analyze_lesion_sizes.py --config configs/datasets.yaml
 cp results/lesion_preprocessing/lesion_size_analysis.csv data/lesion_size_analysis.csv
-
-# Commit the update
 git add data/lesion_size_analysis.csv
-git commit -m "Update lesion size analysis with new datasets"
 ```
 
-**Auto-detection:**
-The `LesionSizeFilter` class automatically searches for this file in:
-1. `data/lesion_size_analysis.csv` (tracked, preferred)
-2. `results/lesion_preprocessing/lesion_size_analysis.csv` (gitignored)
-3. `results/lesion_size_analysis.csv` (gitignored)
+### `sheet.csv`
 
-## Other Data Files
+**Purpose**: Master labels file with patient/case metadata and classification labels.
 
-The `/data/` directory itself is gitignored to prevent accidentally committing large datasets. Only specific files like `lesion_size_analysis.csv` are tracked via `.gitignore` exceptions.
+**Expected columns**:
+| Column | Description |
+|--------|-------------|
+| `Subject` | Case identifier |
+| `Diagnosis_binary` | Binary classification label (0/1) |
+| `Dataset` | Dataset name (optional) |
+
+## Dataset Structure
+
+Each dataset should follow this structure:
+
+```
+data/<dataset_name>/
+├── CASE-001_CT/
+│   └── 1/NIFTI/
+│       ├── image.nii.gz           # CT/MRI volume
+│       └── segmentation.nii.gz    # Lesion mask
+├── CASE-002_CT/
+│   └── 1/NIFTI/
+│       ├── image.nii.gz
+│       └── segmentation.nii.gz
+└── sheet.csv                       # Dataset-specific labels (optional)
+```
+
+## Adding a New Dataset
+
+1. **Place data** in `data/<dataset_name>/`
+2. **Verify structure** matches expected format above
+3. **Add configuration** to `configs/datasets.yaml`:
+   ```yaml
+   new_dataset:
+     dataset_root: data/new_dataset
+     category: new_dataset
+     ct_name: ct_NEWDATA
+     labels:
+       sheet_csv: sheet.csv
+       subject_col: Subject
+       label_col: Diagnosis_binary
+   ```
+4. **Regenerate lesion analysis**:
+   ```bash
+   python scripts/analysis/analyze_lesion_sizes.py --config configs/datasets.yaml
+   cp results/lesion_preprocessing/lesion_size_analysis.csv data/lesion_size_analysis.csv
+   ```
+5. **Commit tracked files**:
+   ```bash
+   git add data/lesion_size_analysis.csv
+   git commit -m "Add new_dataset lesion metrics"
+   ```
+
+## Gitignore Rules
+
+The `.gitignore` is configured to:
+- ✅ Track `lesion_size_analysis.csv`
+- ✅ Track `sheet.csv`
+- ❌ Ignore dataset directories (large NIfTI files)
+- ❌ Ignore intermediate outputs
+
+## Related Documentation
+
+- [Lesion Filtering](../docs/FILTERING.md) — Quality-based sample filtering
+- [Configuration](../configs/README.md) — Dataset YAML configuration
+- [Preprocessing](../docs/technical/preprocessing.md) — Data preprocessing pipeline
