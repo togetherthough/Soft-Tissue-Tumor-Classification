@@ -7,3 +7,5 @@ scikit-learn
 joblib
 monai
 PyYAML
+medim
+requests
