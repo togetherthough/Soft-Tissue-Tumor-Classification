@@ -33,7 +33,16 @@
 # All experiments use TabPFN with k-fold cross-validation.
 #
 # Usage:
+#   sbatch cluster_scripts/slurm/slurm_preprocessing_comparison.sh [pooling_strategy]
+#
+# Arguments:
+#   pooling_strategy: Pooling strategy to use (avg, multiscale, percentile)
+#                     Default: avg
+#
+# Examples:
 #   sbatch cluster_scripts/slurm/slurm_preprocessing_comparison.sh
+#   sbatch cluster_scripts/slurm/slurm_preprocessing_comparison.sh percentile
+#   sbatch cluster_scripts/slurm/slurm_preprocessing_comparison.sh multiscale
 # =============================================================================
 
 echo "=========================================="
@@ -42,7 +51,13 @@ echo "Job Name: $SLURM_JOB_NAME"
 echo "Node: $SLURM_NODELIST"
 echo "Start Time: $(date)"
 echo "=========================================="
+# Parse arguments
+POOLING_STRATEGY=${1:-avg}
 
+echo ""
+echo "Configuration:"
+echo "  Pooling strategy: $POOLING_STRATEGY"
+echo ""
 # Path configuration
 CODE_DIR="${SLURM_SUBMIT_DIR}"
 RESULTS_DIR="${CODE_DIR}/results/preprocessing_comparison"
@@ -127,7 +142,8 @@ python -u cluster_scripts/experiments/compare_preprocessing.py \
     --min-dimension 5 \
     --min-density 0.1 \
     --n-splits 5 \
-    --n-components-max 500
+    --n-components-max 500 \
+    --pooling-strategy ${POOLING_STRATEGY}
 
 # Options:
 #   --datasets gist lipo       : Run only specific datasets
