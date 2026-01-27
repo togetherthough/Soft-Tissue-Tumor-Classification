@@ -143,7 +143,8 @@ python -u cluster_scripts/experiments/compare_preprocessing.py \
     --min-density 0.1 \
     --n-splits 5 \
     --n-components-max 500 \
-    --pooling-strategy ${POOLING_STRATEGY}
+    --pooling-strategy ${POOLING_STRATEGY} \
+    --random-state 42
 
 # Options:
 #   --datasets gist lipo       : Run only specific datasets

@@ -82,6 +82,7 @@ def run_experiment(
     epochs_3d: int = 4,
     dry_run: bool = False,
     n_splits: int = 5,
+    random_state: int = 42,
     # Pooling
     pooling_strategy: str = 'avg',
     # ROI cropping parameters
@@ -245,6 +246,7 @@ def run_experiment(
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
                 n_splits=n_splits,
+                random_state=random_state,
                 # Pooling
                 pooling_strategy=pooling_strategy,
                 # ROI cropping parameters
@@ -274,6 +276,7 @@ def run_experiment(
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
                 n_splits=n_splits,
+                random_state=random_state,
                 # Pooling
                 pooling_strategy=pooling_strategy,
                 # ROI cropping parameters
@@ -618,6 +621,12 @@ def main():
         default=5,
         help='Number of k-fold cross-validation splits (default: 5)'
     )
+    parser.add_argument(
+        '--random-state',
+        type=int,
+        default=42,
+        help='Random state for reproducibility (default: 42)'
+    )
     
     args = parser.parse_args()
     print("[DEBUG] Arguments parsed successfully", flush=True)
@@ -670,6 +679,7 @@ def main():
             epochs_3d=args.epochs_3d,
             dry_run=args.dry_run,
             n_splits=args.n_splits,
+            random_state=args.random_state,
             # Pooling
             pooling_strategy=args.pooling_strategy,
             # ROI cropping parameters

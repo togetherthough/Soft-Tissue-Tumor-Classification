@@ -122,7 +122,8 @@ python -u cluster_scripts/experiments/compare_pooling_strategies.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
     --roi-margin 30 \
-    --n-splits 5
+    --n-splits 5 \
+    --random-state 42
 
 # Options:
 #   --datasets gist lipo              : Run only specific datasets
