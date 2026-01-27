@@ -15,6 +15,7 @@ import sys
 import site
 from pathlib import Path
 from typing import Optional
+import argparse
 import yaml
 
 # Environment setup - reduce thread contention
@@ -59,6 +60,7 @@ def run_single_experiment(
     min_voxels: Optional[int] = None,
     min_dimension: Optional[int] = None,
     min_density: Optional[float] = None,
+    pooling_strategy: str = 'avg',
     freeze_encoder: bool = True,
     num_epochs: int = 20,
     batch_size: int = 4,
@@ -292,6 +294,7 @@ def run_single_experiment(
         dropout=dropout,
         num_workers=num_workers,
         output_dir=output_dir,
+        pooling_strategy=pooling_strategy,
         use_medim=True,  # Use MedIM for model loading (recommended)
         lesion_filter=lesion_filter,
     )
@@ -325,6 +328,19 @@ def run_single_experiment(
 
 
 def main():
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description='Classification Head - Three-Way Preprocessing Comparison'
+    )
+    parser.add_argument(
+        '--pooling-strategy',
+        type=str,
+        choices=['avg', 'multiscale', 'percentile'],
+        default='avg',
+        help='Pooling strategy for feature aggregation (default: avg)'
+    )
+    args = parser.parse_args()
+    
     # Configuration
     repo_root = _add_repo_root_to_sys_path()
     config_path = repo_root / "configs" / "datasets_cluster.yaml"
@@ -344,6 +360,7 @@ def main():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"CUDA Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
     print(f"Config: {config_path}")
+    print(f"Pooling strategy: {args.pooling_strategy}")
     print(f"{'='*80}\n")
     
     # Load config
@@ -367,6 +384,7 @@ def main():
         'img_size': 128,
         'num_workers': 2,
         'output_base_dir': results_dir,
+        'pooling_strategy': args.pooling_strategy,
     }
     
     # Lesion filter configuration for filtered experiments

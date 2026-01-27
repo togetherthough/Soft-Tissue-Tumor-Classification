@@ -62,6 +62,13 @@ def parse_args():
         help="Specific datasets to run (default: all from config)"
     )
     parser.add_argument(
+        "--pooling-strategy",
+        type=str,
+        choices=["avg", "multiscale", "percentile"],
+        default="avg",
+        help="Pooling strategy for embeddings (choices: avg, multiscale, percentile). Default: avg"
+    )
+    parser.add_argument(
         "--roi-margin",
         type=int,
         default=30,
@@ -176,6 +183,7 @@ def run_baseline_experiment(
     n_splits: int,
     n_components_max: int,
     random_state: int,
+    pooling_strategy: str = 'avg',
 ):
     """Run baseline experiment (full-volume, no filtering)."""
     from med3pipe.pipelines import run_multi_tabpfn
@@ -200,6 +208,9 @@ def run_baseline_experiment(
             
             # Feature extraction
             skip_existing_embeddings=False,
+            
+            # Pooling
+            pooling_strategy=pooling_strategy,
             
             # TabPFN parameters
             n_components_max=n_components_max,
@@ -234,6 +245,7 @@ def run_filtered_experiment(
     min_voxels: int,
     min_dimension: int,
     min_density: float,
+    pooling_strategy: str = 'avg',
 ):
     """Run filtered baseline experiment (full-volume with lesion filtering)."""
     from med3pipe.pipelines import run_multi_tabpfn
@@ -264,6 +276,9 @@ def run_filtered_experiment(
             
             # Feature extraction
             skip_existing_embeddings=False,
+            
+            # Pooling
+            pooling_strategy=pooling_strategy,
             
             # TabPFN parameters
             n_components_max=n_components_max,
@@ -297,6 +312,7 @@ def run_roi_experiment(
     random_state: int,
     roi_margin: int,
     roi_target_size: int,
+    pooling_strategy: str = 'avg',
 ):
     """Run ROI-cropped experiment (adaptive crop/pad)."""
     from med3pipe.pipelines import run_multi_tabpfn
@@ -325,6 +341,9 @@ def run_roi_experiment(
             
             # Feature extraction (force re-extraction for ROI data)
             skip_existing_embeddings=True,
+            
+            # Pooling
+            pooling_strategy=pooling_strategy,
             
             # TabPFN parameters
             n_components_max=n_components_max,
@@ -491,6 +510,7 @@ def main():
             n_splits=args.n_splits,
             n_components_max=args.n_components_max,
             random_state=args.random_state,
+            pooling_strategy=args.pooling_strategy,
         ):
             experiments_passed += 1
     
@@ -507,6 +527,7 @@ def main():
             min_voxels=args.min_voxels,
             min_dimension=args.min_dimension,
             min_density=args.min_density,
+            pooling_strategy=args.pooling_strategy,
         ):
             experiments_passed += 1
     
@@ -522,6 +543,7 @@ def main():
             random_state=args.random_state,
             roi_margin=args.roi_margin,
             roi_target_size=args.roi_target_size,
+            pooling_strategy=args.pooling_strategy,
         ):
             experiments_passed += 1
     

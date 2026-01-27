@@ -125,11 +125,24 @@ python -u cluster_scripts/experiments/compare_pooling_strategies.py \
     --n-splits 5
 
 # Options:
-#   --datasets gist lipo     : Run only specific datasets
-#   --roi-margin 30          : ROI margin in voxels (default: 30)
-#   --img-size 128           : Image size (default: 128)
-#   --n-splits 5             : K-fold splits (default: 5)
-#   --n-components-max 500   : Max PCA components (default: 500)
+#   --datasets gist lipo              : Run only specific datasets
+#   --pooling-strategies avg multiscale : Run only specific pooling strategies
+#                                         (choices: avg, multiscale, percentile)
+#   --roi-margin 30                   : ROI margin in voxels (default: 30)
+#   --img-size 128                    : Image size (default: 128)
+#   --n-splits 5                      : K-fold splits (default: 5)
+#   --n-components-max 500            : Max PCA components (default: 500)
+#
+# Examples:
+#   # Run only average pooling on GIST dataset:
+#   python -u cluster_scripts/experiments/compare_pooling_strategies.py \
+#       --config ${CONFIG_FILE} --output-dir ${RESULTS_DIR} \
+#       --datasets gist --pooling-strategies avg
+#
+#   # Compare only multiscale and percentile:
+#   python -u cluster_scripts/experiments/compare_pooling_strategies.py \
+#       --config ${CONFIG_FILE} --output-dir ${RESULTS_DIR} \
+#       --pooling-strategies multiscale percentile
 
 EXIT_CODE=$?
 

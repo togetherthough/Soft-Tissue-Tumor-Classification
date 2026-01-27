@@ -16,7 +16,7 @@ These functions reuse the directory layout produced by med3pipe.data.prepare (st
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable, List, Optional, Sequence, Tuple, Literal
 import sys
 
 import numpy as np
@@ -27,6 +27,9 @@ import torchio as tio
 import SimpleITK as sitk
 
 from ..data.prepare import Sam3DPaths, find_default_sam3d_root
+
+# Type alias for pooling strategies
+PoolingStrategy = Literal['avg', 'multiscale', 'percentile']
 
 
 # ------------------------------
@@ -286,17 +289,105 @@ def load_mask_tensor(mask_path: Path, pre_transform: Optional[Callable] = None) 
     return mask
 
 
-def average_pool_embedding(embedding: torch.Tensor, mask: Optional[torch.Tensor]) -> np.ndarray:
-    """Pool a single embedding.
+def pool_avg(embedding: torch.Tensor) -> np.ndarray:
+    """Global Average Pooling (GAP).
+    
+    Args:
+        embedding: Tensor of shape (B, C, D, H, W) or (1, C, D, H, W)
+        
+    Returns:
+        Pooled vector of shape (C,)
+    """
+    return embedding.mean(dim=(2, 3, 4)).squeeze(0).cpu().numpy()
 
-    Previously performed ROI pooling if mask provided.
-    NOW: Always performs Global Average Pooling (GAP) to match classification head,
-    ignoring the mask argument.
+
+def pool_multiscale(embedding: torch.Tensor) -> np.ndarray:
+    """Multiscale spatial pyramid pooling at 1×1×1, 2×2×2, and 4×4×4 scales.
+    
+    Args:
+        embedding: Tensor of shape (B, C, D, H, W) or (1, C, D, H, W)
+        
+    Returns:
+        Concatenated pooled vector of shape (C × 73,)
+        where 73 = 1³ + 2³ + 4³ = 1 + 8 + 64
     """
     B, C, d, h, w = embedding.shape
-    assert B == 1
-    # Always use global average pooling, ignoring mask
-    return embedding.mean(dim=(2, 3, 4)).squeeze(0).cpu().numpy()
+    assert B == 1, "Batch size must be 1"
+    
+    pooled_features = []
+    
+    for scale in [1, 2, 4]:
+        # Average pool to (scale, scale, scale) grid
+        pooled = F.adaptive_avg_pool3d(embedding, output_size=(scale, scale, scale))
+        # Flatten spatial dimensions: (1, C, scale, scale, scale) -> (C, scale^3)
+        pooled = pooled.view(C, -1)
+        # Flatten to (C * scale^3,)
+        pooled = pooled.flatten()
+        pooled_features.append(pooled.cpu().numpy())
+    
+    return np.concatenate(pooled_features)
+
+
+def pool_percentile(embedding: torch.Tensor, percentiles=(10, 25, 50, 75, 90)) -> np.ndarray:
+    """Percentile pooling across spatial dimensions.
+    
+    Args:
+        embedding: Tensor of shape (B, C, D, H, W) or (1, C, D, H, W)
+        percentiles: Tuple of percentile values to compute (default: 10, 25, 50, 75, 90)
+        
+    Returns:
+        Pooled vector of shape (C × len(percentiles),)
+    """
+    B, C, d, h, w = embedding.shape
+    assert B == 1, "Batch size must be 1"
+    
+    # Flatten spatial dimensions: (1, C, D, H, W) -> (C, D*H*W)
+    emb_flat = embedding.view(C, -1).cpu().numpy()
+    
+    pooled = []
+    for p in percentiles:
+        # Compute percentile along spatial dimension (axis=1)
+        pct = np.percentile(emb_flat, p, axis=1)  # Shape: (C,)
+        pooled.append(pct)
+    
+    # Stack and flatten: (len(percentiles), C) -> (C * len(percentiles),)
+    return np.concatenate(pooled)
+
+
+# Dictionary mapping strategy names to functions
+POOLING_STRATEGIES = {
+    'avg': pool_avg,
+    'multiscale': pool_multiscale,
+    'percentile': pool_percentile,
+}
+
+
+def average_pool_embedding(
+    embedding: torch.Tensor, 
+    mask: Optional[torch.Tensor] = None,
+    pooling_strategy: str = 'avg'
+) -> np.ndarray:
+    """Pool a single embedding using the specified strategy.
+
+    Args:
+        embedding: Tensor of shape (B, C, D, H, W) or (1, C, D, H, W)
+        mask: Optional mask tensor (currently ignored, kept for backward compatibility)
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
+        
+    Returns:
+        Pooled feature vector. Shape depends on pooling strategy:
+        - 'avg': (C,)
+        - 'multiscale': (C × 73,)
+        - 'percentile': (C × 5,)
+    """
+    if pooling_strategy not in POOLING_STRATEGIES:
+        raise ValueError(
+            f"Invalid pooling strategy '{pooling_strategy}'. "
+            f"Valid options are: {list(POOLING_STRATEGIES.keys())}"
+        )
+    
+    pool_fn = POOLING_STRATEGIES[pooling_strategy]
+    return pool_fn(embedding)
 
 
 def case_id_from_pt(pt: Path) -> str:
@@ -307,11 +398,20 @@ def load_pooled_features(
     feat_dir: Path,
     label_dir: Optional[Path],
     pre_transform: Optional[Callable] = None,
+    pooling_strategy: str = 'avg',
 ) -> Tuple[np.ndarray, List[str]]:
     """Load feature vectors from embedding .pt files in `feat_dir`.
 
-    Always uses Global Average Pooling (GAP). label_dir is ignored for pooling purposes.
-    Returns (X, ids) where X is shape (N, C) and ids are case_id strings.
+    Args:
+        feat_dir: Directory containing embedding .pt files
+        label_dir: Optional label directory (currently ignored, kept for backward compatibility)
+        pre_transform: Optional preprocessing transform (currently ignored)
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
+        
+    Returns:
+        Tuple of (X, ids) where:
+        - X is shape (N, D) where D depends on pooling strategy
+        - ids are case_id strings
     """
     X: List[np.ndarray] = []
     ids: List[str] = []
@@ -322,10 +422,10 @@ def load_pooled_features(
             emb = emb.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
         cid = case_id_from_pt(pt)
         
-        # Mask loading removed as we switched to GAP
+        # Mask loading removed as we switched to GAP (kept here for compatibility)
         m = None
         
-        feat = average_pool_embedding(emb, m)
+        feat = average_pool_embedding(emb, m, pooling_strategy=pooling_strategy)
         X.append(feat)
         ids.append(cid)
     if not X:

@@ -58,12 +58,7 @@ def run_classification_head_for_dataset(
     img_size: int = 128,
     num_workers: int = 2,
     output_base: Path = None,
-    # ROI cropping parameters
-    use_roi_crop: bool = False,
-    roi_margin: int = 10,
-    roi_target_size: int = 128,
-    # MedIM integration
-    use_medim: bool = True,
+    pooling_strategy: str = 'avg',
     # Lesion filtering parameters
     min_voxels: Optional[int] = None,
     min_dimension: Optional[int] = None,
@@ -84,10 +79,6 @@ def run_classification_head_for_dataset(
         dropout: Dropout rate
         img_size: Image size
         num_workers: Number of data loader workers
-        use_roi_crop: Whether to use ROI cropping (tumor-centered volumes)
-        roi_margin: Margin around tumor for ROI cropping (in voxels)
-        roi_target_size: Target size after ROI cropping
-        use_medim: Whether to use MedIM for model loading (recommended)
         output_base: Base output directory
     
     Returns:
@@ -261,15 +252,6 @@ def run_classification_head_for_dataset(
         )
         print(f'  Lesion filtering: ENABLED')
     
-    # Print ROI cropping configuration
-    if use_roi_crop:
-        print(f'  ROI cropping: ENABLED (margin={roi_margin}, target_size={roi_target_size})')
-    else:
-        print(f'  ROI cropping: DISABLED')
-    
-    # Print MedIM configuration
-    print(f'  Model loading: {"MedIM" if use_medim else "Legacy"}')
-    
     results = run_classification_head_experiment(
         paths=paths,
         lab_map=lab_map,
@@ -286,8 +268,8 @@ def run_classification_head_for_dataset(
         dropout=dropout,
         num_workers=num_workers,
         output_dir=output_dir,
-        use_medim=use_medim,
-        # Note: lesion_filter removed - not supported by run_classification_head_experiment
+        pooling_strategy=pooling_strategy,
+        lesion_filter=lesion_filter,
     )
     
     # Print summary
@@ -388,6 +370,14 @@ def main():
         default=2,
         help='Number of data loader workers (default: 2)'
     )
+    # Pooling strategy argument
+    parser.add_argument(
+        '--pooling-strategy',
+        type=str,
+        choices=['avg', 'multiscale', 'percentile'],
+        default='avg',
+        help='Pooling strategy for feature aggregation (default: avg)'
+    )
     # Lesion filtering arguments
     parser.add_argument(
         '--min-voxels',
@@ -413,36 +403,6 @@ def main():
         choices=['recommended', 'conservative', 'lenient'],
         default=None,
         help='Use preset filtering configuration (overrides individual filters)'
-    )
-    # ROI cropping arguments
-    parser.add_argument(
-        '--use-roi-crop',
-        action='store_true',
-        help='Enable ROI cropping (tumor-centered volumes)'
-    )
-    parser.add_argument(
-        '--roi-margin',
-        type=int,
-        default=10,
-        help='Margin around tumor for ROI cropping in voxels (default: 10)'
-    )
-    parser.add_argument(
-        '--roi-target-size',
-        type=int,
-        default=128,
-        help='Target size after ROI cropping (default: 128)'
-    )
-    # MedIM integration
-    parser.add_argument(
-        '--use-medim',
-        action='store_true',
-        default=True,
-        help='Use MedIM for model loading (default: True, recommended)'
-    )
-    parser.add_argument(
-        '--no-medim',
-        action='store_true',
-        help='Disable MedIM, use legacy model loading'
     )
     
     args = parser.parse_args()
@@ -509,17 +469,6 @@ def main():
         print(f'  min_density: {min_density}')
     else:
         print(f'Lesion filtering: DISABLED')
-    
-    # Determine MedIM usage
-    use_medim = args.use_medim and not args.no_medim
-    
-    # Print ROI cropping configuration
-    if args.use_roi_crop:
-        print(f'ROI cropping: ENABLED (margin={args.roi_margin}, target_size={args.roi_target_size})')
-    else:
-        print(f'ROI cropping: DISABLED')
-    
-    print(f'Model loading: {"MedIM (recommended)" if use_medim else "Legacy method"}')
     print()
     
     # Run for each dataset
@@ -540,13 +489,7 @@ def main():
                 img_size=args.img_size,
                 num_workers=args.num_workers,
                 output_base=output_base,
-                # ROI cropping parameters
-                use_roi_crop=args.use_roi_crop,
-                roi_margin=args.roi_margin,
-                roi_target_size=args.roi_target_size,
-                # MedIM integration
-                use_medim=use_medim,
-                # Lesion filtering
+                pooling_strategy=args.pooling_strategy,
                 min_voxels=min_voxels,
                 min_dimension=min_dimension,
                 min_density=min_density,

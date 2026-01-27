@@ -82,6 +82,8 @@ def run_experiment(
     epochs_3d: int = 4,
     dry_run: bool = False,
     n_splits: int = 5,
+    # Pooling
+    pooling_strategy: str = 'avg',
     # ROI cropping parameters
     use_roi_crop: bool = False,
     roi_margin: int = 10,
@@ -98,6 +100,7 @@ def run_experiment(
     
     Args:
         config_path: Path to datasets.yaml config
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
         outputs_base: Base directory for outputs
         dataset_filter: Optional list of dataset names to run (None = all)
         skip_tabpfn: Skip TabPFN method
@@ -242,6 +245,8 @@ def run_experiment(
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
                 n_splits=n_splits,
+                # Pooling
+                pooling_strategy=pooling_strategy,
                 # ROI cropping parameters
                 use_roi_crop=use_roi_crop,
                 roi_margin=roi_margin,
@@ -269,6 +274,8 @@ def run_experiment(
                 outputs_base_dir=outputs_base,
                 checkpoint=checkpoint_path,
                 n_splits=n_splits,
+                # Pooling
+                pooling_strategy=pooling_strategy,
                 # ROI cropping parameters
                 use_roi_crop=use_roi_crop,
                 roi_margin=roi_margin,
@@ -517,6 +524,13 @@ def main():
         help='Specific datasets to run (default: all in config)'
     )
     parser.add_argument(
+        '--pooling-strategy',
+        type=str,
+        choices=['avg', 'multiscale', 'percentile'],
+        default='avg',
+        help='Pooling strategy for embeddings (choices: avg, multiscale, percentile). Default: avg'
+    )
+    parser.add_argument(
         '--skip-tabpfn',
         action='store_true',
         help='Skip TabPFN method'
@@ -656,6 +670,8 @@ def main():
             epochs_3d=args.epochs_3d,
             dry_run=args.dry_run,
             n_splits=args.n_splits,
+            # Pooling
+            pooling_strategy=args.pooling_strategy,
             # ROI cropping parameters
             use_roi_crop=args.use_roi_crop,
             roi_margin=args.roi_margin,

@@ -497,21 +497,50 @@ def run_pooling_comparison(
     config_path: Path,
     output_dir: Path,
     dataset_filter: Optional[List[str]] = None,
+    pooling_strategies: Optional[List[str]] = None,
     roi_margin: int = 30,
     img_size: int = 128,
     n_splits: int = 5,
     n_components_max: int = 500,
     random_state: int = 42,
 ):
-    """Run the full pooling strategy comparison experiment."""
+    """Run the full pooling strategy comparison experiment.
+    
+    Args:
+        config_path: Path to datasets YAML config
+        output_dir: Output directory for results
+        dataset_filter: Optional list of specific datasets to run
+        pooling_strategies: Optional list of pooling strategies to run 
+                           (choices: 'avg', 'multiscale', 'percentile').
+                           If None, runs all strategies.
+        roi_margin: ROI margin in voxels
+        img_size: Image size for SAM-Med3D
+        n_splits: Number of k-fold CV splits
+        n_components_max: Maximum PCA components
+        random_state: Random state for reproducibility
+    """
     import medim
     from med3pipe.sam.core import find_default_sam3d_root
+    
+    # Filter pooling strategies if specified
+    if pooling_strategies is not None:
+        # Validate strategy names
+        invalid_strategies = [s for s in pooling_strategies if s not in POOLING_STRATEGIES]
+        if invalid_strategies:
+            raise ValueError(
+                f"Invalid pooling strategies: {invalid_strategies}. "
+                f"Valid choices are: {list(POOLING_STRATEGIES.keys())}"
+            )
+        strategies_to_run = {k: v for k, v in POOLING_STRATEGIES.items() if k in pooling_strategies}
+    else:
+        strategies_to_run = POOLING_STRATEGIES
     
     print(f'\n{"="*80}')
     print('POOLING STRATEGY COMPARISON EXPERIMENT')
     print(f'{"="*80}')
     print(f'Config: {config_path}')
     print(f'Output: {output_dir}')
+    print(f'Pooling strategies: {list(strategies_to_run.keys())}')
     print(f'ROI margin: {roi_margin}')
     print(f'Image size: {img_size}')
     print(f'K-fold splits: {n_splits}')
@@ -579,7 +608,7 @@ def run_pooling_comparison(
     print('\n[5/5] Running experiments...')
     results = []
     
-    for pool_name, pool_fn in POOLING_STRATEGIES.items():
+    for pool_name, pool_fn in strategies_to_run.items():
         print(f'\n{"="*60}')
         print(f'POOLING STRATEGY: {pool_name.upper()}')
         print(f'{"="*60}')
@@ -691,7 +720,7 @@ def run_pooling_comparison(
         print(f'\n{"="*60}')
         print('AVERAGE PERFORMANCE BY POOLING STRATEGY')
         print(f'{"="*60}')
-        for pool_name in POOLING_STRATEGIES.keys():
+        for pool_name in strategies_to_run.keys():
             pool_data = df_results[df_results['pooling_strategy'] == pool_name]
             if pool_data['accuracy'].notna().any():
                 avg_acc = pool_data['accuracy'].mean()
@@ -727,6 +756,15 @@ def main():
         nargs='+',
         default=None,
         help='Specific datasets to run (default: all in config)'
+    )
+    parser.add_argument(
+        '--pooling-strategies',
+        type=str,
+        nargs='+',
+        choices=['avg', 'multiscale', 'percentile'],
+        default=None,
+        help='Specific pooling strategies to run (choices: avg, multiscale, percentile). '
+             'If not specified, runs all strategies.'
     )
     parser.add_argument(
         '--roi-margin',
@@ -776,6 +814,7 @@ def main():
         config_path=config_path,
         output_dir=output_dir,
         dataset_filter=args.datasets,
+        pooling_strategies=args.pooling_strategies,
         roi_margin=args.roi_margin,
         img_size=args.img_size,
         n_splits=args.n_splits,
