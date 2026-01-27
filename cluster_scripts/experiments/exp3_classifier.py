@@ -287,7 +287,7 @@ def run_classification_head_for_dataset(
         num_workers=num_workers,
         output_dir=output_dir,
         use_medim=use_medim,
-        lesion_filter=lesion_filter,
+        # Note: lesion_filter removed - not supported by run_classification_head_experiment
     )
     
     # Print summary
