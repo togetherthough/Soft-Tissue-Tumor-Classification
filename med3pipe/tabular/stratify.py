@@ -23,10 +23,14 @@ def stratified_kfold_features(
     n_splits: int = 5,
     seed: int = 2025,
     lesion_filter: Optional[LesionSizeFilter] = None,
+    pooling_strategy: str = 'avg',
 ) -> List[Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]]:
     """
     Build k-fold stratified splits from the UNION of pooled features coming
     from the dataset's train and val feature directories.
+
+    Args:
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
 
     Returns: List of (train_data, val_data) tuples for each fold, where:
     - train_data = (X_train, y_train, ids_train)
@@ -39,12 +43,12 @@ def stratified_kfold_features(
     X_parts: List[np.ndarray] = []
     id_parts: List[List[str]] = []
 
-    Xtr, idtr = load_pooled_features(Path(feat_train_dir), labels_tr_dir)
+    Xtr, idtr = load_pooled_features(Path(feat_train_dir), labels_tr_dir, pooling_strategy=pooling_strategy)
     if Xtr.size:
         X_parts.append(Xtr)
         id_parts.append(idtr)
 
-    Xva, idva = load_pooled_features(Path(feat_val_dir), labels_val_dir)
+    Xva, idva = load_pooled_features(Path(feat_val_dir), labels_val_dir, pooling_strategy=pooling_strategy)
     if Xva.size:
         X_parts.append(Xva)
         id_parts.append(idva)
@@ -127,10 +131,14 @@ def stratified_features_split(
     seed: int = 2025,
     lesion_filter: Optional[LesionSizeFilter] = None,
     n_splits: int = 5,
+    pooling_strategy: str = 'avg',
 ) -> List[Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]]:
     """
     Build k-fold stratified splits from the UNION of pooled features coming
     from the dataset's train and val feature directories.
+    
+    Args:
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
     
     NOTE: train_ratio parameter is deprecated and ignored. K-fold split is used instead.
 
@@ -148,6 +156,10 @@ def stratified_features_split(
         labels_val_dir=labels_val_dir,
         lab_map=lab_map,
         n_splits=n_splits,
+        seed=seed,
+        lesion_filter=lesion_filter,
+        pooling_strategy=pooling_strategy,
+    )
         seed=seed,
         lesion_filter=lesion_filter,
     )

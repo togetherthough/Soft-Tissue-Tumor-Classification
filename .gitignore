@@ -3,6 +3,8 @@
 !/data/lesion_size_analysis.csv
 !/data/README.md
 features/*
+sam-med3d/features/*
+!sam-med3d/features/**/.gitkeep
 notebooks/baselines/*
 notebooks/Med3Tab/*
 results/

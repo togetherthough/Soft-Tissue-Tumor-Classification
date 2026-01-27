@@ -9,3 +9,5 @@ monai
 PyYAML
 medim
 requests
+tabpfn
+huggingface_hub

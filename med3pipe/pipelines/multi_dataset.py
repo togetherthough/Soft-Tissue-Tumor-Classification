@@ -102,6 +102,8 @@ def _run_multi_core(
     checkpoint: Optional[Path] = None,
     device: Optional[str] = None,
     skip_existing_embeddings: bool = False,
+    # Pooling
+    pooling_strategy: str = 'avg',
     # ROI cropping parameters
     use_roi_crop: bool = False,
     roi_margin: int = 10,
@@ -131,6 +133,9 @@ def _run_multi_core(
     summary_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Core implementation shared by YAML-driven and folder-driven runners.
+    
+    Args:
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
     
     IMPORTANT: 
     - skip_existing_embeddings=False (default): Reuse existing embeddings, extract only if missing
@@ -286,6 +291,7 @@ def _run_multi_core(
                 img_size=img_size,
                 device=device,
                 skip_existing_embeddings=skip_for_this_dataset,
+                pooling_strategy=pooling_strategy,
                 sheet_csv=sheet_csv,
                 dataset_name=dataset_name,
                 subject_col=subject_col,
@@ -415,6 +421,8 @@ def run_multi_tabpfn(
     device: Optional[str] = None,
     # Extraction control
     skip_existing_embeddings: bool = False,
+    # Pooling
+    pooling_strategy: str = 'avg',
     # ROI cropping
     use_roi_crop: bool = False,
     roi_margin: int = 10,
@@ -443,6 +451,7 @@ def run_multi_tabpfn(
         skip_existing_embeddings: If True, skip/ignore existing embeddings and re-extract.
                                   If False (default), reuse existing embeddings when available.
                                   Missing embeddings are always extracted regardless of this setting.
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
         use_roi_crop: If True, uses ROI-centric cropping (tumor-centered volumes).
                      If False (default), uses full-volume resizing.
         roi_margin: Margin in voxels around lesion bounding box (only if use_roi_crop=True).
@@ -468,6 +477,7 @@ def run_multi_tabpfn(
         checkpoint=checkpoint,
         device=device,
         skip_existing_embeddings=skip_existing_embeddings,
+        pooling_strategy=pooling_strategy,
         use_roi_crop=use_roi_crop,
         roi_margin=roi_margin,
         roi_target_size=roi_target_size,
@@ -496,6 +506,8 @@ def run_multi_localpfn(
     device: Optional[str] = None,
     # Extraction control
     skip_existing_embeddings: bool = False,
+    # Pooling
+    pooling_strategy: str = 'avg',
     # ROI cropping
     use_roi_crop: bool = False,
     roi_margin: int = 10,
@@ -528,6 +540,7 @@ def run_multi_localpfn(
         skip_existing_embeddings: If True, skip/ignore existing embeddings and re-extract.
                                   If False (default), reuse existing embeddings when available.
                                   Missing embeddings are always extracted regardless of this setting.
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
         use_roi_crop: If True, uses ROI-centric cropping (tumor-centered volumes).
                      If False (default), uses full-volume resizing.
         roi_margin: Margin in voxels around lesion bounding box (only if use_roi_crop=True).
@@ -552,6 +565,7 @@ def run_multi_localpfn(
         checkpoint=checkpoint,
         device=device,
         skip_existing_embeddings=skip_existing_embeddings,
+        pooling_strategy=pooling_strategy,
         use_roi_crop=use_roi_crop,
         roi_margin=roi_margin,
         roi_target_size=roi_target_size,

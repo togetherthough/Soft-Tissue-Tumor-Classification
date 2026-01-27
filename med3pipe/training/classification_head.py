@@ -36,7 +36,7 @@ class TumorClassificationHead(nn.Module):
     """Simple classification head for SAM-Med3D features.
     
     Takes the 3D feature map from SAM-Med3D image encoder and applies:
-    1. Global Average Pooling (GAP)
+    1. Pooling (avg, multiscale, or percentile)
     2. Dropout
     3. Linear classifier
     """
@@ -46,11 +46,26 @@ class TumorClassificationHead(nn.Module):
         in_channels: int = 768,  # ViT-B output channels
         num_classes: int = 2,
         dropout: float = 0.3,
+        pooling_strategy: str = 'avg',
     ):
         super().__init__()
-        self.gap = nn.AdaptiveAvgPool3d(1)
+        self.pooling_strategy = pooling_strategy
         self.dropout = nn.Dropout(dropout)
-        self.fc = nn.Linear(in_channels, num_classes)
+        
+        # Compute output dimension based on pooling strategy
+        if pooling_strategy == 'avg':
+            self.pooling_dim = in_channels
+        elif pooling_strategy == 'multiscale':
+            # 1x1x1 + 2x2x2 + 4x4x4 = 1 + 8 + 64 = 73 spatial locations per channel
+            self.pooling_dim = in_channels * 73
+        elif pooling_strategy == 'percentile':
+            # 5 percentiles (10th, 25th, 50th, 75th, 90th) per channel
+            self.pooling_dim = in_channels * 5
+        else:
+            raise ValueError(f"Invalid pooling_strategy: {pooling_strategy}. "
+                           f"Choose from: 'avg', 'multiscale', 'percentile'")
+        
+        self.fc = nn.Linear(self.pooling_dim, num_classes)
     
     def forward(self, x):
         """
@@ -59,10 +74,36 @@ class TumorClassificationHead(nn.Module):
         Returns:
             (B, num_classes) logits
         """
-        # Global average pooling: (B, C, D, H, W) -> (B, C, 1, 1, 1)
-        x = self.gap(x)
-        # Flatten: (B, C, 1, 1, 1) -> (B, C)
-        x = x.view(x.size(0), -1)
+        B, C, D, H, W = x.shape
+        
+        if self.pooling_strategy == 'avg':
+            # Global average pooling: (B, C, D, H, W) -> (B, C)
+            x = F.adaptive_avg_pool3d(x, 1).view(B, C)
+            
+        elif self.pooling_strategy == 'multiscale':
+            # Multiscale spatial pyramid pooling
+            pooled = []
+            for scale in [1, 2, 4]:
+                # Pool to (scale, scale, scale) grid
+                p = F.adaptive_avg_pool3d(x, output_size=(scale, scale, scale))
+                # Flatten spatial dims: (B, C, scale, scale, scale) -> (B, C * scale^3)
+                p = p.view(B, C * scale * scale * scale)
+                pooled.append(p)
+            x = torch.cat(pooled, dim=1)  # (B, C * 73)
+            
+        elif self.pooling_strategy == 'percentile':
+            # Percentile pooling across spatial dimensions
+            # Flatten spatial dims: (B, C, D, H, W) -> (B, C, D*H*W)
+            x_flat = x.view(B, C, -1)
+            
+            percentiles = [10, 25, 50, 75, 90]
+            pooled = []
+            for p in percentiles:
+                # Compute percentile along spatial dimension
+                pct = torch.quantile(x_flat, q=p/100.0, dim=2)  # (B, C)
+                pooled.append(pct)
+            x = torch.cat(pooled, dim=1)  # (B, C * 5)
+        
         # Dropout and classification
         x = self.dropout(x)
         x = self.fc(x)
@@ -78,6 +119,7 @@ class SAMWithClassificationHead(nn.Module):
         num_classes: int = 2,
         dropout: float = 0.3,
         freeze_encoder: bool = True,
+        pooling_strategy: str = 'avg',
     ):
         super().__init__()
         self.image_encoder = sam_model.image_encoder
@@ -94,6 +136,7 @@ class SAMWithClassificationHead(nn.Module):
             in_channels=in_channels,
             num_classes=num_classes,
             dropout=dropout,
+            pooling_strategy=pooling_strategy,
         )
         
         if freeze_encoder:
@@ -470,6 +513,8 @@ def run_classification_head_experiment(
     num_workers: int = 2,
     output_dir: Optional[Path] = None,
     use_medim: bool = True,
+    pooling_strategy: str = 'avg',
+    lesion_filter: Optional[LesionSizeFilter] = None,
 ) -> Dict[str, Any]:
     """
     Run complete classification head experiment on prepared SAM-Med3D data.
@@ -535,11 +580,13 @@ def run_classification_head_experiment(
     
     # Add classification head
     print("[2/4] Adding classification head...")
+    print(f"Pooling strategy: {pooling_strategy}")
     model = SAMWithClassificationHead(
         sam_model=sam_model,
         num_classes=2,
         dropout=dropout,
         freeze_encoder=freeze_encoder,
+        pooling_strategy=pooling_strategy,
     )
     
     # Prepare dataloaders
@@ -550,6 +597,7 @@ def run_classification_head_experiment(
         batch_size=batch_size,
         num_workers=num_workers,
         img_size=img_size,
+        lesion_filter=lesion_filter,
     )
     
     # Train

@@ -46,6 +46,42 @@ python -c "import med3pipe; print('med3pipe OK')"
 exit
 ```
 
+## HuggingFace Authentication (for TabPFN v2.5+)
+
+If using TabPFN v2.5+, you need to authenticate with HuggingFace:
+
+```bash
+# Activate your environment
+source /trinity/home/r112276/Med3Tab-PFN/venv/bin/activate
+
+# Install HuggingFace CLI (if not already installed)
+pip install huggingface_hub
+
+# Login with your HuggingFace token
+huggingface-cli login
+# Or: hf auth login
+```
+
+**Get your token**:
+1. Visit https://huggingface.co/settings/tokens
+2. Create a new "Read" token
+3. Paste when prompted by the CLI
+
+**Accept TabPFN model terms**:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5
+2. Click "Agree and access repository"
+
+**Alternative**: Use TabPFN v1.x (no authentication needed)
+```bash
+pip install "tabpfn<2.0"
+```
+
+**For SLURM scripts**: Set `HF_TOKEN` environment variable
+```bash
+# Add to your SLURM script before running Python
+export HF_TOKEN="hf_your_token_here"
+```
+
 ## Common Issues
 
 ### Exit Code 127: "Command not found"

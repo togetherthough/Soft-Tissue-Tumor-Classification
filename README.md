@@ -22,14 +22,20 @@ Med3Tab-PFN is a novel **transfer learning framework** for binary classification
 │                            Med3Tab-PFN Pipeline                               │
 ├───────────────────────────────────────────────────────────────────────────────┤
 │                                                                               │
+│   ┌─────────────┐    ┌──────────────┐    ┌──────────────────┐               │
+│   │  3D Volume  │───▶│     ROI      │───▶│    SAM-Med3D     │               │
+│   │  (CT/MRI)   │    │   Cropping   │    │   Image Encoder  │               │
+│   └─────────────┘    └──────────────┘    └─────────┬────────┘               │
+│                                                     │                         │
+│                                                     ▼                         │
+│                                         ┌──────────────────────────┐          │
+│                                         │   Feature Embeddings     │          │
+│                                         │   (384-dim vectors)      │          │
+│                                         └─────────┬────────────────┘          │
+│                                                   │                           │
+│                                                   ▼                           │
 │   ┌─────────────┐    ┌──────────────────┐    ┌──────────────────────────┐    │
-│   │  3D Volume  │───▶│    SAM-Med3D     │───▶│   Feature Embeddings     │    │
-│   │  (CT/MRI)   │    │   Image Encoder  │    │   (384-dim vectors)      │    │
-│   └─────────────┘    └──────────────────┘    └────────────┬─────────────┘    │
-│                                                           │                   │
-│                                                           ▼                   │
-│   ┌─────────────┐    ┌──────────────────┐    ┌──────────────────────────┐    │
-│   │   Labels    │───▶│   TabPFN or      │◀───│   ROI Pooling +          │    │
+│   │   Labels    │───▶│   TabPFN or      │◀───│   Average Pooling +      │    │
 │   │  (Binary)   │    │   LoCalPFN       │    │   Standardization + PCA  │    │
 │   └─────────────┘    └────────┬─────────┘    └──────────────────────────┘    │
 │                               │                                               │
@@ -72,6 +78,19 @@ source venv/bin/activate  # Linux/macOS
 # Install dependencies
 pip install -r med3pipe/requirements.txt
 ```
+
+**Note on TabPFN**: If using TabPFN v2.5+, you need HuggingFace authentication:
+```bash
+# Install HuggingFace CLI
+pip install huggingface_hub
+
+# Login with your HuggingFace token
+huggingface-cli login
+
+# Accept model terms at: https://huggingface.co/Prior-Labs/tabpfn_2_5
+```
+
+*Alternatively, use TabPFN v1.x (no auth required)*: `pip install "tabpfn<2.0"`
 
 ### 2. Download SAM-Med3D Checkpoint
 

@@ -105,6 +105,8 @@ def run_single_dataset(
     img_size: int = 128,
     device: Optional[str] = None,
     skip_existing_embeddings: bool = True,
+    # Pooling
+    pooling_strategy: str = 'avg',
     # Labels
     sheet_csv: Optional[Path] = None,
     dataset_name: Optional[str] = "GIST",
@@ -137,6 +139,7 @@ def run_single_dataset(
                      If False, uses full-volume resizing (default).
         roi_margin: Margin in voxels around lesion bounding box (only if use_roi_crop=True).
         roi_target_size: Target size for ROI-cropped volumes (only if use_roi_crop=True).
+        pooling_strategy: Pooling strategy to use ('avg', 'multiscale', or 'percentile')
     """
     dataset_root = Path(dataset_root)
     sam3d_root = sam3d_root or find_default_sam3d_root()
@@ -245,6 +248,7 @@ def run_single_dataset(
         seed=seed,
         lesion_filter=lesion_filter,
         n_splits=n_splits,
+        pooling_strategy=pooling_strategy,
     )
 
     method_l = method.lower()
