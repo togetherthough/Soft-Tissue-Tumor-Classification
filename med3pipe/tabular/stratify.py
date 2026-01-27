@@ -160,6 +160,3 @@ def stratified_features_split(
         lesion_filter=lesion_filter,
         pooling_strategy=pooling_strategy,
     )
-        seed=seed,
-        lesion_filter=lesion_filter,
-    )
