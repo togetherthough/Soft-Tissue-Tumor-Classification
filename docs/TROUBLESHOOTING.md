@@ -90,6 +90,52 @@ DataLoader(..., num_workers=2, timeout=60)
 
 ---
 
+## TabPFN / HuggingFace Issues
+
+### "Failed to download TabPFN v2.5 model" or "HuggingFace authentication error"
+
+**Cause**: TabPFN v2.5+ is a gated model on HuggingFace requiring authentication.
+
+**Solution 1**: Authenticate with HuggingFace
+```bash
+# Install HuggingFace CLI
+pip install huggingface_hub
+
+# Login (you'll be prompted for your token)
+huggingface-cli login
+# Or: hf auth login
+```
+
+**Get your HuggingFace token**:
+1. Visit https://huggingface.co/settings/tokens
+2. Click "New token" → Select "Read" access
+3. Copy the token and paste when prompted
+
+**Accept model terms**:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5
+2. Click "Agree and access repository"
+
+**Solution 2**: Use TabPFN v1.x (no authentication needed)
+```bash
+# Downgrade to v1.x
+pip install "tabpfn<2.0"
+```
+
+Update `med3pipe/requirements.txt`:
+```
+tabpfn<2.0  # Use v1.x to avoid gated model authentication
+```
+
+**Solution 3**: Set HF_TOKEN environment variable
+```bash
+# Export token before running
+export HF_TOKEN="hf_your_token_here"
+
+# Or add to SLURM script before Python command
+```
+
+---
+
 ## Checkpoint Issues
 
 ### No checkpoint saved / crash during epoch
