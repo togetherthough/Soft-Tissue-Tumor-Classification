@@ -405,6 +405,25 @@ def main():
         help='Use preset filtering configuration (overrides individual filters)'
     )
     
+    # ROI cropping parameters
+    parser.add_argument(
+        '--use-roi-crop',
+        action='store_true',
+        help='Use ROI cropping (adaptive crop/pad around tumor)'
+    )
+    parser.add_argument(
+        '--roi-margin',
+        type=int,
+        default=30,
+        help='ROI margin in voxels (default: 30)'
+    )
+    parser.add_argument(
+        '--roi-target-size',
+        type=int,
+        default=128,
+        help='ROI target size (default: 128)'
+    )
+    
     args = parser.parse_args()
     
     # Setup paths
@@ -424,6 +443,13 @@ def main():
     print(f'Config path: {config_path}')
     print(f'Config exists: {config_path.exists()}')
     print(f'Output base: {output_base}')
+    
+    # Check ROI parameters
+    if args.use_roi_crop:
+        print(f'\n⚠️  WARNING: ROI cropping is not yet implemented in exp3_classifier.py')
+        print(f'   The --use-roi-crop, --roi-margin, and --roi-target-size flags are accepted but ignored.')
+        print(f'   For ROI experiments, use the preprocessing comparison script instead.')
+        print()
     
     with open(config_path, 'r', encoding='utf-8') as f:
         cfg = yaml.safe_load(f) or {}
