@@ -56,7 +56,7 @@ def run_classification_head_for_dataset(
     weight_decay: float = 1e-4,
     dropout: float = 0.3,
     img_size: int = 128,
-    num_workers: int = 2,
+    num_workers: int = 0,  # Set to 0 to avoid SimpleITK multiprocessing issues
     output_base: Path = None,
     pooling_strategy: str = 'avg',
     # Lesion filtering parameters
