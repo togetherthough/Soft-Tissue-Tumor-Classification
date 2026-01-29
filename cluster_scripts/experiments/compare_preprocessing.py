@@ -487,18 +487,15 @@ def main():
     print(f"Output: {output_dir}")
     print()
     
-    # Device setup - GPU required
-    device = "cuda"
-    if not torch.cuda.is_available():
-        raise RuntimeError(
-            "❌ CUDA is not available! This experiment requires GPU.\n"
-            f"   CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES', 'not set')}\n"
-            "   Ensure SLURM allocated GPU and CUDA module is loaded."
-        )
-    
+    # Device setup - prefer CUDA, fall back to CPU
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Device: {device}")
-    print(f"GPU: {torch.cuda.get_device_name(0)}")
-    print(f"CUDA Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+    if device == "cuda":
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"CUDA Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+    else:
+        print("⚠️  CUDA not available, running on CPU (will be slow)")
+        print(f"   CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES', 'not set')}")
     
     # Load SAM model
     sam_model = load_sam_model(project_root, device)
