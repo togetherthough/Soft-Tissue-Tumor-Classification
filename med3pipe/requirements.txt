@@ -11,3 +11,5 @@ medim
 requests
 tabpfn
 huggingface_hub
+torchvision
+segment-anything

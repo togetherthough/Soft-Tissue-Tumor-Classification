@@ -89,28 +89,45 @@ def build_sam3d_model(
         except ImportError:
             print("⚠️  medim not available, falling back to legacy loading method")
         except Exception as e:
-            print(f"⚠️  medim loading failed ({e}), falling back to legacy loading method")
-    
-    # Legacy loading method
-    sam3d_root = sam3d_root or find_default_sam3d_root()
-    _ensure_repo_on_path(sam3d_root)
-
-    from segment_anything.build_sam3D import sam_model_registry3D  # type: ignore
-
-    model = sam_model_registry3D[model_type](checkpoint=None).to(device)
-    if checkpoint is not None and Path(checkpoint).exists():
-        ckpt = torch.load(str(checkpoint), map_location=device, weights_only=False)
-        try:
-            model.load_state_dict(ckpt["model_state_dict"], strict=False)
-            print("Loaded checkpoint (model_state_dict)")
-        except Exception:
-            model.load_state_dict(ckpt, strict=False)
-            print("Loaded checkpoint (raw state_dict)")
-    if eval_mode:
-        model.eval()
-    else:
-        model.train()
-    return model
+            print(f"⚠️  medim loading failed ({e})")
+            # If CUDA is not available, retry with CPU patching
+            if not torch.cuda.is_available() and checkpoint is not None:
+                print("🔧 Retrying with CPU map_location patch...")
+                import torch as torch_module
+                original_load = torch_module.load
+                
+                def patched_load(*args, **kwargs):
+                    if 'map_location' not in kwargs:
+                        kwargs['map_location'] = 'cpu'
+                    return original_load(*args, **kwargs)
+                
+                torch_module.load = patched_load
+                try:
+                    model = medim.create_model(
+                        "SAM-Med3D",
+                        pretrained=True,
+                        checkpoint_path=str(checkpoint)
+                    ).to(device)
+                    if eval_mode:
+                        model.eval()
+                    else:
+                        model.train()
+                    print("✅ SAM-Med3D model loaded successfully with CPU patch!")
+                    return model
+                except Exception as e2:
+                    print(f"❌ CPU patch also failed: {e2}")
+                finally:
+                    torch_module.load = original_load
+            
+            # If all medim attempts fail, raise error (no legacy fallback available)
+            raise RuntimeError(
+                f"Failed to load SAM-Med3D model via medim: {e}\n"
+                "Legacy loading method requires SAM-Med3D source code to be installed.\n"
+                "Please ensure:\n"
+                "  1. CUDA is available (if using GPU)\n"
+                "  2. medim library is installed: pip install medim\n"
+                "  3. Checkpoint file exists and is valid"
+            )
 
 
 def _znorm_masking_method(x):
