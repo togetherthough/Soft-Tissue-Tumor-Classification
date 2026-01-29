@@ -18,6 +18,7 @@ Based on: notebooks/experiments/Preprocessing_Comparisons_Local.ipynb
 """
 
 import argparse
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -487,13 +488,14 @@ def main():
     print()
     
     # Device setup - GPU required
+    device = "cuda"
     if not torch.cuda.is_available():
         raise RuntimeError(
             "❌ CUDA is not available! This experiment requires GPU.\n"
-            "   Check SLURM GPU allocation and CUDA environment setup."
+            f"   CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES', 'not set')}\n"
+            "   Ensure SLURM allocated GPU and CUDA module is loaded."
         )
     
-    device = "cuda"
     print(f"Device: {device}")
     print(f"GPU: {torch.cuda.get_device_name(0)}")
     print(f"CUDA Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")

@@ -85,8 +85,9 @@ echo "=========================================="
 echo "Setting up environment..."
 echo "=========================================="
 
-# Load modules (PyTorch 2.8.0+cu128 has bundled CUDA, no need to load CUDA module)
+# Load modules
 module load Python/3.11.5-GCCcore-13.2.0
+module load CUDA/12.1.1
 
 # Activate virtual environment (thesis_peron)
 source /trinity/home/r112276/Med3Tab-PFN/thesis_peron/bin/activate
