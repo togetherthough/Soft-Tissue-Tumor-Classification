@@ -63,6 +63,10 @@ def run_classification_head_for_dataset(
     min_voxels: Optional[int] = None,
     min_dimension: Optional[int] = None,
     min_density: Optional[float] = None,
+    # ROI cropping parameters
+    use_roi_crop: bool = False,
+    roi_margin: int = 30,
+    roi_target_size: int = 128,
 ):
     """
     Run classification head experiment for a single dataset
@@ -179,10 +183,13 @@ def run_classification_head_for_dataset(
     if output_base is None:
         output_base = repo_root / 'results' / 'classification_head'
     
-    # Add suffix to output dir if filtering is enabled
+    # Add suffix to output dir based on preprocessing
     is_filtered = (min_voxels is not None or min_dimension is not None or min_density is not None)
+    
+    suffix_parts = []
+    if use_roi_crop:
+        suffix_parts.append(f"roi_m{roi_margin}_s{roi_target_size}")
     if is_filtered:
-        filter_suffix = "_filtered"
         filter_desc = []
         if min_voxels is not None:
             filter_desc.append(f"v{min_voxels}")
@@ -190,28 +197,49 @@ def run_classification_head_for_dataset(
             filter_desc.append(f"d{min_dimension}")
         if min_density is not None:
             filter_desc.append(f"ρ{min_density:.2f}")
-        filter_suffix += "_" + "_".join(filter_desc)
-        output_dir = output_base / f"{dataset_key}{filter_suffix}"
+        suffix_parts.append("filt_" + "_".join(filter_desc))
+    
+    if suffix_parts:
+        output_dir = output_base / f"{dataset_key}_{'_'.join(suffix_parts)}"
     else:
         output_dir = output_base / dataset_key
     
     output_dir.mkdir(parents=True, exist_ok=True)
     
     print(f'Output directory: {output_dir}')
+    if use_roi_crop:
+        print(f'  ROI cropping: margin={roi_margin} voxels, target_size={roi_target_size}')
     if is_filtered:
         print(f'  Filtered results: voxels>={min_voxels}, dim>={min_dimension}, density>={min_density}')
     
     # Step 1: Prepare dataset
     print(f'\n[1/4] Preparing dataset...')
-    prepared, paths = prepare_for_sam3d(
-        dataset_root=ds_root,
-        sam3d_root=sam3d_root,
-        category=category,
-        ct_name=ct_name,
-        case_glob=None,
-        max_cases=None,
-    )
-    print(f'✓ Prepared {prepared} cases')
+    if use_roi_crop:
+        from med3pipe.data.prepare import prepare_for_sam3d_roi_cropped
+        # Use ROI-cropped preparation
+        ct_name_roi = f"{ct_name}_roi_m{roi_margin}_s{roi_target_size}"
+        prepared, paths = prepare_for_sam3d_roi_cropped(
+            dataset_root=ds_root,
+            sam3d_root=sam3d_root,
+            category=category,
+            ct_name=ct_name_roi,
+            case_glob=None,
+            max_cases=None,
+            target_size=roi_target_size,
+            margin=roi_margin,
+        )
+        print(f'✓ Prepared {prepared} ROI-cropped cases (margin={roi_margin}, size={roi_target_size})')
+    else:
+        # Use standard full-volume preparation
+        prepared, paths = prepare_for_sam3d(
+            dataset_root=ds_root,
+            sam3d_root=sam3d_root,
+            category=category,
+            ct_name=ct_name,
+            case_glob=None,
+            max_cases=None,
+        )
+        print(f'✓ Prepared {prepared} cases')
     
     # Step 2: Create validation split
     print(f'\n[2/4] Creating validation split...')
@@ -446,9 +474,9 @@ def main():
     
     # Check ROI parameters
     if args.use_roi_crop:
-        print(f'\n⚠️  WARNING: ROI cropping is not yet implemented in exp3_classifier.py')
-        print(f'   The --use-roi-crop, --roi-margin, and --roi-target-size flags are accepted but ignored.')
-        print(f'   For ROI experiments, use the preprocessing comparison script instead.')
+        print(f'\n🎯 ROI CROPPING ENABLED')
+        print(f'   Margin: {args.roi_margin} voxels')
+        print(f'   Target size: {args.roi_target_size}x{args.roi_target_size}x{args.roi_target_size}')
         print()
     
     with open(config_path, 'r', encoding='utf-8') as f:
@@ -519,6 +547,9 @@ def main():
                 min_voxels=min_voxels,
                 min_dimension=min_dimension,
                 min_density=min_density,
+                use_roi_crop=args.use_roi_crop,
+                roi_margin=args.roi_margin,
+                roi_target_size=args.roi_target_size,
             )
             results_list.append(result)
             print(f'✅ SUCCESS: {ds_key}')
