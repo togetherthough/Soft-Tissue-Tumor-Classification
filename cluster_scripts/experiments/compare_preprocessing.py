@@ -164,11 +164,34 @@ def load_sam_model(project_root: Path, device: str):
         print(f"✅ Checkpoint present: {checkpoint_path} ({size_mb:.1f} MB)")
     
     print("\n📦 Loading SAM-Med3D model via medim...")
-    sam_model = medim.create_model(
-        "SAM-Med3D",
-        pretrained=True,
-        checkpoint_path=str(checkpoint_path)
-    ).to(device)
+    
+    # Workaround for CPU loading: temporarily patch torch.load if on CPU
+    if device == "cpu":
+        print("⚠️  CPU mode: Patching torch.load to use map_location='cpu'")
+        import torch as torch_module
+        original_load = torch_module.load
+        
+        def patched_load(*args, **kwargs):
+            if 'map_location' not in kwargs:
+                kwargs['map_location'] = 'cpu'
+            return original_load(*args, **kwargs)
+        
+        torch_module.load = patched_load
+        try:
+            sam_model = medim.create_model(
+                "SAM-Med3D",
+                pretrained=True,
+                checkpoint_path=str(checkpoint_path)
+            ).to(device)
+        finally:
+            torch_module.load = original_load
+    else:
+        sam_model = medim.create_model(
+            "SAM-Med3D",
+            pretrained=True,
+            checkpoint_path=str(checkpoint_path)
+        ).to(device)
+    
     sam_model.eval()
     print("✅ SAM-Med3D model loaded successfully!")
     print(f"   Model device: {next(sam_model.parameters()).device}")
