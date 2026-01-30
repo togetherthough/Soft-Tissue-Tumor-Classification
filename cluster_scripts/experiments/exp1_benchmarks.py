@@ -284,7 +284,7 @@ def run_experiment(
                 roi_margin=roi_margin,
                 roi_target_size=roi_target_size,
                 # LoCalPFN configuration
-                local_k=128,
+                local_k=None,  # Auto: min(1000, 10*sqrt(n_train)) - adapts to dataset size
                 local_fit_adapter=True,
                 local_adapter_epochs=8,
                 local_adapter_num_queries=150,
