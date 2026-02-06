@@ -84,7 +84,7 @@ def run_experiment(
     n_splits: int = 5,
     random_state: int = 42,
     # Pooling
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
     # ROI cropping parameters
     use_roi_crop: bool = False,
     roi_margin: int = 10,
@@ -530,8 +530,8 @@ def main():
         '--pooling-strategy',
         type=str,
         choices=['avg', 'multiscale', 'percentile'],
-        default='avg',
-        help='Pooling strategy for embeddings (choices: avg, multiscale, percentile). Default: avg'
+        default='percentile',
+        help='Pooling strategy for embeddings (choices: avg, multiscale, percentile). Default: percentile'
     )
     parser.add_argument(
         '--skip-tabpfn',

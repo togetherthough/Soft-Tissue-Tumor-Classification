@@ -60,7 +60,7 @@ def run_single_experiment(
     min_voxels: Optional[int] = None,
     min_dimension: Optional[int] = None,
     min_density: Optional[float] = None,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
     freeze_encoder: bool = True,
     num_epochs: int = 20,
     batch_size: int = 4,
@@ -336,8 +336,8 @@ def main():
         '--pooling-strategy',
         type=str,
         choices=['avg', 'multiscale', 'percentile'],
-        default='avg',
-        help='Pooling strategy for feature aggregation (default: avg)'
+        default='percentile',
+        help='Pooling strategy for feature aggregation (default: percentile)'
     )
     args = parser.parse_args()
     

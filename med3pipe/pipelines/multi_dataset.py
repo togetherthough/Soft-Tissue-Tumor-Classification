@@ -103,7 +103,7 @@ def _run_multi_core(
     device: Optional[str] = None,
     skip_existing_embeddings: bool = False,
     # Pooling
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
     # ROI cropping parameters
     use_roi_crop: bool = False,
     roi_margin: int = 10,
@@ -422,7 +422,7 @@ def run_multi_tabpfn(
     # Extraction control
     skip_existing_embeddings: bool = False,
     # Pooling
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
     # ROI cropping
     use_roi_crop: bool = False,
     roi_margin: int = 10,
@@ -507,7 +507,7 @@ def run_multi_localpfn(
     # Extraction control
     skip_existing_embeddings: bool = False,
     # Pooling
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
     # ROI cropping
     use_roi_crop: bool = False,
     roi_margin: int = 10,

@@ -23,7 +23,7 @@ def stratified_kfold_features(
     n_splits: int = 5,
     seed: int = 2025,
     lesion_filter: Optional[LesionSizeFilter] = None,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
 ) -> List[Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]]:
     """
     Build k-fold stratified splits from the UNION of pooled features coming
@@ -131,7 +131,7 @@ def stratified_features_split(
     seed: int = 2025,
     lesion_filter: Optional[LesionSizeFilter] = None,
     n_splits: int = 5,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
 ) -> List[Tuple[Tuple[np.ndarray, np.ndarray, List[str]], Tuple[np.ndarray, np.ndarray, List[str]]]]:
     """
     Build k-fold stratified splits from the UNION of pooled features coming

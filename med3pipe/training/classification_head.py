@@ -46,7 +46,7 @@ class TumorClassificationHead(nn.Module):
         in_channels: int = 768,  # ViT-B output channels
         num_classes: int = 2,
         dropout: float = 0.3,
-        pooling_strategy: str = 'avg',
+        pooling_strategy: str = 'percentile',
     ):
         super().__init__()
         self.pooling_strategy = pooling_strategy
@@ -119,7 +119,7 @@ class SAMWithClassificationHead(nn.Module):
         num_classes: int = 2,
         dropout: float = 0.3,
         freeze_encoder: bool = True,
-        pooling_strategy: str = 'avg',
+        pooling_strategy: str = 'percentile',
     ):
         super().__init__()
         self.image_encoder = sam_model.image_encoder
@@ -513,7 +513,7 @@ def run_classification_head_experiment(
     num_workers: int = 2,
     output_dir: Optional[Path] = None,
     use_medim: bool = True,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
     lesion_filter: Optional[LesionSizeFilter] = None,
 ) -> Dict[str, Any]:
     """

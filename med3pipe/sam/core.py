@@ -382,7 +382,7 @@ POOLING_STRATEGIES = {
 def average_pool_embedding(
     embedding: torch.Tensor, 
     mask: Optional[torch.Tensor] = None,
-    pooling_strategy: str = 'avg'
+    pooling_strategy: str = 'percentile'
 ) -> np.ndarray:
     """Pool a single embedding using the specified strategy.
 
@@ -415,7 +415,7 @@ def load_pooled_features(
     feat_dir: Path,
     label_dir: Optional[Path],
     pre_transform: Optional[Callable] = None,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
 ) -> Tuple[np.ndarray, List[str]]:
     """Load feature vectors from embedding .pt files in `feat_dir`.
 

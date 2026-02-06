@@ -37,7 +37,7 @@
 #
 # Arguments:
 #   pooling_strategy: Pooling strategy to use (avg, multiscale, percentile)
-#                     Default: avg
+#                     Default: percentile
 #
 # Examples:
 #   sbatch cluster_scripts/slurm/slurm_preprocessing_comparison.sh
@@ -52,7 +52,7 @@ echo "Node: $SLURM_NODELIST"
 echo "Start Time: $(date)"
 echo "=========================================="
 # Parse arguments
-POOLING_STRATEGY=${1:-avg}
+POOLING_STRATEGY=${1:-percentile}
 
 echo ""
 echo "Configuration:"

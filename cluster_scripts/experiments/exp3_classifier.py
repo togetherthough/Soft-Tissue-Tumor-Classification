@@ -58,7 +58,7 @@ def run_classification_head_for_dataset(
     img_size: int = 128,
     num_workers: int = 0,  # Set to 0 to avoid SimpleITK multiprocessing issues
     output_base: Path = None,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
     # Lesion filtering parameters
     min_voxels: Optional[int] = None,
     min_dimension: Optional[int] = None,
@@ -403,8 +403,8 @@ def main():
         '--pooling-strategy',
         type=str,
         choices=['avg', 'multiscale', 'percentile'],
-        default='avg',
-        help='Pooling strategy for feature aggregation (default: avg)'
+        default='percentile',
+        help='Pooling strategy for feature aggregation (default: percentile)'
     )
     # Lesion filtering arguments
     parser.add_argument(

@@ -10,7 +10,7 @@ Flow:
 3)    Create validation split (copy by default) into imagesVal/labelsVal (folder-level, for caching only).
 4)    Build SAM-Med3D model (optionally load checkpoint).
 4)    Extract TRAIN and VAL embeddings.
-5)    Pool to per-case vectors using Global Average Pooling.
+5)    Pool to per-case vectors using the configured pooling strategy (default: Percentile Pooling).
 6)    Load labels and build label map.
 6b)   Perform a STRATIFIED feature-level split from the UNION of features (train_ratio).
 7)    Standardize (fit on TRAIN) + PCA.
@@ -106,7 +106,7 @@ def run_single_dataset(
     device: Optional[str] = None,
     skip_existing_embeddings: bool = True,
     # Pooling
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
     # Labels
     sheet_csv: Optional[Path] = None,
     dataset_name: Optional[str] = "GIST",

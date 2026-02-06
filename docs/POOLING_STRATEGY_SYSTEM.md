@@ -6,7 +6,7 @@ The Med3Tab-PFN pipeline now supports three different pooling strategies for SAM
 
 ## Available Pooling Strategies
 
-### 1. Average Pooling (avg) - DEFAULT
+### 1. Average Pooling (avg)
 - **Feature Dimension**: C (e.g., 384)
 - **Description**: Global average pooling across all spatial dimensions
 - **Use Case**: Fast baseline, good for most datasets
@@ -25,7 +25,7 @@ The Med3Tab-PFN pipeline now supports three different pooling strategies for SAM
   - Computation: 73 = 1³ + 2³ + 4³ = 1 + 8 + 64
   - Best for heterogeneous tumors with complex spatial patterns
 
-### 3. Percentile Pooling (percentile)
+### 3. Percentile Pooling (percentile) - DEFAULT
 - **Feature Dimension**: C × 5 (e.g., 1,920)
 - **Description**: 10th, 25th, 50th, 75th, 90th percentiles per channel
 - **Use Case**: When distribution of feature activations is important
@@ -39,7 +39,7 @@ The Med3Tab-PFN pipeline now supports three different pooling strategies for SAM
 ### Experiment 1: Benchmarks (exp1_benchmarks.py)
 
 ```bash
-# Default (average pooling)
+# Default (percentile pooling)
 python cluster_scripts/experiments/exp1_benchmarks.py \
     --config configs/datasets.yaml
 
@@ -57,7 +57,7 @@ python cluster_scripts/experiments/exp1_benchmarks.py \
 ### Preprocessing Comparison (compare_preprocessing.py)
 
 ```bash
-# Default (average pooling)
+# Default (percentile pooling)
 python cluster_scripts/experiments/compare_preprocessing.py \
     --config configs/datasets.yaml
 
@@ -161,12 +161,12 @@ TabPFN has a feature limit (~500-1000). For high-dimensional strategies:
 - **Percentile** (1,920 dims): May require PCA depending on sample size
 - **Average** (384 dims): Usually doesn't require PCA
 
-## Backward Compatibility
+## Default Pooling Strategy
 
-The default pooling strategy is `'avg'` (average pooling), which maintains the original behavior:
-- Existing scripts without `--pooling-strategy` flag will use average pooling
-- All function signatures have `pooling_strategy='avg'` as default
-- No breaking changes to existing code
+The default pooling strategy is `'percentile'` (percentile pooling), based on experimental results showing superior performance:
+- Existing scripts without `--pooling-strategy` flag will use percentile pooling
+- All function signatures have `pooling_strategy='percentile'` as default
+- Provides best balance of performance and computational efficiency
 
 ## Best Practices
 

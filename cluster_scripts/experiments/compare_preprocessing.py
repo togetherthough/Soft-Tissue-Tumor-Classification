@@ -66,8 +66,8 @@ def parse_args():
         "--pooling-strategy",
         type=str,
         choices=["avg", "multiscale", "percentile"],
-        default="avg",
-        help="Pooling strategy for embeddings (choices: avg, multiscale, percentile). Default: avg"
+        default="percentile",
+        help="Pooling strategy for embeddings (choices: avg, multiscale, percentile). Default: percentile"
     )
     parser.add_argument(
         "--roi-margin",
@@ -207,7 +207,7 @@ def run_baseline_experiment(
     n_splits: int,
     n_components_max: int,
     random_state: int,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
 ):
     """Run baseline experiment (full-volume, no filtering)."""
     from med3pipe.pipelines import run_multi_tabpfn
@@ -269,7 +269,7 @@ def run_filtered_experiment(
     min_voxels: int,
     min_dimension: int,
     min_density: float,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
 ):
     """Run filtered baseline experiment (full-volume with lesion filtering)."""
     from med3pipe.pipelines import run_multi_tabpfn
@@ -336,7 +336,7 @@ def run_roi_experiment(
     random_state: int,
     roi_margin: int,
     roi_target_size: int,
-    pooling_strategy: str = 'avg',
+    pooling_strategy: str = 'percentile',
 ):
     """Run ROI-cropped experiment (adaptive crop/pad)."""
     from med3pipe.pipelines import run_multi_tabpfn

@@ -141,7 +141,7 @@ Embeddings are 3D feature maps (C×D×H×W). Pooling converts them to fixed-leng
 | **Multiscale** | Multiple pool sizes | C × scales |
 | **Percentile** | Percentile-based pooling | C × percentiles |
 
-Default: Global Average Pooling (384-dim vectors)
+Default: Percentile Pooling (1,920-dim vectors)
 
 ---
 
