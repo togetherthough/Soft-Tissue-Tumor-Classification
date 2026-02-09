@@ -5,7 +5,7 @@
 #SBATCH --error=logs/exp3_roi_error_%j.log
 #SBATCH --nodes=1
 # Tip: export SBATCH_NODELIST=gpuXYZ before submission if you must target a specific node.
-#SBATCH --time=1-00:00:00    # ADJUST TIME: for all 6 datasets, may need more
+#SBATCH --time=10-00:00:00    # ADJUST TIME: for all 6 datasets, may need more
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
@@ -106,7 +106,7 @@ echo ""
 python cluster_scripts/experiments/exp3_classifier.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
-    --epochs 20 \
+    --epochs 200 \
     --batch-size 4 \
     --freeze-encoder \
     --use-roi-crop \
@@ -117,7 +117,7 @@ python cluster_scripts/experiments/exp3_classifier.py \
 # python cluster_scripts/experiments/exp3_classifier.py \
 #     --config ${CONFIG_FILE} \
 #     --output-dir ${RESULTS_DIR} \
-#     --epochs 20 \
+#     --epochs 200 \
 #     --batch-size 4 \
 #     --freeze-encoder \
 #     --use-roi-crop \

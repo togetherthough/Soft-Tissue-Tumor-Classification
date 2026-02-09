@@ -20,6 +20,11 @@ from .lesion_filter import (
     LesionSizeFilter,
     load_lesion_filter_from_config,
 )
+from .diagnostics import (
+    mann_whitney_test,
+    hsic_test,
+    knn_agreement_test,
+)
 
 __all__ = [
     "standardize_pca",
@@ -34,4 +39,8 @@ __all__ = [
     # Lesion filtering
     "LesionSizeFilter",
     "load_lesion_filter_from_config",
+    # Embedding diagnostics
+    "mann_whitney_test",
+    "hsic_test",
+    "knn_agreement_test",
 ]

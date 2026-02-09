@@ -5,7 +5,7 @@
 #SBATCH --error=logs/exp1_roi_error_%j.log
 #SBATCH --nodes=1
 # Tip: if you must target specific nodes, export SBATCH_NODELIST=gpuXYZ before calling sbatch.
-#SBATCH --time=2-00:00:00
+#SBATCH --time=20-00:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
@@ -134,7 +134,7 @@ export PYTHONUNBUFFERED=1
 python -u cluster_scripts/experiments/exp1_benchmarks.py \
     --config ${CONFIG_FILE} \
     --output-dir ${RESULTS_DIR} \
-    --epochs-3d ${EPOCHS:-20} \
+    --epochs-3d ${EPOCHS:-200} \
     --use-roi-crop \
     --roi-margin 30 \
     --roi-target-size 128
@@ -143,7 +143,7 @@ python -u cluster_scripts/experiments/exp1_benchmarks.py \
 # python -u cluster_scripts/experiments/exp1_benchmarks.py \
 #     --config ${CONFIG_FILE} \
 #     --output-dir ${RESULTS_DIR} \
-#     --epochs-3d ${EPOCHS:-20} \
+#     --epochs-3d ${EPOCHS:-200} \
 #     --use-roi-crop \
 #     --roi-margin 10 \
 #     --roi-target-size 128 \
