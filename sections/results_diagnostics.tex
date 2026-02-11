@@ -1,0 +1,36 @@
+% Results subsection: Embedding Diagnostics
+\subsection{Embedding Diagnostics}\label{sec:res_diagnostics}
+
+Three statistical tests probed whether the 1920-dimensional embeddings
+carry label-relevant signal (Table~\ref{tab:embedding-diagnostics}).
+Discriminative information is limited to two of six datasets, and even
+there it lacks the geometric organization that nearest-neighbor
+classifiers require.
+
+\paragraph{Mann--Whitney $U$.}
+Only Desmoid (395/1920 dims, 21\%) and GIST (679/1920, 35\%) show
+significant per-dimension separation after Benjamini--Hochberg
+correction. CRLM, Lipo, Liver, and Melanoma yield zero significant
+dimensions.
+
+\paragraph{HSIC/CKA.}
+Desmoid ($\text{CKA}{=}0.052$, $p{=}0.0012$) and GIST
+($\text{CKA}{=}0.080$, $p{=}0.0001$) confirm weak but real global
+dependence between features and labels; both CKA values fall in the
+weak band ($0.02$--$0.1$). CRLM approaches significance ($p{=}0.083$)
+without crossing it; the remaining three datasets show none ($p{>}0.15$).
+
+\paragraph{$k$NN agreement.}
+No dataset achieves strong local label coherence. Desmoid and GIST have
+negative adjusted agreement at $k{=}5$ ($\kappa{=}{-}0.037$ and
+${-}0.008$), meaning their signal is not geometrically localized. Lipo
+is the sole exception ($\kappa{=}0.113$, $p{=}0.021$): a weak local
+pattern that univariate tests and global kernels miss.
+
+These findings complement the attention analysis
+(Section~\ref{sec:res_attention}): the encoder \emph{attends} to
+lesion regions but does not reliably \emph{encode} class-discriminative
+features within them for most datasets. Where signal exists, it is
+distributed across dimensions rather than organized into locally
+coherent neighborhoods, limiting nearest-neighbor methods such as
+LoCalPFN.

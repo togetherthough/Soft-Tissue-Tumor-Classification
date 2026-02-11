@@ -198,7 +198,14 @@ def run_single_dataset(
     else:
         print("✅ Using pre-loaded model (e.g., via medim)")
     
-    feat_dirs = default_feature_dirs(sam3d_root, category=category, ct_name=ct_name)
+    # Use a distinct feature directory for ROI-cropped embeddings so they
+    # don't collide with baseline (full-volume) embeddings.
+    feat_ct_name = (
+        f"{ct_name}_roi_m{roi_margin}_s{roi_target_size}"
+        if use_roi_crop
+        else ct_name
+    )
+    feat_dirs = default_feature_dirs(sam3d_root, category=category, ct_name=feat_ct_name)
     extract_embeddings_train_val(
         paths,
         model,

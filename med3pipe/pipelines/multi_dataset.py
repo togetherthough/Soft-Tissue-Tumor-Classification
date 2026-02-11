@@ -233,9 +233,16 @@ def _run_multi_core(
                 return None
             return default_localpfn_out_dir(category, ct_name, base_dir=outputs_base_dir)
 
-        # Check if embeddings exist for this specific dataset
-        feat_train_dir = sam3d_root / "features" / category / f"{ct_name}_train"
-        feat_val_dir = sam3d_root / "features" / category / ct_name
+        # Check if embeddings exist for this specific dataset.
+        # ROI-cropped embeddings live in a separate directory to avoid
+        # collisions with baseline (full-volume) embeddings.
+        feat_ct_name = (
+            f"{ct_name}_roi_m{roi_margin}_s{roi_target_size}"
+            if use_roi_crop
+            else ct_name
+        )
+        feat_train_dir = sam3d_root / "features" / category / f"{feat_ct_name}_train"
+        feat_val_dir = sam3d_root / "features" / category / feat_ct_name
         
         embeddings_exist = (
             feat_train_dir.exists() 
