@@ -117,7 +117,7 @@ python cluster_scripts/experiments/exp3_classifier.py \
 # python cluster_scripts/experiments/exp3_classifier.py \
 #     --config ${CONFIG_FILE} \
 #     --output-dir ${RESULTS_DIR} \
-#     --epochs 200 \
+#     --epochs 50 \
 #     --batch-size 4 \
 #     --freeze-encoder \
 #     --use-roi-crop \

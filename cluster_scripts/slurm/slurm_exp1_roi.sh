@@ -143,7 +143,7 @@ python -u cluster_scripts/experiments/exp1_benchmarks.py \
 # python -u cluster_scripts/experiments/exp1_benchmarks.py \
 #     --config ${CONFIG_FILE} \
 #     --output-dir ${RESULTS_DIR} \
-#     --epochs-3d ${EPOCHS:-200} \
+#     --epochs-3d ${EPOCHS:-50} \
 #     --use-roi-crop \
 #     --roi-margin 10 \
 #     --roi-target-size 128 \
