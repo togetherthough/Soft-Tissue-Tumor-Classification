@@ -114,7 +114,8 @@ python cluster_scripts/experiments/exp3_classifier.py \
     --output-dir ${RESULTS_DIR} \
     --epochs 20 \
     --batch-size 4 \
-    --freeze-encoder
+    --freeze-encoder \
+    --n-splits 5
     # Add ROI cropping: --use-roi-crop --roi-margin 10 --roi-target-size 128
     # Add filtering: --filter-preset recommended
 

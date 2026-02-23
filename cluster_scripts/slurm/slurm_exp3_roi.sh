@@ -111,7 +111,8 @@ python cluster_scripts/experiments/exp3_classifier.py \
     --freeze-encoder \
     --use-roi-crop \
     --roi-margin 30 \
-    --roi-target-size 128
+    --roi-target-size 128 \
+    --n-splits 5
 
 # Alternative: Combine with lesion filtering
 # python cluster_scripts/experiments/exp3_classifier.py \

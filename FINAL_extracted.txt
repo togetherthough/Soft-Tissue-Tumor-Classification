@@ -1,0 +1,245 @@
+FOUNDATION MODELS FOR 
+CLASSIFICATION OF SOFT
+TISSUE TUMORS
+Carlo Peron
+• Heterogeneous group of lesions, the diagnosis often requires invasive biopsy because many 
+tumors look similar on imaging [Fletcher, 2018]
+• Key clinical challenge: distinguishing benign from malignant subtypes non-invasively e.g. lipoma 
+vs well-differentiated liposarcoma appears nearly identical on MRI
+• Machine learning can help, but faces three barriers: (1) small labeled datasets, (2) high 
+computational cost of 3D volumes, (3) need for generalizable features across scanners and 
+protocols
+SOFT TISSUE TUMORS
+22/02/2026
+Footer
+2
+Well Differentiated Liposarcoma
+• WORC is a dataset containing 3 soft-tissue tumors classes, that 
+totals 930 patients across 6 tumor categories: GIST (246), 
+Desmoid (203), Liver (186), Lipo (115), Melanoma (103), CRLM 
+(77) 
+• Each case contains volumetric CT or MRI + expert segmentation 
+mask + clinical label [Starmans et al., 2021]
+WORC
+22/02/2026
+Footer
+3
+WORC scans
+• Why WORC is hard:
+• Small cohorts (77–246 cases) where deep learning typically needs 
+thousands
+• Subtle imaging differences, tasks are ambiguous even for expert 
+radiologists
+• Mixed modalities (CT and MRI), variable scanners and protocols
+WORC
+22/02/2026
+Footer
+4
+WORC scans
+• Foundation models are pre-trained on massive, diverse 
+datasets and can be reused across downstream tasks with 
+minimal adaptation
+• The advantages 
+• Time
+• Compute
+• Generalizability
+• Modularity
+FOUNDATION MODELS
+22/02/2026
+Footer
+5
+Foundation models
+• SAM-Med3D, a segmentation model 
+is used as encoder here requires the 
+input to be 128x128x128 so there’s 
+the need to do some preprocessing
+• After having extracted the features we 
+need to vectorize them in order to 
+allow TabPFN, the model used for 
+classification, to work
+FOUNDATION MODELS
+22/02/2026
+Footer
+6
+Foundation models
+• Three strategies compared all evaluated with TabPFN + 
+percentile pooling + 5-fold CV (Experiment 3):
+• Full volume baseline
+• Filtered baseline
+• ROI cropping
+PREPROCESSING
+22/02/2026
+Footer
+7
+• Foundation model for 3D medical image segmentation it extends Segment Anything 
+Model (SAM) from 2D natural images → 3D medical volumes [Wang et al., 2023] 
+• It is originally designed for segmentation, but in this study only part of the whole model 
+(the encoder) is used to extract features from the scans 
+SAM-MED3D
+22/02/2026
+Footer
+8
+SAM-Med3D architecture
+• Encoder output (384 × 8 × 8 × 8) must be compressed into a 
+fixed-size vector per case using a pooling layer + PCA
+• Three pooling strategies compared, all with TabPFN + ROI 
+cropping + 5-fold CV (Experiment 4):
+• Average pooling: global mean → 384-dim vector (no PCA needed)
+• Multiscale pooling: adaptive average at 1³, 2³, 4³ resolutions → 
+concatenate → 28,032-dim (PCA to ≤500)
+• Percentile pooling:10th, 25th, 50th, 75th, 90th percentile per 
+channel → 5 × 384 = 1,920-dim (PCA to ≤500)
+POOLING LAYER & STANDARDIZATION
+22/02/2026
+Footer
+9
+• Tabular Prior-data Fitted Network is a transformer-based classifier for 
+small tabular datasets [Hollmann et al., 2023]
+• In-context learning: training set + labels + test query concatenated → 
+single forward pass → class probabilities — no gradient updates at 
+inference
+• Designed for datasets with <10,000 samples is perfect for WORC 
+cohorts (77–246)
+TABPFN
+22/02/2026
+Footer
+10
+TabPFN architecture
+• LoCalPFN = Locally Calibrated PFN — extends TabPFN with 
+local neighborhood retrieval [Thomas et al., 2024]
+• Motivation: tumors have subtypes that occupy different regions of 
+feature space with different decision boundaries — a global 
+classifier may miss these [Atkeson et al., 1997]
+LOCALPFN
+22/02/2026
+Footer
+11
+TabPFN vs LoCalPFN decision 
+boundary
+• Experiment 1: Which preprocessing technique is optimal
+• Experiment 2: Which pooling layer leads to the best performance
+• Experiment 3: Custom methods against baselines 
+• Experiment 4: Attention maps, does SAM-Med3D look at the 
+lesions?
+• Experiment 5: Embeddings diagnostics, do the embeddings carry 
+label-discriminative features?
+• Experiment 6: Can a classification head positioned on top of 
+SAM-Med3D outperform TabPFN?
+THE EXPERIMENTS
+22/02/2026
+Footer
+12
+TabPFN vs LoCalPFN decision 
+boundary
+• Full volume baseline, Filtered baseline and ROI cropping were 
+compared to establish which one guaranteed the greatest gains
+• ROI cropping with 30-voxel margin appears to be the best performing 
+technique and it is therefore adopted as default for all subsequent 
+experiments
+PREPROCESSING
+22/02/2026
+Footer
+13
+• Multiscale and percentile comparable in accuracy and F1, but 
+percentile achieved highest mean AUC (0.637 vs 0.624)
+• Percentile uses 15× fewer raw features than multiscale → 
+more efficient PCA
+POOLING LAYER & STANDARDIZATION
+22/02/2026
+Footer
+14
+• The 4 methods compared on all 6 WORC datasets, Med3-
+TabPFN and Med3-LoCalPFN: frozen SAM-Med3D → 
+percentile pooling → PCA → tabular classifier (5-fold stratified 
+CV)
+• 3D DenseNet-121 and 3D ViT: trained from scratch, 50 
+epochs, cross-entropy loss (single 80/20 split)
+• 3D DenseNet-121 dominates: mean Acc = 76.4%, mean AUC 
+= 0.701 showing consistent results across all datasets 
+(69.6%–81.6%)
+TRANSFER LEARNING EXPERIMENT
+22/02/2026
+Footer
+15
+• LoCalPFN failed on the smaller datasets as the formula for 
+calculating the neighborhood is effective only when the 
+dataset size is equal or bigger than 125
+TRANSFER LEARNING EXPERIMENT
+22/02/2026
+Footer
+16
+• The goal is to determine whether the frozen encoder is even 
+"looking at" the tumor without even taking into consideration 
+the classifier
+• This has been achieved by capturing the self-attention 
+weights from all 12 ViT-B blocks using monkey-patching and 
+computing multiplicative rollout across the 4 global attention 
+blocks (2, 5, 8, 11) with residual mixing
+• The metrics collected are attention mass (fraction of attention 
+inside lesion mask) and concentration ratio (attention mass ÷ 
+lesion volume fraction; >1 = above chance)
+ATTENTION MAPS
+22/02/2026
+Footer
+17
+• Mean concentration ratio = 4.1× the encoder consistently attends to lesion regions
+• The encoder knows where the tumor is attending to the lesion is necessary, but not 
+sufficient; it must also encode label-discriminative features
+ATTENTION MAPS
+22/02/2026
+Footer
+18
+• Mann–Whitney U: tests whether different cases have 
+different values in each of the 1,920 feature dimensions 
+independently
+• HSIC / CKA: measures whether the entire feature matrix and 
+the label vector are statistically dependent as a whole
+• kNN agreement: checks whether nearby points in feature 
+space tend to share the same label
+EMBEDDINGS DIAGNOSTICS
+22/02/2026
+Footer
+19
+• Minimal detectable signal across datasets. Only Desmoid 
+and GIST showed any class separation
+• Where signal exists, it is distributed across many weak 
+dimensions rather than forming separable clusters
+EMBEDDINGS DIAGNOSTICS
+22/02/2026
+Footer
+20
+• Is the bottleneck the encoder or the downstream pipeline?
+• Lightweight FC head attached to frozen SAM-Med3D encoder 
+output; only the head is trained (200 epochs, AdamW, lr = 
+10⁻³, dropout = 0.3); same ROI-cropped 128³ inputs
+• The embedding diagnostics said "no signal" but the 
+classification head found strong signal in the same features. 
+The encoder distributes class-relevant information across 
+many dimensions in a collectively exploitable but individually 
+weak pattern
+CLASSIFICATION HEAD EXPERIMENT
+22/02/2026
+Footer
+21
+CLASSIFICATION HEAD EXPERIMENT
+22/02/2026
+Footer
+22
+• Mean AUC = 0.872, mean Acc = 79.1%
+• CRLM: AUC jumped from 0.395 (TabPFN) to 0.883 — largest 
+recovery (+0.488)
+•
+CLASSIFICATION HEAD EXPERIMENT
+22/02/2026
+Footer
+23
+• Transfer-learning pipeline (Exp 1): mean AUC = 0.555
+• Classification head on same frozen encoder (Exp 2): mean 
+AUC = 0.872
+• Bottleneck is downstream:  PCA → tabular classifier
+• The encoder distributes class cues across many weak 
+dimensions
+CONCLUSION
+22/02/2026
+Footer
+24

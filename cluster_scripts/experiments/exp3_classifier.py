@@ -67,6 +67,9 @@ def run_classification_head_for_dataset(
     use_roi_crop: bool = False,
     roi_margin: int = 30,
     roi_target_size: int = 128,
+    # K-Fold CV parameters
+    n_splits: int = 1,
+    random_state: int = 42,
 ):
     """
     Run classification head experiment for a single dataset
@@ -94,7 +97,10 @@ def run_classification_head_for_dataset(
         find_default_sam3d_root
     )
     from med3pipe.sam.core import load_labels_from_sheet
-    from med3pipe.training.classification_head import run_classification_head_experiment
+    from med3pipe.training.classification_head import (
+        run_classification_head_experiment,
+        run_classification_head_experiment_kfold,
+    )
     from med3pipe.tabular.lesion_filter import LesionSizeFilter
     
     print(f'\n{"="*80}')
@@ -280,46 +286,97 @@ def run_classification_head_for_dataset(
         )
         print(f'  Lesion filtering: ENABLED')
     
-    results = run_classification_head_experiment(
-        paths=paths,
-        lab_map=lab_map,
-        sam3d_root=sam3d_root,
-        model_type="vit_b_ori",
-        checkpoint=checkpoint_path,
-        img_size=img_size,
-        device=None,  # Auto-detect
-        freeze_encoder=freeze_encoder,
-        num_epochs=num_epochs,
-        batch_size=batch_size,
-        learning_rate=learning_rate,
-        weight_decay=weight_decay,
-        dropout=dropout,
-        num_workers=num_workers,
-        output_dir=output_dir,
-        pooling_strategy=pooling_strategy,
-        lesion_filter=lesion_filter,
-    )
+    # Choose between k-fold CV and single-split experiment
+    use_kfold = n_splits > 1
     
-    # Print summary
-    print(f'\n{"="*80}')
-    print(f'RESULTS FOR {dataset_key.upper()}')
-    print(f'{"="*80}')
-    print(f'Best Epoch: {results["best_epoch"]}')
-    print(f'Best Val AUC: {results["best_auc"]:.4f}')
-    metrics = results['final_metrics']
-    print(f'Final Accuracy: {metrics.accuracy:.4f}')
-    print(f'Final AUC: {metrics.auc:.4f}')
-    print(f'{"="*80}\n')
-    
-    return {
-        'dataset': dataset_key,
-        'category': category,
-        'best_epoch': results['best_epoch'],
-        'best_auc': results['best_auc'],
-        'final_accuracy': metrics.accuracy,
-        'final_auc': metrics.auc,
-        'output_dir': str(output_dir),
-    }
+    if use_kfold:
+        print(f'\n  Using {n_splits}-fold cross-validation (seed={random_state})')
+        results = run_classification_head_experiment_kfold(
+            paths=paths,
+            lab_map=lab_map,
+            n_splits=n_splits,
+            random_state=random_state,
+            sam3d_root=sam3d_root,
+            model_type="vit_b_ori",
+            checkpoint=checkpoint_path,
+            img_size=img_size,
+            device=None,  # Auto-detect
+            freeze_encoder=freeze_encoder,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            weight_decay=weight_decay,
+            dropout=dropout,
+            num_workers=num_workers,
+            output_dir=output_dir,
+            pooling_strategy=pooling_strategy,
+            lesion_filter=lesion_filter,
+        )
+        
+        # Print summary
+        print(f'\n{"="*80}')
+        print(f'RESULTS FOR {dataset_key.upper()} ({n_splits}-Fold CV)')
+        print(f'{"="*80}')
+        print(f'Mean Best AUC:  {results["mean_best_auc"]:.4f} ± {results["std_best_auc"]:.4f}')
+        print(f'Mean Final AUC: {results["mean_final_auc"]:.4f} ± {results["std_final_auc"]:.4f}')
+        print(f'Mean Accuracy:  {results["mean_accuracy"]:.4f} ± {results["std_accuracy"]:.4f}')
+        for r in results['fold_results']:
+            print(f'  Fold {r["fold"]}: AUC={r["best_auc"]:.4f}  Acc={r["final_accuracy"]:.4f}')
+        print(f'{"="*80}\n')
+        
+        return {
+            'dataset': dataset_key,
+            'category': category,
+            'n_splits': n_splits,
+            'mean_best_auc': results['mean_best_auc'],
+            'std_best_auc': results['std_best_auc'],
+            'mean_final_auc': results['mean_final_auc'],
+            'std_final_auc': results['std_final_auc'],
+            'mean_accuracy': results['mean_accuracy'],
+            'std_accuracy': results['std_accuracy'],
+            'output_dir': str(output_dir),
+        }
+    else:
+        results = run_classification_head_experiment(
+            paths=paths,
+            lab_map=lab_map,
+            sam3d_root=sam3d_root,
+            model_type="vit_b_ori",
+            checkpoint=checkpoint_path,
+            img_size=img_size,
+            device=None,  # Auto-detect
+            freeze_encoder=freeze_encoder,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            weight_decay=weight_decay,
+            dropout=dropout,
+            num_workers=num_workers,
+            output_dir=output_dir,
+            pooling_strategy=pooling_strategy,
+            lesion_filter=lesion_filter,
+        )
+        
+        # Print summary
+        print(f'\n{"="*80}')
+        print(f'RESULTS FOR {dataset_key.upper()}')
+        print(f'{"="*80}')
+        print(f'Best Epoch: {results["best_epoch"]}')
+        print(f'Best Val AUC: {results["best_auc"]:.4f}')
+        metrics = results['final_metrics']
+        print(f'Final Accuracy: {metrics.accuracy:.4f}')
+        print(f'Final AUC: {metrics.auc:.4f}')
+        print(f'{"="*80}\n')
+        
+        return {
+            'dataset': dataset_key,
+            'category': category,
+            'best_epoch': results['best_epoch'],
+            'best_auc': results['best_auc'],
+            'final_accuracy': metrics.accuracy,
+            'final_auc': metrics.auc,
+            'output_dir': str(output_dir),
+        }
 
 
 def main():
@@ -452,6 +509,20 @@ def main():
         help='ROI target size (default: 128)'
     )
     
+    # K-Fold CV parameters
+    parser.add_argument(
+        '--n-splits',
+        type=int,
+        default=5,
+        help='Number of stratified k-fold CV splits (default: 5). Use 1 for a single train/val split.'
+    )
+    parser.add_argument(
+        '--random-state',
+        type=int,
+        default=42,
+        help='Random seed for k-fold split (default: 42)'
+    )
+    
     args = parser.parse_args()
     
     # Setup paths
@@ -495,6 +566,12 @@ def main():
     print(f'Epochs: {args.epochs}')
     print(f'Batch size: {args.batch_size}')
     print(f'Learning rate: {args.lr}')
+    
+    # K-Fold CV info
+    if args.n_splits > 1:
+        print(f'Cross-validation: {args.n_splits}-fold (seed={args.random_state})')
+    else:
+        print(f'Cross-validation: DISABLED (single train/val split)')
     
     # Apply filter presets or use individual parameters
     min_voxels = args.min_voxels
@@ -550,6 +627,8 @@ def main():
                 use_roi_crop=args.use_roi_crop,
                 roi_margin=args.roi_margin,
                 roi_target_size=args.roi_target_size,
+                n_splits=args.n_splits,
+                random_state=args.random_state,
             )
             results_list.append(result)
             print(f'✅ SUCCESS: {ds_key}')

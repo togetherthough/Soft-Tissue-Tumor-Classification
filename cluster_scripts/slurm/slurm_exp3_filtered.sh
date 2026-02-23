@@ -104,7 +104,8 @@ python cluster_scripts/experiments/exp3_classifier.py \
     --epochs 20 \
     --batch-size 4 \
     --freeze-encoder \
-    --filter-preset recommended
+    --filter-preset recommended \
+    --n-splits 5
 
 # Alternative: Use custom filtering parameters instead of preset
 # Uncomment and modify these lines to use custom thresholds:

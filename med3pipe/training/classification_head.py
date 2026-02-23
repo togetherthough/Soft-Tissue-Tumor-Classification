@@ -12,7 +12,7 @@ before using them in the full TabPFN/LoCalPFN pipeline.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 import time
 
 import numpy as np
@@ -21,6 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import accuracy_score, roc_auc_score, classification_report, confusion_matrix
+from sklearn.model_selection import StratifiedKFold
 import SimpleITK as sitk
 
 from ..sam.core import (
@@ -643,3 +644,271 @@ def run_classification_head_experiment(
         print(f"\n✓ Results saved to {output_dir}")
     
     return results
+
+
+# ---------------------------------------------------------------------------
+# K-Fold Cross-Validation variant
+# ---------------------------------------------------------------------------
+
+def _gather_all_images_and_labels(
+    paths: Sam3DPaths,
+    lab_map: dict,
+    lesion_filter: Optional[LesionSizeFilter] = None,
+) -> Tuple[List[Path], List[int]]:
+    """Gather ALL image paths (train + val dirs) and their labels.
+
+    Returns:
+        (image_paths, labels) – parallel lists
+    """
+    valid_cases = None
+    if lesion_filter is not None and lesion_filter.is_enabled():
+        lesion_filter.print_filter_summary()
+        valid_cases = lesion_filter.get_valid_cases()
+
+    def _get_case_id(img_path: Path) -> str:
+        name = img_path.name
+        if name.endswith('.nii.gz'):
+            return name[:-7]
+        elif name.endswith('.nii'):
+            return name[:-4]
+        return img_path.stem
+
+    all_imgs: List[Path] = []
+    all_labels: List[int] = []
+
+    for search_dir in [paths.images_tr, paths.images_val]:
+        if not search_dir.exists():
+            continue
+        for img_path in sorted(search_dir.glob("*.nii.gz")):
+            case_id = _get_case_id(img_path)
+            if case_id not in lab_map:
+                continue
+            if valid_cases is not None and case_id not in valid_cases:
+                continue
+            all_imgs.append(img_path)
+            all_labels.append(lab_map[case_id])
+
+    # Deduplicate (same case_id may appear in both dirs after split_validation copies)
+    seen: dict[str, int] = {}
+    unique_imgs: List[Path] = []
+    unique_labels: List[int] = []
+    for img, lab in zip(all_imgs, all_labels):
+        cid = _get_case_id(img)
+        if cid not in seen:
+            seen[cid] = len(unique_imgs)
+            unique_imgs.append(img)
+            unique_labels.append(lab)
+
+    return unique_imgs, unique_labels
+
+
+def run_classification_head_experiment_kfold(
+    paths: Sam3DPaths,
+    lab_map: dict,
+    *,
+    n_splits: int = 5,
+    random_state: int = 42,
+    sam3d_root: Optional[Path] = None,
+    model_type: str = "vit_b_ori",
+    checkpoint: Optional[Path] = None,
+    img_size: int = 128,
+    device: Optional[str] = None,
+    freeze_encoder: bool = True,
+    num_epochs: int = 10,
+    batch_size: int = 4,
+    learning_rate: float = 1e-3,
+    weight_decay: float = 1e-4,
+    dropout: float = 0.3,
+    num_workers: int = 2,
+    output_dir: Optional[Path] = None,
+    use_medim: bool = True,
+    pooling_strategy: str = 'percentile',
+    lesion_filter: Optional[LesionSizeFilter] = None,
+) -> Dict[str, Any]:
+    """Run classification head experiment with Stratified K-Fold cross-validation.
+
+    Instead of a single train/val split, this trains *n_splits* models, each
+    time holding out a different fold as the validation set.  The per-fold
+    metrics are aggregated into mean ± std.
+
+    Returns a dict with:
+        fold_results  – list of per-fold result dicts
+        mean_auc      – mean best validation AUC across folds
+        std_auc       – std of best validation AUC across folds
+        mean_accuracy – mean final accuracy across folds
+        std_accuracy  – std of final accuracy across folds
+    """
+    sam3d_root = sam3d_root or find_default_sam3d_root()
+
+    if device is None:
+        torch_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    else:
+        torch_device = torch.device(device)
+
+    print(f"\n{'='*60}")
+    print("SAM-Med3D Classification Head – K-Fold CV")
+    print(f"{'='*60}")
+    print(f"Device: {torch_device}")
+    print(f"Model: {model_type}")
+    print(f"Encoder frozen: {freeze_encoder}")
+    print(f"Image size: {img_size}")
+    print(f"Batch size: {batch_size}")
+    print(f"Epochs: {num_epochs}")
+    print(f"Learning rate: {learning_rate}")
+    print(f"K-Fold splits: {n_splits}")
+    print(f"Random state: {random_state}")
+    print(f"{'='*60}\n")
+
+    # ---- gather ALL samples ----
+    all_imgs, all_labels = _gather_all_images_and_labels(paths, lab_map, lesion_filter)
+    all_labels_np = np.array(all_labels)
+    print(f"[INFO] Total samples for CV: {len(all_imgs)}")
+    unique, counts = np.unique(all_labels_np, return_counts=True)
+    for u, c in zip(unique, counts):
+        print(f"  Class {u}: {c} samples")
+
+    pre_transform = make_pre_transform(img_size=img_size)
+
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    fold_results: List[Dict[str, Any]] = []
+
+    for fold_idx, (train_indices, val_indices) in enumerate(skf.split(all_imgs, all_labels_np)):
+        print(f"\n{'='*60}")
+        print(f"  FOLD {fold_idx + 1} / {n_splits}")
+        print(f"{'='*60}")
+        print(f"  Train: {len(train_indices)} | Val: {len(val_indices)}")
+
+        train_imgs_fold = [all_imgs[i] for i in train_indices]
+        train_labels_fold = [all_labels[i] for i in train_indices]
+        val_imgs_fold = [all_imgs[i] for i in val_indices]
+        val_labels_fold = [all_labels[i] for i in val_indices]
+
+        train_ds = TumorDataset(train_imgs_fold, train_labels_fold, pre_transform=pre_transform)
+        val_ds = TumorDataset(val_imgs_fold, val_labels_fold, pre_transform=pre_transform)
+
+        train_loader = DataLoader(
+            train_ds, batch_size=batch_size, shuffle=True,
+            num_workers=num_workers, pin_memory=True,
+        )
+        val_loader = DataLoader(
+            val_ds, batch_size=batch_size, shuffle=False,
+            num_workers=num_workers, pin_memory=True,
+        )
+
+        # Build a fresh model for every fold
+        sam_model = build_sam3d_model(
+            sam3d_root=sam3d_root,
+            model_type=model_type,
+            checkpoint=checkpoint,
+            device=torch_device,
+            eval_mode=False,
+            use_medim=use_medim,
+        )
+        model = SAMWithClassificationHead(
+            sam_model=sam_model,
+            num_classes=2,
+            dropout=dropout,
+            freeze_encoder=freeze_encoder,
+            pooling_strategy=pooling_strategy,
+        )
+
+        fold_out_dir = None
+        if output_dir is not None:
+            fold_out_dir = Path(output_dir) / f"fold_{fold_idx + 1}"
+            fold_out_dir.mkdir(parents=True, exist_ok=True)
+
+        results = train_classification_head(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            device=torch_device,
+            num_epochs=num_epochs,
+            learning_rate=learning_rate,
+            weight_decay=weight_decay,
+            output_dir=fold_out_dir,
+        )
+
+        metrics = results["final_metrics"]
+
+        fold_result = {
+            "fold": fold_idx + 1,
+            "best_epoch": results["best_epoch"],
+            "best_auc": results["best_auc"],
+            "final_accuracy": metrics.accuracy,
+            "final_auc": metrics.auc,
+        }
+        fold_results.append(fold_result)
+
+        # Save per-fold artefacts
+        if fold_out_dir is not None:
+            np.save(fold_out_dir / "history.npy", results["history"])
+            np.save(fold_out_dir / "predictions.npy", metrics.predictions)
+            np.save(fold_out_dir / "targets.npy", metrics.targets)
+            np.save(fold_out_dir / "probabilities.npy", metrics.probabilities)
+
+            with open(fold_out_dir / "summary.txt", "w") as f:
+                f.write(f"Fold {fold_idx + 1} / {n_splits}\n")
+                f.write(f"{'='*60}\n")
+                f.write(f"Best epoch: {results['best_epoch']}\n")
+                f.write(f"Best AUC: {results['best_auc']:.4f}\n")
+                f.write(f"Final Accuracy: {metrics.accuracy:.4f}\n")
+                f.write(f"Final AUC: {metrics.auc:.4f}\n")
+                f.write(f"\nConfusion Matrix:\n{metrics.confusion_matrix}\n")
+                f.write(f"\nClassification Report:\n{metrics.classification_report}\n")
+
+        print(f"\n  Fold {fold_idx + 1} done — Best AUC: {results['best_auc']:.4f}, "
+              f"Final Acc: {metrics.accuracy:.4f}, Final AUC: {metrics.auc:.4f}")
+
+    # ---- aggregate across folds ----
+    aucs = [r["best_auc"] for r in fold_results]
+    accs = [r["final_accuracy"] for r in fold_results]
+    final_aucs = [r["final_auc"] for r in fold_results]
+
+    mean_best_auc = float(np.mean(aucs))
+    std_best_auc = float(np.std(aucs))
+    mean_acc = float(np.mean(accs))
+    std_acc = float(np.std(accs))
+    mean_final_auc = float(np.mean(final_aucs))
+    std_final_auc = float(np.std(final_aucs))
+
+    print(f"\n{'='*60}")
+    print(f"  K-FOLD CV SUMMARY  ({n_splits} folds)")
+    print(f"{'='*60}")
+    print(f"  Best AUC:      {mean_best_auc:.4f} ± {std_best_auc:.4f}")
+    print(f"  Final AUC:     {mean_final_auc:.4f} ± {std_final_auc:.4f}")
+    print(f"  Final Accuracy:{mean_acc:.4f} ± {std_acc:.4f}")
+    for r in fold_results:
+        print(f"    Fold {r['fold']}: AUC={r['best_auc']:.4f}  Acc={r['final_accuracy']:.4f}")
+    print(f"{'='*60}\n")
+
+    # Save overall summary
+    if output_dir is not None:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        with open(output_dir / "kfold_summary.txt", "w") as f:
+            f.write(f"K-Fold CV Summary ({n_splits} folds, seed={random_state})\n")
+            f.write(f"{'='*60}\n")
+            f.write(f"Best AUC:       {mean_best_auc:.4f} ± {std_best_auc:.4f}\n")
+            f.write(f"Final AUC:      {mean_final_auc:.4f} ± {std_final_auc:.4f}\n")
+            f.write(f"Final Accuracy: {mean_acc:.4f} ± {std_acc:.4f}\n\n")
+            for r in fold_results:
+                f.write(f"Fold {r['fold']}: best_auc={r['best_auc']:.4f}  "
+                        f"final_auc={r['final_auc']:.4f}  acc={r['final_accuracy']:.4f}  "
+                        f"best_epoch={r['best_epoch']}\n")
+
+        # Also save as CSV for easy parsing
+        import pandas as pd
+        fold_df = pd.DataFrame(fold_results)
+        fold_df.to_csv(output_dir / "kfold_results.csv", index=False)
+        print(f"✓ K-fold results saved to {output_dir}")
+
+    return {
+        "fold_results": fold_results,
+        "mean_best_auc": mean_best_auc,
+        "std_best_auc": std_best_auc,
+        "mean_final_auc": mean_final_auc,
+        "std_final_auc": std_final_auc,
+        "mean_accuracy": mean_acc,
+        "std_accuracy": std_acc,
+        "n_splits": n_splits,
+    }
