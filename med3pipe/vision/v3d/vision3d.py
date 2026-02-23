@@ -165,6 +165,7 @@ class VolumeDataset(Dataset[Tuple[torch.Tensor, int, str, str]]):
         lab_map: Dict[str, int],
         img_size: int = 96,
         augment: bool = False,
+        file_paths: Optional[List[Path]] = None,
     ) -> None:
         super().__init__()
         self.img_dir = Path(img_dir)
@@ -172,12 +173,16 @@ class VolumeDataset(Dataset[Tuple[torch.Tensor, int, str, str]]):
         self.img_size = img_size
         self.augment = augment
         self.paths: List[Path] = []
-        # collect NIfTI files that have labels
-        for ext in ("*.nii.gz", "*.nii"):
-            for p in sorted(self.img_dir.glob(ext)):
-                cid = _normalize_case_id_from_filename(p.name)
-                if cid in self.lab_map:
-                    self.paths.append(p)
+        if file_paths is not None:
+            # Use explicitly provided file paths (e.g. for k-fold CV)
+            self.paths = list(file_paths)
+        else:
+            # collect NIfTI files that have labels
+            for ext in ("*.nii.gz", "*.nii"):
+                for p in sorted(self.img_dir.glob(ext)):
+                    cid = _normalize_case_id_from_filename(p.name)
+                    if cid in self.lab_map:
+                        self.paths.append(p)
         if len(self.paths) == 0:
             # Build a helpful error message
             all_files: List[Path] = []
@@ -554,6 +559,199 @@ def _build_dataloaders_from_paths(
     return dl_tr, dl_va
 
 
+def _collect_all_labeled_volumes(
+    paths: Sam3DPaths,
+    lab_map: Dict[str, int],
+    lesion_filter=None,
+) -> Tuple[List[Path], List[int]]:
+    """Collect all NIfTI volumes from both train and val dirs that have labels.
+
+    Returns (file_paths, labels) sorted by case ID.
+    """
+    from ...tabular.lesion_filter import LesionSizeFilter
+
+    valid_cases = None
+    if lesion_filter is not None and isinstance(lesion_filter, LesionSizeFilter) and lesion_filter.is_enabled():
+        valid_cases = lesion_filter.get_valid_cases()
+
+    all_files: List[Path] = []
+    all_labels: List[int] = []
+
+    for img_dir in [paths.images_tr, paths.images_val]:
+        if not img_dir.exists():
+            continue
+        for ext in ("*.nii.gz", "*.nii"):
+            for p in sorted(img_dir.glob(ext)):
+                cid = _normalize_case_id_from_filename(p.name)
+                if cid not in lab_map:
+                    continue
+                if valid_cases is not None and cid not in valid_cases:
+                    continue
+                all_files.append(p)
+                all_labels.append(lab_map[cid])
+
+    # Deduplicate by case ID (prefer imagesTr if present in both)
+    seen: Dict[str, int] = {}
+    deduped_files: List[Path] = []
+    deduped_labels: List[int] = []
+    for fp, lab in zip(all_files, all_labels):
+        cid = _normalize_case_id_from_filename(fp.name)
+        if cid not in seen:
+            seen[cid] = len(deduped_files)
+            deduped_files.append(fp)
+            deduped_labels.append(lab)
+
+    return deduped_files, deduped_labels
+
+
+def _train_eval_model_kfold(
+    model_builder,
+    paths: Sam3DPaths,
+    lab_map: Dict[str, int],
+    cfg: Train3DConfig,
+    n_splits: int = 5,
+    random_state: int = 42,
+    lesion_filter=None,
+) -> Dict[str, Any]:
+    """Train and evaluate a 3D model using stratified k-fold CV.
+
+    Args:
+        model_builder: Callable that returns a fresh nn.Module (called per fold).
+        paths: Sam3DPaths for locating NIfTI volumes.
+        lab_map: case_id -> label mapping.
+        cfg: Training configuration.
+        n_splits: Number of CV folds.
+        random_state: Random seed for reproducibility.
+        lesion_filter: Optional lesion size filter.
+
+    Returns:
+        Dict with averaged metrics and per-fold details.
+    """
+    from sklearn.model_selection import StratifiedKFold
+
+    all_files, all_labels = _collect_all_labeled_volumes(paths, lab_map, lesion_filter)
+    n_total = len(all_files)
+    if n_total == 0:
+        raise ValueError("No labeled volumes found for k-fold CV")
+
+    print(f"  [K-FOLD] {n_total} total volumes, {n_splits}-fold stratified CV")
+
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    dev = _device(cfg.device)
+
+    fold_metrics: List[Dict[str, Any]] = []
+    all_y_true: List[int] = []
+    all_y_pred: List[int] = []
+    all_y_proba: List[np.ndarray] = []
+    all_case_ids: List[str] = []
+
+    files_arr = np.array(all_files, dtype=object)
+    labels_arr = np.array(all_labels)
+
+    for fold_idx, (train_idx, val_idx) in enumerate(skf.split(files_arr, labels_arr)):
+        print(f"  [K-FOLD] Fold {fold_idx + 1}/{n_splits}: "
+              f"train={len(train_idx)}, val={len(val_idx)}")
+
+        _set_seed(cfg.seed + fold_idx)
+
+        train_files = [all_files[i] for i in train_idx]
+        val_files = [all_files[i] for i in val_idx]
+
+        # Build fold-specific dataloaders using file_paths parameter
+        ds_tr = VolumeDataset(
+            img_dir=paths.images_tr,  # used for transforms reference only
+            lab_map=lab_map,
+            img_size=cfg.img_size,
+            augment=cfg.augment,
+            file_paths=train_files,
+        )
+        ds_va = VolumeDataset(
+            img_dir=paths.images_tr,
+            lab_map=lab_map,
+            img_size=cfg.img_size,
+            augment=False,
+            file_paths=val_files,
+        )
+
+        dl_tr = DataLoader(ds_tr, batch_size=cfg.batch_size, shuffle=True,
+                           num_workers=cfg.num_workers, pin_memory=True)
+        dl_va = DataLoader(ds_va, batch_size=cfg.batch_size, shuffle=False,
+                           num_workers=cfg.num_workers, pin_memory=True)
+
+        # Build fresh model for this fold
+        model = model_builder()
+        model, fit_info = _fit_model(model, dl_tr, dl_va, dev,
+                                     cfg.epochs, cfg.lr, cfg.weight_decay)
+
+        # Evaluate on this fold's validation set
+        eval_res = _evaluate_3d(model, dl_va, dev)
+        fold_metrics.append({
+            'fold': fold_idx + 1,
+            'acc': eval_res['acc'],
+            'macro_f1': eval_res['macro_f1'],
+            'roc_auc': eval_res['roc_auc'],
+            'best_val_acc': fit_info['best_val_acc'],
+        })
+
+        all_y_true.extend(eval_res['y_true'])
+        all_y_pred.extend(eval_res['y_pred'])
+        all_y_proba.extend(eval_res['y_proba'])
+        all_case_ids.extend(eval_res['case_ids'])
+
+        print(f"  [K-FOLD] Fold {fold_idx + 1} => "
+              f"acc={eval_res['acc']:.4f}, "
+              f"f1={eval_res['macro_f1']:.4f}, "
+              f"auc={eval_res['roc_auc']:.4f}" if eval_res['roc_auc'] is not None
+              else f"  [K-FOLD] Fold {fold_idx + 1} => "
+                   f"acc={eval_res['acc']:.4f}, "
+                   f"f1={eval_res['macro_f1']:.4f}, auc=N/A")
+
+        # Free GPU memory between folds
+        del model
+        torch.cuda.empty_cache()
+
+    # Aggregate metrics across folds
+    accs = [m['acc'] for m in fold_metrics]
+    f1s = [m['macro_f1'] for m in fold_metrics]
+    aucs = [m['roc_auc'] for m in fold_metrics if m['roc_auc'] is not None]
+
+    avg_acc = float(np.mean(accs))
+    avg_f1 = float(np.mean(f1s))
+    avg_auc = float(np.mean(aucs)) if aucs else None
+
+    # Also compute pooled ROC AUC from all fold predictions
+    pooled_auc = None
+    try:
+        from sklearn.metrics import roc_auc_score
+        proba_arr = np.array(all_y_proba)
+        if proba_arr.ndim == 2 and proba_arr.shape[1] == 2:
+            pooled_auc = float(roc_auc_score(all_y_true, proba_arr[:, 1]))
+    except Exception:
+        pass
+
+    print(f"  [K-FOLD] Mean: acc={avg_acc:.4f}, f1={avg_f1:.4f}, "
+          f"auc={avg_auc:.4f}" if avg_auc is not None else
+          f"  [K-FOLD] Mean: acc={avg_acc:.4f}, f1={avg_f1:.4f}, auc=N/A")
+
+    return {
+        'eval': {
+            'acc': avg_acc,
+            'macro_f1': avg_f1,
+            'roc_auc': avg_auc,
+            'pooled_roc_auc': pooled_auc,
+            'y_true': all_y_true,
+            'y_pred': all_y_pred,
+            'y_proba': all_y_proba,
+            'case_ids': all_case_ids,
+            'report': '',
+            'cm': [],
+        },
+        'fold_metrics': fold_metrics,
+        'n_splits': n_splits,
+        'n_total_samples': n_total,
+    }
+
+
 def train_eval_densenet121_3d(
     paths: Sam3DPaths,
     sheet_csv: Optional[Path] = None,
@@ -574,6 +772,9 @@ def train_eval_densenet121_3d(
     num_workers: Optional[int] = None,
     augment: Optional[bool] = None,
     device: Optional[str] = None,
+    # Cross-validation
+    n_splits: int = 1,
+    random_state: int = 42,
     # Lesion filtering
     lesion_filter=None,  # Optional[LesionSizeFilter]
 ) -> Dict[str, Any]:
@@ -588,7 +789,6 @@ def train_eval_densenet121_3d(
     if device is not None: cfg.device = device
 
     _set_seed(cfg.seed)
-    dev = _device(cfg.device)
 
     # labels (resolve sheet_csv with fallbacks)
     sheet_csv_resolved = _resolve_sheet_csv(sheet_csv, paths, dataset_root)
@@ -599,6 +799,43 @@ def train_eval_densenet121_3d(
         label_col=label_col,
         case_suffix=case_suffix,
     )
+
+    # ---- K-fold CV path ----
+    if n_splits > 1:
+        def _build_densenet():
+            return build_densenet121_3d(num_classes=num_classes, in_channels=1)
+
+        kfold_result = _train_eval_model_kfold(
+            model_builder=_build_densenet,
+            paths=paths,
+            lab_map=lab_map,
+            cfg=cfg,
+            n_splits=n_splits,
+            random_state=random_state,
+            lesion_filter=lesion_filter,
+        )
+        # Save summary outputs
+        project_root = paths.sam3d_root.parent.parent
+        base_dir = project_root / "notebooks" / "baselines"
+        out_dir = base_dir / f"densenet121_3d_{_timestamp()}"
+        base_dir.mkdir(parents=True, exist_ok=True)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        _save_run_outputs(
+            out_dir,
+            {
+                "model": "densenet121_3d",
+                "num_classes": num_classes,
+                "train_config": vars(cfg),
+                "cv": {"n_splits": n_splits, "random_state": random_state},
+                "fold_metrics": kfold_result['fold_metrics'],
+            },
+            kfold_result['eval'],
+        )
+        kfold_result['out_dir'] = out_dir
+        return kfold_result
+
+    # ---- Single split path (legacy) ----
+    dev = _device(cfg.device)
     dl_tr, dl_va = _build_dataloaders_from_paths(paths, lab_map, cfg.img_size, cfg.batch_size, cfg.num_workers, cfg.augment, lesion_filter=lesion_filter)
 
     model = build_densenet121_3d(num_classes=num_classes, in_channels=1)
@@ -663,6 +900,9 @@ def train_eval_vit_3d(
     num_workers: Optional[int] = None,
     augment: Optional[bool] = None,
     device: Optional[str] = None,
+    # Cross-validation
+    n_splits: int = 1,
+    random_state: int = 42,
     # Lesion filtering
     lesion_filter=None,  # Optional[LesionSizeFilter]
 ) -> Dict[str, Any]:
@@ -677,7 +917,6 @@ def train_eval_vit_3d(
     if device is not None: cfg.device = device
 
     _set_seed(cfg.seed)
-    dev = _device(cfg.device)
 
     sheet_csv_resolved = _resolve_sheet_csv(sheet_csv, paths, dataset_root)
     _, lab_map = load_labels_from_sheet(
@@ -687,6 +926,64 @@ def train_eval_vit_3d(
         label_col=label_col,
         case_suffix=case_suffix,
     )
+
+    # ---- K-fold CV path ----
+    if n_splits > 1:
+        def _build_vit():
+            return build_vit_3d(
+                num_classes=num_classes,
+                in_channels=1,
+                img_size=img_size_3d,
+                patch_size=patch_size,
+                hidden_size=hidden_size,
+                mlp_dim=mlp_dim,
+                num_layers=num_layers,
+                num_heads=num_heads,
+                pos_embed=pos_embed,
+                dropout_rate=dropout_rate,
+            )
+
+        kfold_result = _train_eval_model_kfold(
+            model_builder=_build_vit,
+            paths=paths,
+            lab_map=lab_map,
+            cfg=cfg,
+            n_splits=n_splits,
+            random_state=random_state,
+            lesion_filter=lesion_filter,
+        )
+        # Save summary outputs
+        project_root = paths.sam3d_root.parent.parent
+        base_dir = project_root / "notebooks" / "baselines"
+        out_dir = base_dir / f"vit3d_{_timestamp()}"
+        base_dir.mkdir(parents=True, exist_ok=True)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        _save_run_outputs(
+            out_dir,
+            {
+                "model": "vit3d",
+                "num_classes": num_classes,
+                "train_config": vars(cfg),
+                "cv": {"n_splits": n_splits, "random_state": random_state},
+                "fold_metrics": kfold_result['fold_metrics'],
+                "vit": {
+                    "img_size_3d": list(img_size_3d),
+                    "patch_size": list(patch_size),
+                    "hidden_size": hidden_size,
+                    "mlp_dim": mlp_dim,
+                    "num_layers": num_layers,
+                    "num_heads": num_heads,
+                    "pos_embed": pos_embed,
+                    "dropout_rate": dropout_rate,
+                },
+            },
+            kfold_result['eval'],
+        )
+        kfold_result['out_dir'] = out_dir
+        return kfold_result
+
+    # ---- Single split path (legacy) ----
+    dev = _device(cfg.device)
     dl_tr, dl_va = _build_dataloaders_from_paths(paths, lab_map, cfg.img_size, cfg.batch_size, cfg.num_workers, cfg.augment, lesion_filter=lesion_filter)
 
     model = build_vit_3d(

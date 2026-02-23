@@ -333,7 +333,7 @@ def run_experiment(
             paths.ensure()
             
             # DenseNet121-3D
-            print(f'\n  -> Running DenseNet121-3D on {ds_key}...')
+            print(f'\n  -> Running DenseNet121-3D on {ds_key} ({n_splits}-fold CV)...')
             try:
                 d121 = train_eval_densenet121_3d(
                     paths=paths,
@@ -345,6 +345,8 @@ def run_experiment(
                     dataset_root=ds_root,
                     epochs=epochs_3d,
                     device=None,
+                    n_splits=n_splits,
+                    random_state=random_state,
                     lesion_filter=lesion_filter,
                 )
                 er = d121['eval']
@@ -373,7 +375,7 @@ def run_experiment(
                 })
             
             # ViT-3D
-            print(f'\n  -> Running ViT-3D on {ds_key}...')
+            print(f'\n  -> Running ViT-3D on {ds_key} ({n_splits}-fold CV)...')
             try:
                 vit = train_eval_vit_3d(
                     paths=paths,
@@ -385,6 +387,8 @@ def run_experiment(
                     dataset_root=ds_root,
                     epochs=epochs_3d,
                     device=None,
+                    n_splits=n_splits,
+                    random_state=random_state,
                     lesion_filter=lesion_filter,
                 )
                 er = vit['eval']
