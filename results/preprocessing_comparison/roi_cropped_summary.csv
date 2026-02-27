@@ -1,0 +1,7 @@
+dataset,category,ct_name,method,accuracy,macro_f1,roc_auc,out_dir,metrics_path,pred_path,error
+crlm,crlm,ct_CRLM,tabpfn,0.5083333333333333,0.46373284266473125,0.49107142857142855,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/roi_cropped/tabpfn_runs/crlm_ct_CRLM_20260211_175754,,,
+desmoid,desmoid,ct_DESMOID,tabpfn,0.6943902439024391,0.6126373263838604,0.6585551485551485,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/roi_cropped/tabpfn_runs/desmoid_ct_DESMOID_20260211_175855,,,
+gist,gist,ct_GIST,tabpfn,0.6173877551020408,0.6166080720525865,0.6540600000000001,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/roi_cropped/tabpfn_runs/gist_ct_GIST_20260211_180030,,,
+lipo,lipo,mr_LIPO,tabpfn,0.5043478260869565,0.4965531095737045,0.46590909090909094,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/roi_cropped/tabpfn_runs/lipo_mr_LIPO_20260211_180332,,,
+liver,liver,ct_LIVER,tabpfn,0.596728307254623,0.5916604128108865,0.6054170514004309,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/roi_cropped/tabpfn_runs/liver_ct_LIVER_20260211_180426,,,
+melanoma,melanoma,ct_MELANOMA,tabpfn,0.4757142857142857,0.4615943012656568,0.5258181818181817,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/roi_cropped/tabpfn_runs/melanoma_ct_MELANOMA_20260211_180545,,,

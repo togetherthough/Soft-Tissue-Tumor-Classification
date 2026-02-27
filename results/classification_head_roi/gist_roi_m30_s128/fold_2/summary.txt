@@ -1,0 +1,21 @@
+Fold 2 / 5
+============================================================
+Best epoch: 70
+Best AUC: 0.7033
+Final Accuracy: 0.6327
+Final AUC: 0.7017
+
+Confusion Matrix:
+[[15  9]
+ [ 9 16]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+      Benign       0.62      0.62      0.62        24
+   Malignant       0.64      0.64      0.64        25
+
+    accuracy                           0.63        49
+   macro avg       0.63      0.63      0.63        49
+weighted avg       0.63      0.63      0.63        49
+

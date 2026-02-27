@@ -1,0 +1,11 @@
+K-Fold CV Summary (5 folds, seed=42)
+============================================================
+Best AUC:       0.7091 ± 0.0440
+Final AUC:      0.6802 ± 0.0498
+Final Accuracy: 0.6654 ± 0.0639
+
+Fold 1: best_auc=0.6614  final_auc=0.6561  acc=0.6585  best_epoch=128
+Fold 2: best_auc=0.7385  final_auc=0.6282  acc=0.5854  best_epoch=4
+Fold 3: best_auc=0.6897  final_auc=0.6744  acc=0.6829  best_epoch=32
+Fold 4: best_auc=0.6758  final_auc=0.6676  acc=0.6250  best_epoch=103
+Fold 5: best_auc=0.7802  final_auc=0.7747  acc=0.7750  best_epoch=117

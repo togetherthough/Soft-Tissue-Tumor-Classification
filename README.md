@@ -6,7 +6,6 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Overview
 
 Med3Tab-PFN is a novel **transfer learning framework** for binary classification of 3D medical imaging data (CT/MRI). It combines:
 
@@ -35,7 +34,7 @@ Med3Tab-PFN is a novel **transfer learning framework** for binary classification
 │                                                   │                           │
 │                                                   ▼                           │
 │   ┌─────────────┐    ┌──────────────────┐    ┌──────────────────────────┐    │
-│   │   Labels    │───▶│   TabPFN or      │◀───│   Average Pooling +      │    │
+│   │   Labels    │───▶│   TabPFN or      │◀───│   Percentile Pooling +      │    │
 │   │  (Binary)   │    │   LoCalPFN       │    │   Standardization + PCA  │    │
 │   └─────────────┘    └────────┬─────────┘    └──────────────────────────┘    │
 │                               │                                               │
@@ -55,7 +54,6 @@ Med3Tab-PFN is a novel **transfer learning framework** for binary classification
 | 🧠 **TabPFN/LoCalPFN** | State-of-the-art tabular classification with minimal hyperparameter tuning |
 | 📊 **Multi-Dataset** | Process multiple datasets via unified YAML configuration |
 | 🎯 **ROI Cropping** | Tumor-centered preprocessing for focused feature extraction |
-| 🔧 **Lesion Filtering** | Quality-based sample filtering to remove noisy data |
 | 📈 **Benchmarking** | Built-in comparison with DenseNet121-3D and ViT-3D baselines |
 | 🖥️ **HPC Ready** | SLURM scripts for cluster deployment |
 
@@ -66,8 +64,8 @@ Med3Tab-PFN is a novel **transfer learning framework** for binary classification
 ### 1. Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/Med3Tab-PFN.git
+# Clone the repository (replace with the repository URL provided by your institution)
+git clone <repository-url>
 cd Med3Tab-PFN
 
 # Create virtual environment
@@ -210,7 +208,9 @@ Med3Tab-PFN/
 │   └── training/          # Training utilities
 ├── notebooks/             # Jupyter notebooks
 │   ├── walkthrough/       # Step-by-step tutorials
-│   └── experiments/       # Experiment notebooks
+│   ├── experiments/       # Experiment notebooks
+│   └── visualization/     # Visualization notebooks and plots
+|   |__ visualization
 ├── cluster_scripts/       # HPC experiment scripts
 │   ├── experiments/       # Python scripts
 │   └── slurm/             # SLURM job scripts
@@ -237,7 +237,6 @@ Med3Tab-PFN/
 ### Technical Guides
 - [Preprocessing Pipeline](docs/technical/preprocessing.md) — Resize-then-pad approach
 - [Embedding Extraction](docs/technical/embeddings.md) — Reusing cached embeddings
-- [Lesion Filtering](docs/FILTERING.md) — Quality-based sample selection
 - [Multi-Dataset Workflows](docs/technical/multi-dataset.md)
 
 ### HPC & Experiments
@@ -259,17 +258,7 @@ See [med3pipe/requirements.txt](med3pipe/requirements.txt) for dependencies.
 
 ---
 
-## Citation
 
-```bibtex
-@mastersthesis{med3tabpfn2026,
-  title={Transfer Learning for 3D Medical Image Classification 
-         using SAM-Med3D and Tabular Foundation Models},
-  author={Your Name},
-  school={Your Institution},
-  year={2026}
-}
-```
 
 ## Acknowledgments
 
@@ -285,6 +274,5 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE) for de
 ---
 
 <p align="center">
-  <b>Questions?</b> Open an <a href="https://github.com/yourusername/Med3Tab-PFN/issues">issue</a> · 
-  Check the <a href="docs/TROUBLESHOOTING.md">troubleshooting guide</a>
+  See the troubleshooting guide in `docs/TROUBLESHOOTING.md` for common issues.
 </p>

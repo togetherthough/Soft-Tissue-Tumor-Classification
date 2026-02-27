@@ -1,0 +1,20 @@
+{
+  "device": "cuda",
+  "clf_kwargs": {},
+  "train_time_sec": 0.2128598690032959,
+  "tabpfn_src": null,
+  "shapes": {
+    "X_train": [
+      83,
+      83
+    ],
+    "X_val": [
+      20,
+      83
+    ]
+  },
+  "classes": [
+    0,
+    1
+  ]
+}

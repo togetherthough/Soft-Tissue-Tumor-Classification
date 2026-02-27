@@ -1,0 +1,46 @@
+dataset,category,ct_name,method,accuracy,macro_f1,roc_auc,out_dir,metrics_path,pred_path,error
+crlm,crlm,ct_CRLM,tabpfn,0.5083333333333333,0.46373284266473125,0.49107142857142855,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/crlm_ct_CRLM_20260223_140702,,,
+desmoid,desmoid,ct_DESMOID,tabpfn,0.6943902439024391,0.6126373263838604,0.6585551485551485,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/desmoid_ct_DESMOID_20260223_140752,,,
+gist,gist,ct_GIST,tabpfn,0.5971428571428571,0.5952838541583773,0.6523066666666667,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/gist_ct_GIST_20260223_140911,,,
+lipo,lipo,mr_LIPO,tabpfn,0.5043478260869565,0.4965531095737045,0.46590909090909094,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/lipo_mr_LIPO_20260223_141729,,,
+liver,liver,ct_LIVER,tabpfn,0.596728307254623,0.5916604128108865,0.6054170514004309,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/liver_ct_LIVER_20260223_141834,,,
+melanoma,melanoma,ct_MELANOMA,tabpfn,0.4757142857142857,0.4615943012656568,0.5258181818181817,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/melanoma_ct_MELANOMA_20260223_141931,,,
+crlm,crlm,ct_CRLM,localpfn,,,,,,,"Expected n_neighbors <= n_samples_fit, but n_neighbors = 78, n_samples_fit = 61, n_samples = 61
+Traceback (most recent call last):
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 275, in _run_multi_core
+    res = run_single_dataset(
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 292, in run_single_dataset
+    local_res = localpfn_pipeline(
+ValueError: Expected n_neighbors <= n_samples_fit, but n_neighbors = 78, n_samples_fit = 61, n_samples = 61
+"
+desmoid,desmoid,ct_DESMOID,localpfn,0.6453658536585365,0.5267844571428028,0.6451363451363451,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/local_desmoid_ct_DESMOID_20260223_142526,,,
+gist,gist,ct_GIST,localpfn,0.641795918367347,0.6414520233625366,0.6716333333333333,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/local_gist_ct_GIST_20260223_144006,,,
+lipo,lipo,mr_LIPO,localpfn,,,,,,,"Expected n_neighbors <= n_samples_fit, but n_neighbors = 95, n_samples_fit = 92, n_samples = 92
+Traceback (most recent call last):
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 275, in _run_multi_core
+    res = run_single_dataset(
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 292, in run_single_dataset
+    local_res = localpfn_pipeline(
+ValueError: Expected n_neighbors <= n_samples_fit, but n_neighbors = 95, n_samples_fit = 92, n_samples = 92
+"
+liver,liver,ct_LIVER,localpfn,0.5587482219061166,0.5419990814747896,0.6001385041551246,/trinity/home/r112276/Med3Tab-PFN/results/experiment1_roi/tabpfn_runs/local_liver_ct_LIVER_20260223_145750,,,
+melanoma,melanoma,ct_MELANOMA,localpfn,,,,,,,"Expected n_neighbors <= n_samples_fit, but n_neighbors = 90, n_samples_fit = 82, n_samples = 82
+Traceback (most recent call last):
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 275, in _run_multi_core
+    res = run_single_dataset(
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 292, in run_single_dataset
+    local_res = localpfn_pipeline(
+ValueError: Expected n_neighbors <= n_samples_fit, but n_neighbors = 90, n_samples_fit = 82, n_samples = 82
+"
+crlm,crlm,ct_CRLM,densenet121_3d,0.8208333333333334,0.8195564892623717,0.7665178571428571,/trinity/home/r112276/notebooks/baselines/densenet121_3d_20260223_172359,,,
+crlm,crlm,ct_CRLM,vit3d,0.5308333333333333,0.46919437392448565,0.44955357142857144,/trinity/home/r112276/notebooks/baselines/vit3d_20260223_190749,,,
+desmoid,desmoid,ct_DESMOID,densenet121_3d,0.8129268292682926,0.7939707144375244,0.7908424908424908,/trinity/home/r112276/notebooks/baselines/densenet121_3d_20260224_011142,,,
+desmoid,desmoid,ct_DESMOID,vit3d,0.6796341463414635,0.5180348831451773,0.5637220187220187,/trinity/home/r112276/notebooks/baselines/vit3d_20260224_055338,,,
+gist,gist,ct_GIST,densenet121_3d,0.7597551020408163,0.7559357131192448,0.7494266666666667,/trinity/home/r112276/notebooks/baselines/densenet121_3d_20260224_125112,,,
+gist,gist,ct_GIST,vit3d,0.5977142857142856,0.5536835392344581,0.6543733333333333,/trinity/home/r112276/notebooks/baselines/vit3d_20260224_194031,,,
+lipo,lipo,mr_LIPO,densenet121_3d,0.7826086956521738,0.7733410284779454,0.8242424242424242,/trinity/home/r112276/notebooks/baselines/densenet121_3d_20260224_230408,,,
+lipo,lipo,mr_LIPO,vit3d,0.5565217391304348,0.42862901804078274,0.4924242424242425,/trinity/home/r112276/notebooks/baselines/vit3d_20260225_014530,,,
+liver,liver,ct_LIVER,densenet121_3d,0.6938833570412518,0.6849708837352343,0.659926131117267,/trinity/home/r112276/notebooks/baselines/densenet121_3d_20260225_071458,,,
+liver,liver,ct_LIVER,vit3d,0.607823613086771,0.5687112596963706,0.6172668513388735,/trinity/home/r112276/notebooks/baselines/vit3d_20260225_114003,,,
+melanoma,melanoma,ct_MELANOMA,densenet121_3d,0.6895238095238095,0.6727455877455878,0.5963636363636363,/trinity/home/r112276/notebooks/baselines/densenet121_3d_20260225_144407,,,
+melanoma,melanoma,ct_MELANOMA,vit3d,0.5823809523809524,0.5082412683032866,0.5427272727272727,/trinity/home/r112276/notebooks/baselines/vit3d_20260225_170840,,,

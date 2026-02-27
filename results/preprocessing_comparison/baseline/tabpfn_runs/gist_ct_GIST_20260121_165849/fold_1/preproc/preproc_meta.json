@@ -1,0 +1,9 @@
+{
+  "n_components_max": 500,
+  "n_components_used": 196,
+  "train_samples": 196,
+  "train_features": 384,
+  "val_samples": 50,
+  "val_features": 384,
+  "explained_variance_ratio_sum": 0.9999999403953552
+}

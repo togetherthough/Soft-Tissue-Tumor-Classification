@@ -1,0 +1,20 @@
+{
+  "device": "cpu",
+  "clf_kwargs": {},
+  "train_time_sec": 0.17094755172729492,
+  "tabpfn_src": null,
+  "shapes": {
+    "X_train": [
+      65,
+      65
+    ],
+    "X_val": [
+      16,
+      65
+    ]
+  },
+  "classes": [
+    0,
+    1
+  ]
+}

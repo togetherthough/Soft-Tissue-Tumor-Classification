@@ -1,0 +1,271 @@
+dataset,pooling_strategy,error
+crlm,avg,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+desmoid,avg,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+gist,avg,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+lipo,avg,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+liver,avg,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+melanoma,avg,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+crlm,multiscale,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+desmoid,multiscale,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+gist,multiscale,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+lipo,multiscale,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+liver,multiscale,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+melanoma,multiscale,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+crlm,percentile,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+desmoid,percentile,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+gist,percentile,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+lipo,percentile,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+liver,percentile,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."
+melanoma,percentile,"Failed to download TabPFN v2.5 model 'tabpfn-v2.5-classifier-v2.5_default.ckpt'.
+
+Details and instructions:
+HuggingFace authentication error downloading from 'Prior-Labs/tabpfn_2_5'.
+This model is gated and requires you to accept its terms.
+
+Please follow these steps:
+1. Visit https://huggingface.co/Prior-Labs/tabpfn_2_5 in your browser and accept the terms of use.
+2. Log in to your Hugging Face account via the command line by running:
+   hf auth login
+   (Alternatively, you can set the HF_TOKEN environment variable   with a read token.)
+
+For detailed instructions, see https://docs.priorlabs.ai/how-to-access-gated-models
+
+For commercial usage, we provide alternative download options for TabPFN v2.5; please reach out to us at sales@priorlabs.ai."

@@ -1,0 +1,14 @@
+dataset,category,ct_name,method,accuracy,macro_f1,roc_auc,out_dir,metrics_path,pred_path,error
+crlm,crlm,ct_CRLM,tabpfn,,,,,,,"n_splits=5 cannot be greater than the number of members in each class.
+Traceback (most recent call last):
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/multi_dataset.py"", line 275, in _run_multi_core
+    res = run_single_dataset(
+  File ""/trinity/home/r112276/Med3Tab-PFN/med3pipe/pipelines/end_to_end.py"", line 248, in run_single_dataset
+    folds = stratified_features_split(
+ValueError: n_splits=5 cannot be greater than the number of members in each class.
+"
+desmoid,desmoid,ct_DESMOID,tabpfn,0.74,0.4251794871794871,0.5148484848484849,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/filtered_baseline/tabpfn_runs/desmoid_ct_DESMOID_20260211_173518,,,
+gist,gist,ct_GIST,tabpfn,0.574025974025974,0.38123758594346835,0.5631054131054132,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/filtered_baseline/tabpfn_runs/gist_ct_GIST_20260211_173735,,,
+lipo,lipo,mr_LIPO,tabpfn,0.4698529411764706,0.3881567225045486,0.3373015873015873,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/filtered_baseline/tabpfn_runs/lipo_mr_LIPO_20260211_174710,,,
+liver,liver,ct_LIVER,tabpfn,0.6666666666666666,0.3995604395604396,0.5577777777777777,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/filtered_baseline/tabpfn_runs/liver_ct_LIVER_20260211_174832,,,
+melanoma,melanoma,ct_MELANOMA,tabpfn,0.5333333333333333,0.4666666666666666,0.3,/trinity/home/r112276/Med3Tab-PFN/results/preprocessing_comparison/filtered_baseline/tabpfn_runs/melanoma_ct_MELANOMA_20260211_174952,,,

@@ -1,0 +1,15 @@
+{
+  "accuracy": 0.56,
+  "macro_f1": 0.56,
+  "roc_auc": 0.6016,
+  "confusion_matrix": [
+    [
+      14,
+      11
+    ],
+    [
+      11,
+      14
+    ]
+  ]
+}

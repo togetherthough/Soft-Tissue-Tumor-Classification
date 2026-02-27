@@ -124,7 +124,7 @@ Edit the script header:
 #SBATCH --time=8:00:00           # Time limit
 #SBATCH --mem=32G                # Memory
 #SBATCH --gres=gpu:1             # GPU allocation
-#SBATCH --mail-user=your@email   # Notifications
+#SBATCH --mail-user=<your.email@institution.edu>   # Notifications (replace with your contact)
 ```
 
 ## Output Structure

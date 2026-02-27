@@ -1,0 +1,24 @@
+{
+  "k": null,
+  "metric": "euclidean",
+  "device": "cuda",
+  "tabpfn_src": null,
+  "clf_kwargs": null,
+  "fit_adapter": true,
+  "adapter_epochs": 8,
+  "adapter_lr": 0.05,
+  "adapter_weight_decay": 0.0,
+  "adapter_num_queries": 150,
+  "adapter_verbose": true,
+  "k_effective": 127,
+  "shapes": {
+    "X_train_p": [
+      163,
+      163
+    ],
+    "X_val_p": [
+      40,
+      163
+    ]
+  }
+}

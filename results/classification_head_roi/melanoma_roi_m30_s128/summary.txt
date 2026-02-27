@@ -1,0 +1,23 @@
+SAM-Med3D Classification Head Experiment
+============================================================
+Model: vit_b_ori
+Encoder frozen: True
+Best epoch: 106
+Best AUC: 0.9694
+Final Accuracy: 0.9524
+Final AUC: 0.9694
+
+Confusion Matrix:
+[[13  1]
+ [ 0  7]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+      Benign       1.00      0.93      0.96        14
+   Malignant       0.88      1.00      0.93         7
+
+    accuracy                           0.95        21
+   macro avg       0.94      0.96      0.95        21
+weighted avg       0.96      0.95      0.95        21
+

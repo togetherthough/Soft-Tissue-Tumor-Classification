@@ -1,0 +1,7 @@
+dataset,accuracy_baseline,macro_f1_baseline,roc_auc_baseline,accuracy_filtered,macro_f1_filtered,roc_auc_filtered,accuracy_roi,macro_f1_roi,roc_auc_roi,accuracy_delta_filtered,macro_f1_delta_filtered,roc_auc_delta_filtered,accuracy_delta_roi,macro_f1_delta_roi,roc_auc_delta_roi
+crlm,,,,,,,,,,,,,,,
+desmoid,,,,,,,,,,,,,,,
+gist,,,,,,,,,,,,,,,
+lipo,,,,,,,,,,,,,,,
+liver,,,,,,,,,,,,,,,
+melanoma,,,,,,,,,,,,,,,
