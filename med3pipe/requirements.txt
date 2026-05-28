@@ -5,3 +5,5 @@ torchio
 pandas
 scikit-learn
 joblib
+monai
+PyYAML

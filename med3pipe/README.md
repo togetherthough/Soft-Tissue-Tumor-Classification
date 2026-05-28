@@ -15,7 +15,7 @@ and provides methods for steps 4–6 as reusable functions:
 3. Create a validation split by copying (or moving) a subset into
    `data/validation/<category>/<ct_name>/{imagesVal, labelsVal}`.
 4. Build a SAM-Med3D model and extract image-encoder embeddings.
-5. ROI-pool embeddings with lesion masks to get per-case feature vectors.
+5. Pool embeddings using Global Average Pooling to get per-case feature vectors.
 6. Load labels from CSV (e.g., `gist/sheet.csv`) and align to case IDs.
 
 The implementation mirrors the notebook behavior and incorporates the following fixes:
@@ -39,6 +39,53 @@ You can install them with pip:
 ```bash
 pip install -r med3pipe/requirements.txt
 ```
+
+## 3D Classification: DenseNet121 (3D) and Vision Transformer (3D)
+
+For native 3D volumetric classification, use the MONAI-based APIs in `med3pipe.vision.v3d`. These operate directly on NIfTI volumes prepared by steps 1–3 (SAM-Med3D layout), loading from:
+
+- `data/train/<category>/<ct_name>/imagesTr/*.nii.gz`
+- `data/validation/<category>/<ct_name>/imagesVal/*.nii.gz`
+
+Labels are read from your dataset sheet via `load_labels_from_sheet`, ensuring case IDs match the prepared filenames (consistent with multiple-lesion merging and `.nii`-suffix handling).
+
+### Train DenseNet121 (3D)
+
+```python
+from pathlib import Path
+from med3pipe import Sam3DPaths, Train3DConfig, train_eval_densenet121_3d
+
+SAM3D_ROOT = Path("SAM-Med3D-main/SAM-Med3D-main")
+paths = Sam3DPaths(sam3d_root=SAM3D_ROOT, category="gist", ct_name="ct_GIST")
+
+res = train_eval_densenet121_3d(
+    paths=paths,
+    sheet_csv=Path("gist") / "sheet.csv",
+    num_classes=2,
+    cfg=Train3DConfig(epochs=30, img_size=96, batch_size=2, device="cuda"),  # set device to "cuda" for GPU
+)
+print("Saved to:", res["out_dir"])  # baselines/densenet121_3d_<timestamp>
+```
+
+### Train Swin Transformer (3D)
+
+```python
+from med3pipe import train_eval_swin_transformer_3d, Train3DConfig, Sam3DPaths
+from pathlib import Path
+
+SAM3D_ROOT = Path("SAM-Med3D-main/SAM-Med3D-main")
+paths = Sam3DPaths(sam3d_root=SAM3D_ROOT, category="gist", ct_name="ct_GIST")
+
+res = train_eval_swin_transformer_3d(
+    paths=paths,
+    sheet_csv=Path("gist") / "sheet.csv",
+    num_classes=2,
+    cfg=Train3DConfig(epochs=30, img_size=96, batch_size=2, device="cuda"),
+)
+print("Saved to:", res["out_dir"])  # baselines/swin3d_<timestamp>
+```
+
+Both training and validation inference use the selected device (`cfg.device`), so GPU is used end-to-end when you set `device="cuda"`.
 
 Note: The CLI defers importing heavy dependencies so `python -m med3pipe --help` works even if
 `SimpleITK` is not installed yet.
@@ -108,7 +155,7 @@ from pathlib import Path
 from med3pipe import (
     prepare_for_sam3d, split_validation, Sam3DPaths,
     build_sam3d_model, extract_embeddings_train_val, default_feature_dirs,
-    load_roi_features, load_labels_from_sheet, build_y,
+    load_pooled_features, load_labels_from_sheet, build_y,
     find_default_sam3d_root,
 )
 
@@ -132,9 +179,9 @@ model = build_sam3d_model(sam3d_root=SAM3D_ROOT, checkpoint=ckpt, model_type="vi
 feat_dirs = default_feature_dirs(SAM3D_ROOT, category=paths.category, ct_name=paths.ct_name)
 extract_embeddings_train_val(paths, model, sam3d_root=SAM3D_ROOT)
 
-# ROI-pool to per-case vectors
-X_train, ids_train = load_roi_features(feat_dirs.train_dir, paths.labels_tr)
-X_val,   ids_val   = load_roi_features(feat_dirs.val_dir,   paths.labels_val)
+# Pool to per-case vectors using Global Average Pooling
+X_train, ids_train = load_pooled_features(feat_dirs.train_dir, paths.labels_tr)
+X_val,   ids_val   = load_pooled_features(feat_dirs.val_dir,   paths.labels_val)
 
 # Load labels and align to case IDs
 df_gist, lab_map = load_labels_from_sheet(Path("gist") / "sheet.csv")
