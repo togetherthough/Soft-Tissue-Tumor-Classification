@@ -51,3 +51,8 @@ results/*
 !results/pooling_comparison/
 !results/preprocessing_comparison/
 results/experiment1/
+
+# Large model checkpoint files (too large for GitHub, store externally)
+*.pt
+*.pth
+sam-med3d/ckpt/
